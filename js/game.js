@@ -138,6 +138,12 @@ function create() {
     socket.on('removePlayer', function(data) {
         console.log(datum() + " | Player: " + players[data].name.charAt(0).toUpperCase() + players[data].name.substring(1) + " has left the game!");        
         removePlayer(data);
+
+        var i = onlinePlayers.indexOf(players[data].name);
+        if(i != -1) {
+            onlinePlayers.splice(i,1);
+        }        
+        textOnlinePlayers.setText("Online Players:\nYou (" + playerName + ")\n" + onlinePlayers.join("\n"));
     });
 
     // Spawn bullet
