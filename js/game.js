@@ -57,8 +57,7 @@ function create() {
 
     // Initialize sound effects
     background = game.add.audio('background');
-    background.play();
-    background.volume = 0;
+    background.play('', 0, 1, true); // loop background music
     bulletSound = game.add.audio('allyShot');
 
     // Create new player sprite
@@ -325,7 +324,7 @@ function fire() {
 		if(bullet) {
 
             if(player.angle == 0 || player.angle == -90 ) {
-			     bullet.reset(player.body.x + 42, player.body.y + 42);
+			    bullet.reset(player.body.x + 42, player.body.y + 42);
             } else {
                 bullet.reset(player.body.x + 22, player.body.y + 22);
             }
