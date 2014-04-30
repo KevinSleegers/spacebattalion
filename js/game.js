@@ -12,7 +12,7 @@ function preload() {
 
     //game.load.setPreloadSprite('player');
 
-    game.load.audio('background', 'audio/background.ogg');
+    game.load.audio('background', ['audio/background.mp3', 'audio/background.ogg']);
     game.load.audio('allyShot', 'audio/shot.wav');
 }
 
@@ -172,7 +172,7 @@ function create() {
     otherBullets.setAll('anchor.y', 0.5);
     otherBullets.setAll('outOfBoundsKill', true);   
 
-    game.stage.backgroundColor = '#ccc';
+    game.stage.backgroundColor = '#000';
 
     game.input.addPointer();
     fireButton = game.input.pointer1;
@@ -504,4 +504,5 @@ function datum() {
 }
 
 function render() {
+    game.debug.soundInfo(background, 100, 100);
 }
