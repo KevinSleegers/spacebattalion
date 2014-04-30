@@ -5,7 +5,7 @@ var express = require('express'),
     players = {},
     bullets = {};
 
-server.listen(3000);
+server.listen(process.env.PORT || 5000);
 
 app.use(express.static(__dirname + '/'));
 
