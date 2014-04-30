@@ -12,7 +12,7 @@ function preload() {
 
     //game.load.setPreloadSprite('player');
 
-    game.load.audio('background', ['audio/background.mp3', 'audio/background.ogg']);
+    game.load.audio('background', ['audio/test.mp3', 'audio/background.ogg']);
     game.load.audio('allyShot', 'audio/shot.wav');
 }
 
