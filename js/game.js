@@ -6,14 +6,14 @@ var game = new Phaser.Game(window.screen.availWidth, window.screen.availHeight, 
 });
 
 function preload() {
-	game.load.spritesheet('player', 'img/ally_sprite.png', 64, 64);
-	game.load.image('boss', 'img/boss.png');
-	game.load.image('bullet', 'img/bullet.png');
+	//game.load.spritesheet('player', 'img/ally_sprite.png', 64, 64);
+    game.load.image('player', 'assets/spr_myplane.png');
+    game.load.image('otherPlayers', 'assets/spr_plane.png');
+	game.load.image('boss', 'assets/img/spr_boss.png');
+	game.load.image('bullet', 'assets/img/spr_bullet.png');
 
-    //game.load.setPreloadSprite('player');
-
-    game.load.audio('background', ['audio/background.mp3', 'audio/background.ogg']);
-    game.load.audio('allyShot', 'audio/shot.wav');
+    game.load.audio('backgroundMusic', ['assets/audio/takingFlight.mp3', 'assets/audio/takingFlight.ogg', 'assets/audio/takingFlight.wav']);
+    //game.load.audio('playerBullet', 'assets/audio/shot.wav');
 }
 
 var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'Flash Socket', 'AJAX long-polling']}), 
@@ -34,11 +34,14 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     otherBullets, 
     movementSpeed = 350,
     diagonalSpeed,
-    background,
-    bulletSound,
     vibrate = false,
     shakeScreen = 0,
-    bossHealth = 100;
+    bossHealth = 100,
+
+    // audio
+    playerBullet,
+    backgroundMusic
+    ;
 
 function create() {
     // Keep game running, even if out of focus
@@ -56,9 +59,9 @@ function create() {
     game.world.setBounds(0, 0, 2000, 2000);
 
     // Initialize sound effects
-    background = game.add.audio('background');
-    background.play('', 0, 1, true); // loop background music
-    bulletSound = game.add.audio('allyShot');
+    backgroundMusic = game.add.audio('backgroundMusic');
+    backgroundMusic.play('', 0, 1, true); // loop background music
+    //playerBullet = game.add.audio('playerBullet');
 
     // Create new player sprite
 	player = game.add.sprite(game.world.centerX, game.world.centerY, 'player');
@@ -69,6 +72,9 @@ function create() {
 
 	player.enableBody = true;
 	player.body.collideWorldBounds = true;
+
+    // change player sprite color (new in latest Phaser, just for testing purposes! :-)
+    player.tint = 0x33CC00;
 
     game.camera.follow(player);
 
@@ -334,7 +340,7 @@ function fire() {
 			bulletTime = game.time.now + 150;
 
             // Play shooting sound
-            bulletSound.play();
+            //playerBullet.play();
 
             // Vibrate phone
             if(vibrate == true) {
@@ -369,12 +375,12 @@ function newPlayer(plr) {
     var newPlayerX = plr.x;
     var newPlayerY = plr.y;
 
-    players[plr.session] = game.add.sprite(plr.x, plr.y, 'player');
+    players[plr.session] = game.add.sprite(plr.x, plr.y, 'otherPlayers');
 
     // configurations for new player
     players[plr.session].anchor.setTo(.5,.5);
-    players[plr.session].animations.add('fly'); 
-    players[plr.session].animations.play('fly', 10, true);
+    //players[plr.session].animations.add('fly'); 
+    //players[plr.session].animations.play('fly', 10, true);
     game.physics.enable(players[plr.session], Phaser.Physics.ARCADE);
     players[plr.session].enableBody = true;
     players[plr.session].body.collideWorldBounds = true;
@@ -411,8 +417,8 @@ function newBullet(blt) {
         game.physics.arcade.velocityFromRotation(blt.rotation, 800, otherBullet.body.velocity);
 
         // Play bullet sound with lowered volume    
-        bulletSound.play();
-        bulletSound.volume = 0.5;
+        //playerBullet.play();
+        //playerBullet.volume = 0.5;
     }
 
 }
@@ -504,5 +510,5 @@ function datum() {
 }
 
 function render() {
-    game.debug.soundInfo(background, 100, 100);
+    //game.debug.soundInfo(backgroundMusic, 100, 100);
 }
