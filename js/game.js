@@ -11,6 +11,7 @@ function preload() {
     game.load.image('otherPlayers', 'assets/img/spr_plane.png');
 	game.load.image('boss', 'assets/img/spr_boss.png');
 	game.load.image('bullet', 'assets/img/spr_bullet.png');
+    game.load.image('muzzleFlash', 'assets/img/spr_muzzleFlash.png');
 
     game.load.audio('backgroundMusic', ['assets/audio/TakingFlight.mp3', 'assets/audio/TakingFlight.ogg', 'assets/audio/TakingFlight.wav']);
     //game.load.audio('playerBullet', 'assets/audio/shot.wav');
@@ -37,6 +38,7 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     vibrate = false,
     shakeScreen = 0,
     bossHealth = 100,
+    muzzleFlash,
 
     // audio
     playerBullet,
@@ -66,8 +68,8 @@ function create() {
     // Create new player sprite
 	player = game.add.sprite(game.world.centerX, game.world.centerY, 'player');
 	player.anchor.setTo(.5,.5);
-	player.animations.add('fly'); 
-	player.animations.play('fly', 10, true);
+	//player.animations.add('fly'); 
+	//player.animations.play('fly', 10, true);
 	game.physics.enable(player, Phaser.Physics.ARCADE);
 
 	player.enableBody = true;
@@ -176,7 +178,10 @@ function create() {
     otherBullets.physicsBodyType = Phaser.Physics.ARCADE;
     otherBullets.setAll('anchor.x', 0.5);
     otherBullets.setAll('anchor.y', 0.5);
-    otherBullets.setAll('outOfBoundsKill', true);   
+    otherBullets.setAll('outOfBoundsKill', true);  
+
+    muzzleFlash = game.add.group();
+    muzzleFlash.createMultiple(30, 'muzzleFlash');
 
     game.stage.backgroundColor = '#000';
 
@@ -326,13 +331,14 @@ function update() {
 function fire() {
 	if(game.time.now > bulletTime) {
 		bullet = bullets.getFirstExists(false);
+        var muzzle = muzzleFlash.getFirstExists(false);
 
 		if(bullet) {
 
             if(player.angle == 0 || player.angle == -90 ) {
-			    bullet.reset(player.body.x + 42, player.body.y + 42);
+			    bullet.reset(player.body.x + 38, player.body.y + 38);
             } else {
-                bullet.reset(player.body.x + 22, player.body.y + 22);
+                bullet.reset(player.body.x + 26, player.body.y + 26);
             }
 
 			bullet.rotation = player.rotation;
