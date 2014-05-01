@@ -7,8 +7,8 @@ var game = new Phaser.Game(window.screen.availWidth, window.screen.availHeight, 
 
 function preload() {
 	//game.load.spritesheet('player', 'img/ally_sprite.png', 64, 64);
-    game.load.image('player', 'assets/spr_myplane.png');
-    game.load.image('otherPlayers', 'assets/spr_plane.png');
+    game.load.image('player', 'assets/img/spr_myplane.png');
+    game.load.image('otherPlayers', 'assets/img/spr_plane.png');
 	game.load.image('boss', 'assets/img/spr_boss.png');
 	game.load.image('bullet', 'assets/img/spr_bullet.png');
 
