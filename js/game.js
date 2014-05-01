@@ -315,6 +315,8 @@ function update() {
         for(var plr in players) {
             game.physics.arcade.overlap(bullets, players[plr], bulletCollisionWithPlayer, null, this);
         }
+
+        game.physics.arcade.overlap(otherBullets, boss, otherBulletCollisionWithBoss, null, this);
     }
 
     // Screen shake
@@ -422,12 +424,12 @@ function removePlayer(plr) {
 
 function newBullet(blt) {
     otherBullets.createMultiple(1, 'bullet');
-    var otherBullet = otherBullets.getFirstExists(false);
+    otherBullet = otherBullets.getFirstExists(false);
     
     if(otherBullet) {
         otherBullet.reset(blt.x, blt.y);
         otherBullet.rotation = blt.rotation;
-        game.physics.arcade.velocityFromRotation(blt.rotation, 800, otherBullet.body.velocity);
+        game.physics.arcade.velocityFromRotation(blt.rotation, 400, otherBullet.body.velocity);
 
         // Play bullet sound with lowered volume    
         //playerBullet.play();
@@ -488,10 +490,20 @@ function bulletCollisionWithBoss(plr, blt)
 {
     bullet.destroy();  
 
-    console.log('boss has been hit!');
+    // damage done to boss (boss.health - boss.damage)
+    boss.damage(100);
+}
+
+function otherBulletCollisionWithBoss(plr, blt)
+{
+    otherBullet.destroy();  
+
+    console.log('jaaa');
 
     // damage done to boss (boss.health - boss.damage)
-    boss.damage(10);
+    boss.damage(100);
+
+    console.log(boss.health);
 }
 
 function bulletCollisionWithPlayer(plr, blt) {
