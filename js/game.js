@@ -13,7 +13,7 @@ function preload() {
 	game.load.image('bullet', 'assets/img/spr_bullet.png');
     game.load.image('muzzleFlash', 'assets/img/spr_muzzleFlash.png');
 
-    game.load.audio('backgroundMusic', ['assets/audio/TakingFlight.mp3', 'assets/audio/TakingFlight.ogg']);
+    game.load.audio('backgroundMusic', 'assets/audio/TakingFlight.ogg');
     //game.load.audio('playerBullet', 'assets/audio/shot.wav');
 }
 
