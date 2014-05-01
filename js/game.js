@@ -74,6 +74,7 @@ function create() {
 
 	player.enableBody = true;
 	player.body.collideWorldBounds = true;
+    player.bringToTop();
 
     // change player sprite color (new in latest Phaser, just for testing purposes! :-)
     // player.tint = 0x33CC00;
@@ -163,6 +164,7 @@ function create() {
 	boss.enableBody = true;
     game.physics.enable(boss, Phaser.Physics.ARCADE);
     boss.physicsBodyType = Phaser.Physics.ARCADE;
+    boss.health = 1000;
 
 	bullets = game.add.group();
 	bullets.enableBody = true;
@@ -308,6 +310,11 @@ function update() {
 
         // Collisions
         game.physics.arcade.overlap(bullets, boss, bulletCollisionWithBoss, null, this);
+
+        // Create collision detection for all players
+        for(var plr in players) {
+            game.physics.arcade.overlap(bullets, players[plr], bulletCollisionWithPlayer, null, this);
+        }
     }
 
     // Screen shake
@@ -331,7 +338,6 @@ function update() {
 function fire() {
 	if(game.time.now > bulletTime) {
 		bullet = bullets.getFirstExists(false);
-        var muzzle = muzzleFlash.getFirstExists(false);
 
 		if(bullet) {
 
@@ -390,7 +396,8 @@ function newPlayer(plr) {
     game.physics.enable(players[plr.session], Phaser.Physics.ARCADE);
     players[plr.session].enableBody = true;
     players[plr.session].body.collideWorldBounds = true;
-    players[plr.session].name = plr.nickname;
+    players[plr.session].name = plr.session;
+    players[plr.session].health = 100;
 }
 
 function updatePlayer(plr) {
@@ -479,13 +486,24 @@ function changePosition(xVal, xSpeed, yVal, ySpeed, angleVal) {
 
 function bulletCollisionWithBoss(plr, blt)
 {
-    bossHealth -= 0.5;
-    bullet.destroy();   
+    bullet.destroy();  
 
-    if(bossHealth == 0) {
-        boss.destroy();
-        alert('UU KILLED DA BAWSSS');
+    console.log('boss has been hit!');
+
+    // damage done to boss (boss.health - boss.damage)
+    boss.damage(10);
+}
+
+function bulletCollisionWithPlayer(plr, blt) {
+    bullet.destroy();
+
+    players[plr.name].damage(10);
+
+    if(players[plr.name].health == 0) {
+        alert('You have killed player: ' + players[plr.name].name + '!');
     }
+
+    // other player add damage..
 }
 
 function diagonalSpeed(speed) {
@@ -513,6 +531,14 @@ function datum() {
     seconds = d.getSeconds().toString().length == 1 ? '0'+d.getSeconds() : d.getSeconds(),
     hours = d.getHours().toString().length == 1 ? '0'+d.getHours() : d.getHours();
     return d.getDate() + '-' + (d.getMonth()+1) + '-' + d.getFullYear() +' ' + hours + ':' + minutes + ':' + seconds;
+}
+
+function getByValue(arr, value) {
+
+  for (var i=0, iLen=arr.length; i<iLen; i++) {
+
+    if (arr[i].b == 6) return arr[i];
+  }
 }
 
 function render() {
