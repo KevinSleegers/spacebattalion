@@ -12,7 +12,7 @@ function preload() {
 	game.load.image('boss', 'assets/img/spr_boss.png');
 	game.load.image('bullet', 'assets/img/spr_bullet.png');
 
-    game.load.audio('backgroundMusic', ['assets/audio/takingFlight.mp3', 'assets/audio/takingFlight.ogg', 'assets/audio/takingFlight.wav']);
+    game.load.audio('backgroundMusic', ['assets/audio/TakingFlight.mp3', 'assets/audio/TakingFlight.ogg', 'assets/audio/TakingFlight.wav']);
     //game.load.audio('playerBullet', 'assets/audio/shot.wav');
 }
 
@@ -74,7 +74,7 @@ function create() {
 	player.body.collideWorldBounds = true;
 
     // change player sprite color (new in latest Phaser, just for testing purposes! :-)
-    player.tint = 0x33CC00;
+    // player.tint = 0x33CC00;
 
     game.camera.follow(player);
 
