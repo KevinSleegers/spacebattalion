@@ -1,4 +1,7 @@
-var game = new Phaser.Game(window.screen.availWidth, window.screen.availHeight, Phaser.AUTO, '', {
+var w = window.innerWidth * window.devicePixelRatio,
+    h = window.innerHeight * window.devicePixelRatio;
+
+var game = new Phaser.Game(w, h, Phaser.AUTO, '', {
 	preload: preload,
 	create: create,
 	update: update,
@@ -12,6 +15,9 @@ function preload() {
 	game.load.image('boss', 'assets/img/spr_boss.png');
 	game.load.image('bullet', 'assets/img/spr_bullet.png');
     game.load.image('muzzleFlash', 'assets/img/spr_muzzleFlash.png');
+
+    // Animated background..
+    game.load.image('mainBg', 'assets/img/spr_backgroundOverlay.png');
 
     game.load.audio('backgroundMusic', ['assets/audio/TakingFlight.mp3', 'assets/audio/TakingFlight.ogg']);
     //game.load.audio('playerBullet', 'assets/audio/shot.wav');
@@ -40,6 +46,9 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     bossHealth = 100,
     muzzleFlash,
 
+    // Background image variable
+    bgtile,
+
     // audio
     playerBullet,
     backgroundMusic
@@ -48,6 +57,15 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
 function create() {
     // Keep game running, even if out of focus
     this.stage.disableVisibilityChange = true;
+
+    // Background
+    bgtile = game.add.tileSprite(0, 0, 2000, 2000, 'mainBg');
+
+    // Scaling of game
+    game.scale.fullScreenScaleMode = Phaser.ScaleManager.NO_SCALE;
+    game.input.onDown.add(goFullscreen, this);
+    //game.stage.scale.setShowAll();
+    //game.stage.scale.refresh();
 
     // Get nickname from player
     playerName = prompt("What's your battle name?");
@@ -185,7 +203,7 @@ function create() {
     muzzleFlash = game.add.group();
     muzzleFlash.createMultiple(30, 'muzzleFlash');
 
-    game.stage.backgroundColor = '#000';
+    //game.stage.backgroundColor = '#FFF';
 
     game.input.addPointer();
     fireButton = game.input.pointer1;
@@ -258,6 +276,10 @@ function create() {
 function update() {
 	player.body.velocity.setTo(0,0);
 
+    // Update background
+    bgtile.tilePosition.x -= 1;
+    bgtile.tilePosition.y += .5;
+
     // Check window state
     // This overrides the default because we only want to pause the audio, and not the gameplay.
     if(document.hasFocus()) {
@@ -321,8 +343,8 @@ function update() {
 
     // Screen shake
     if(shakeScreen > 0) {
-        var rand1 = game.rnd.integerInRange(-15,15);
-        var rand2 = game.rnd.integerInRange(-15,15);
+        var rand1 = game.rnd.integerInRange(-5,5);
+        var rand2 = game.rnd.integerInRange(-5,5);
 
         game.world.setBounds(rand1, rand2, 2000 + rand1, 2000 + rand2);
         shakeScreen--;
@@ -362,7 +384,7 @@ function fire() {
             }
 
             // Shake screen for n frames
-            shakeScreen = 20;
+            shakeScreen = 15;
 
 			// Update bullet counter
 			bulletsCount --;
@@ -551,6 +573,10 @@ function getByValue(arr, value) {
 
     if (arr[i].b == 6) return arr[i];
   }
+}
+
+function goFullscreen() {
+    game.scale.startFullScreen();
 }
 
 function render() {
