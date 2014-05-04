@@ -582,16 +582,24 @@ function goFullscreen() {
 }
 
 function resizeGame() {
-    var h = window.innerHeight;
-    var w = window.innerWidth;
+    var w = window.innerWidth * window.devicePixelRatio,
+    h = window.innerHeight * window.devicePixelRatio;
 
     game.width = w;
     game.height = h;
+    game.stage.width = w;
+    game.stage.height = h;
+    game.scale.width = w;
+    game.scale.height = h;
 
-    if(game.renderType === 1) {
+    if(game.renderType === Phaser.WEBGL) {
+        game.renderer.resize(w, h);
+    } else if (game.renderType === Phaser.CANVAS) {        
         game.renderer.resize(w, h);
         Phaser.Canvas.setSmoothingEnabled(game.context, false);
     }
+
+    game.scale.setSize();
 }
 
 function render() {
