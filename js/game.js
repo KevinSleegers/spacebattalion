@@ -64,8 +64,10 @@ function create() {
     // Scaling of game
     game.scale.fullScreenScaleMode = Phaser.ScaleManager.NO_SCALE;
     game.input.onDown.add(goFullscreen, this);
-    //game.stage.scale.setShowAll();
-    //game.stage.scale.refresh();
+    window.addEventListener('resize', function(event) {
+        resizeGame();
+        console.log('window has been resized!');
+    });
 
     // Get nickname from player
     playerName = prompt("What's your battle name?");
@@ -577,6 +579,19 @@ function getByValue(arr, value) {
 
 function goFullscreen() {
     game.scale.startFullScreen();
+}
+
+function resizeGame() {
+    var h = window.innerHeight;
+    var w = window.innerWidth;
+
+    game.width = w;
+    game.height = h;
+
+    if(game.renderType === 1) {
+        game.renderer.resize(w, h);
+        Phaser.Canvas.setSmoothingEnabled(game.context, false);
+    }
 }
 
 function render() {
