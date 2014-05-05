@@ -112,7 +112,7 @@ function create() {
 
     // Initialize sound effects
     backgroundMusic = game.add.audio('backgroundMusic');
-    // irritant.. backgroundMusic.play('', 0, 1, true); // loop background music
+    backgroundMusic.play('', 0, 1, true); // loop background music
     //playerBullet = game.add.audio('playerBullet');
 
     // Create player group
