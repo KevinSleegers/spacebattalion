@@ -62,6 +62,9 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     clouds,
     cloudTimer = 0,
 
+    // Moon image
+    moon,
+
     // audio
     playerBullet,
     backgroundMusic
@@ -70,6 +73,11 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
 function create() {
     // Keep game running, even if out of focus
     this.stage.disableVisibilityChange = true;
+
+    game.renderer.clearBeforeRender = false;
+    game.renderer.roundPixels = true;
+    game.physics.startSystem(Phaser.Physics.ARCADE);    
+    game.world.setBounds(0, 0, 2000, 2000);
 
     // Background
     bgtile = game.add.tileSprite(0, 0, 2000, 2000, 'mainBg');
@@ -89,8 +97,6 @@ function create() {
     // Create moon
     createMoon();
 
-    console.log('height of game..', game.world.bounds.height);
-
     // Scaling of game
     game.scale.fullScreenScaleMode = Phaser.ScaleManager.NO_SCALE;
     game.input.onDown.add(goFullscreen, this);
@@ -103,12 +109,6 @@ function create() {
     playerName = prompt("What's your battle name?");
     console.log(currentDate() + " | Welcome: " + playerName.charAt(0).toUpperCase() + playerName.substring(1) + ".");
     // playerName = randName();
-
-    game.renderer.clearBeforeRender = false;
-    game.renderer.roundPixels = true;
-
-	game.physics.startSystem(Phaser.Physics.ARCADE);    
-    game.world.setBounds(0, 0, 2000, 2000);
 
     // Initialize sound effects
     backgroundMusic = game.add.audio('backgroundMusic');
@@ -322,6 +322,13 @@ function update() {
     // create clouds
     if(game.time.now > cloudTimer) {          
         createCloud();
+    }
+
+    if(moon.x > (game.world.width + moon.width)) {
+        // Destroy old moon, and create new one..
+        moon.destroy();
+
+        createMoon();
     }
 
     // move boss
@@ -619,25 +626,24 @@ function createCloud() {
 function createMoon() {
     var randY = game.world.randomY;
 
-    // Make sure the moon is always fully within screen (height = 164, round to 200)
-    if(randY < 200) {
+    // Make sure the moon is always fully within screen (height = 164, round to 300)
+    if(randY < 300) {
         // Define new randomY with added height of moon
         randY = randY + 164;
+    } else if(randY > 1700) {
+        randY = randY - 164;
+    } else {
+        randY = randY;
     }
 
-    var moon = game.add.sprite(-(Math.random() * 400), randY, 'moon');
+    console.log(randY);
+
+    moon = game.add.sprite(-(Math.random() * 400), randY, 'moon');
     moon.angle = game.rnd.angle();
 
     // Tween angle werkt niet op de 1 of andere manier :o
     //game.add.tween(moon).to({ angle: 180 }, 5000, Phaser.Easing.Linear.None, true);
     game.add.tween(moon).to({ x: game.width + (1600 + moon.x) }, 300000, Phaser.Easing.Linear.None, true);
-
-    if(moon.x > game.world.x) {
-        console.log('moon is outside bounds..');
-        moon.destroy();
-        // create new moon
-        createMoon();
-    }
 }
 
 function randName() {
