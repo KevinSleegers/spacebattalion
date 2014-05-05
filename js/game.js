@@ -632,8 +632,9 @@ function createMoon() {
     //game.add.tween(moon).to({ angle: 180 }, 5000, Phaser.Easing.Linear.None, true);
     game.add.tween(moon).to({ x: game.width + (1600 + moon.x) }, 300000, Phaser.Easing.Linear.None, true);
 
-    if(moon.outOfBoundsKill) {
-        console.log('new moon has been created!');
+    if(moon.x > game.world.x) {
+        console.log('moon is outside bounds..');
+        moon.destroy();
         // create new moon
         createMoon();
     }
