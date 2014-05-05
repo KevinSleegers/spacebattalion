@@ -17,7 +17,14 @@ function preload() {
     game.load.image('muzzleFlash', 'assets/img/spr_muzzleFlash.png');
 
     // Animated background..
-    game.load.image('mainBg', 'assets/img/spr_backgroundOverlay.png');
+    game.load.spritesheet('mainBg', 'assets/img/spr_backgroundOverlay.png', 160, 160);
+
+    // Cloud sprites
+    game.load.image('cloud1', 'assets/img/spr_cloud1.png');
+    game.load.image('cloud2', 'assets/img/spr_cloud2.png');
+
+    // Moon sprite
+    game.load.image('moon', 'assets/img/spr_moon.png');
 
     game.load.audio('backgroundMusic', ['assets/audio/TakingFlight.mp3', 'assets/audio/TakingFlight.ogg']);
     //game.load.audio('playerBullet', 'assets/audio/shot.wav');
@@ -46,8 +53,14 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     bossHealth = 100,
     muzzleFlash,
 
+    playerGroup,
+
     // Background image variable
     bgtile,
+
+    // Cloud image
+    clouds,
+    cloudTimer = 0,
 
     // audio
     playerBullet,
@@ -61,6 +74,23 @@ function create() {
     // Background
     bgtile = game.add.tileSprite(0, 0, 2000, 2000, 'mainBg');
 
+    clouds = game.add.group();
+    clouds.enableBody = true;
+    clouds.physicsBodyType = Phaser.Physics.ARCADE;
+    clouds.setAll('anchor.x', 0.5);
+    clouds.setAll('anchor.y', 0.5);
+    clouds.setAll('outOfBoundsKill', true);  
+
+    // Generate 5 clouds to start with.
+    for(i = 0; i < 5; i++) {
+        createCloud();
+    }
+
+    // Create moon
+    createMoon();
+
+    console.log('height of game..', game.world.bounds.height);
+
     // Scaling of game
     game.scale.fullScreenScaleMode = Phaser.ScaleManager.NO_SCALE;
     game.input.onDown.add(goFullscreen, this);
@@ -71,7 +101,7 @@ function create() {
 
     // Get nickname from player
     playerName = prompt("What's your battle name?");
-    console.log(datum() + " | Welcome: " + playerName.charAt(0).toUpperCase() + playerName.substring(1) + ".");
+    console.log(currentDate() + " | Welcome: " + playerName.charAt(0).toUpperCase() + playerName.substring(1) + ".");
     // playerName = randName();
 
     game.renderer.clearBeforeRender = false;
@@ -82,8 +112,12 @@ function create() {
 
     // Initialize sound effects
     backgroundMusic = game.add.audio('backgroundMusic');
-    backgroundMusic.play('', 0, 1, true); // loop background music
+    // irritant.. backgroundMusic.play('', 0, 1, true); // loop background music
     //playerBullet = game.add.audio('playerBullet');
+
+    // Create player group
+    playerGroup = game.add.group();
+    //playerGroup.sort('y', Phaser.Group.SORT_ASCENDING);
 
     // Create new player sprite
 	player = game.add.sprite(game.world.centerX, game.world.centerY, 'player');
@@ -95,6 +129,7 @@ function create() {
 	player.enableBody = true;
 	player.body.collideWorldBounds = true;
     player.bringToTop();
+    playerGroup.add(player);
 
     // change player sprite color (new in latest Phaser, just for testing purposes! :-)
     // player.tint = 0x33CC00;
@@ -135,7 +170,7 @@ function create() {
             newPlayer(data[onlinePlayer]);
             onlinePlayers.push(data[onlinePlayer].nickname);
         }
-        //console.log(datum() + " | Online players: " + onlinePlayers.toString());
+        //console.log(currentDate() + " | Online players: " + onlinePlayers.toString());
         textOnlinePlayers.setText("Online Players:\nYou (" + playerName + ")\n" + onlinePlayers.join("\n"));
     });
 
@@ -150,7 +185,7 @@ function create() {
 
     // Get new player
     socket.on('sendNewPlayer', function(data) {
-        console.log(datum() + " | Player: " + data.nickname.charAt(0).toUpperCase() + data.nickname.substring(1) + " has joined the game!");
+        console.log(currentDate() + " | Player: " + data.nickname.charAt(0).toUpperCase() + data.nickname.substring(1) + " has joined the game!");
         newPlayer(data);
 
         onlinePlayers.push(data.nickname);
@@ -164,7 +199,9 @@ function create() {
 
     // Remove player
     socket.on('removePlayer', function(data) {
-        console.log(datum() + " | Player: " + players[data].name.charAt(0).toUpperCase() + players[data].name.substring(1) + " has left the game!");        
+        console.log('remove', data);
+
+        //console.log(currentDate() + " | Player: " + players[data].name.charAt(0).toUpperCase() + players[data].name.substring(1) + " has left the game!");        
         removePlayer(data);
 
         var i = onlinePlayers.indexOf(players[data].name);
@@ -218,7 +255,7 @@ function create() {
         navigator.vibrate ? vibrate = true : vibrate = false;
 
         if(gyro.hasFeature('devicemotion')) {
-            console.log(datum() + ' | Gyro.js loaded!');
+            console.log(currentDate() + ' | Gyro.js loaded!');
 
             if(gyro.getFeatures().length > 0) {
                 gyro.frequency = 10;
@@ -244,7 +281,7 @@ function create() {
         }
         else {
             // fallback if gyro.js is not working
-            console.log(datum() + ' | Gyro.js not loaded!');
+            console.log(currentDate() + ' | Gyro.js not loaded!');
 
             window.addEventListener('devicemotion', function(event) {
                 var x = event.accelerationIncludingGravity.x;
@@ -281,6 +318,17 @@ function update() {
     // Update background
     bgtile.tilePosition.x -= 1;
     bgtile.tilePosition.y += .5;
+
+    // create clouds
+    if(game.time.now > cloudTimer) {          
+        createCloud();
+    }
+
+    // move boss
+    /*boss.y -= 2;
+    if(boss.y < -boss.height) {
+        boss.y = game.world.height;
+    }*/
 
     // Check window state
     // This overrides the default because we only want to pause the audio, and not the gameplay.
@@ -424,6 +472,8 @@ function newPlayer(plr) {
     players[plr.session].body.collideWorldBounds = true;
     players[plr.session].name = plr.session;
     players[plr.session].health = 100;
+
+    playerGroup.add(players[plr.session]);
 }
 
 function updatePlayer(plr) {
@@ -522,12 +572,8 @@ function otherBulletCollisionWithBoss(plr, blt)
 {
     otherBullet.destroy();  
 
-    console.log('jaaa');
-
     // damage done to boss (boss.health - boss.damage)
     boss.damage(100);
-
-    console.log(boss.health);
 }
 
 function bulletCollisionWithPlayer(plr, blt) {
@@ -547,6 +593,52 @@ function diagonalSpeed(speed) {
     return diagonalSpeed;
 }
 
+function createCloud() {
+    // random getal tussen 0 en 1
+    var randCloud = Math.floor((Math.random() * 10) + 1);
+
+    // random x waarde tussen 800 en 400
+    var random = Math.floor(Math.random() * (800 - 400 + 1)) + 400;
+
+    if(randCloud < 5) {
+        var cloud = game.add.sprite(-(Math.random() * random), game.world.randomY, 'cloud1');
+    } else {
+        var cloud = game.add.sprite(-(Math.random() * random), game.world.randomY, 'cloud2');
+    }
+
+    cloud.angle = game.rnd.angle();
+
+    game.add.tween(cloud).to({ x: game.width + (1600 + cloud.x) }, 150000, Phaser.Easing.Linear.None, true);
+    game.add.tween(cloud).to({ angle: cloud.angle}, 150000, Phaser.Easing.Linear.None, true);
+
+    cloudTimer = game.time.now + 5000;
+
+    clouds.add(cloud);
+}
+
+function createMoon() {
+    var randY = game.world.randomY;
+
+    // Make sure the moon is always fully within screen (height = 164, round to 200)
+    if(randY < 200) {
+        // Define new randomY with added height of moon
+        randY = randY + 164;
+    }
+
+    var moon = game.add.sprite(-(Math.random() * 400), randY, 'moon');
+    moon.angle = game.rnd.angle();
+
+    // Tween angle werkt niet op de 1 of andere manier :o
+    //game.add.tween(moon).to({ angle: 180 }, 5000, Phaser.Easing.Linear.None, true);
+    game.add.tween(moon).to({ x: game.width + (1600 + moon.x) }, 300000, Phaser.Easing.Linear.None, true);
+
+    if(moon.outOfBoundsKill) {
+        console.log('new moon has been created!');
+        // create new moon
+        createMoon();
+    }
+}
+
 function randName() {
     var text = "";
     var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -561,7 +653,7 @@ function diffNumbers(a, b) {
     return Math.abs(a - b);
 }
 
-function datum() {
+function currentDate() {
     var d = new Date(),
     minutes = d.getMinutes().toString().length == 1 ? '0'+d.getMinutes() : d.getMinutes(),
     seconds = d.getSeconds().toString().length == 1 ? '0'+d.getSeconds() : d.getSeconds(),
@@ -569,16 +661,8 @@ function datum() {
     return d.getDate() + '-' + (d.getMonth()+1) + '-' + d.getFullYear() +' ' + hours + ':' + minutes + ':' + seconds;
 }
 
-function getByValue(arr, value) {
-
-  for (var i=0, iLen=arr.length; i<iLen; i++) {
-
-    if (arr[i].b == 6) return arr[i];
-  }
-}
-
 function goFullscreen() {
-    game.scale.startFullScreen();
+    //game.scale.startFullScreen();
 }
 
 function resizeGame() {
