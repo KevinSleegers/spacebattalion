@@ -334,10 +334,10 @@ function update() {
     }
 
     // move boss
-    boss.y -= 2;
+    /*boss.y -= 2;
     if(boss.y < -boss.height) {
         boss.y = game.world.height;
-    }
+    }*/
 
     // Check window state
     // This overrides the default because we only want to pause the audio, and not the gameplay.
