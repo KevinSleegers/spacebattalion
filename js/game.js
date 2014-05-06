@@ -145,7 +145,6 @@ function create() {
     textPlayer.align = 'center';
     textPlayer.anchor.setTo(0.5, 0.5);
     textPlayer.fixedToCamera = true;
-    textPlayer.bringToTop();
 
     textBullets = game.add.text(window.screen.availWidth - 150, 50, "Bullets: " + bulletsCount);    
     textBullets.font = 'Press Start 2P';
@@ -154,7 +153,6 @@ function create() {
     textBullets.align = 'left';
     textBullets.anchor.setTo(0.5, 0.5);
     textBullets.fixedToCamera = true;
-    textBullets.bringToTop();
 
     textOnlinePlayers = game.add.text(180, 0 + window.screen.availHeight - 200, "Online Players:\nYou (" + playerName + ")");    
     textOnlinePlayers.font = 'Press Start 2P';
@@ -163,7 +161,6 @@ function create() {
     textOnlinePlayers.align = 'left';
     textOnlinePlayers.anchor.setTo(0.5, 0.5);
     textOnlinePlayers.fixedToCamera = true;
-    textOnlinePlayers.bringToTop();
 
     // Request already online players
     socket.emit('requestPlayers', io.socket.sessionid);
