@@ -5,8 +5,6 @@ var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '
     render: render
 });
 
-//DERP
-
 function preload() {
 	game.load.spritesheet('player', 'img/ally_sprite.png', 64, 64);
 	game.load.image('boss', 'img/boss.png');
