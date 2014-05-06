@@ -431,7 +431,7 @@ function fire() {
             }
 
 			bullet.rotation = player.rotation;
-            game.physics.arcade.velocityFromRotation(player.rotation, 400, bullet.body.velocity);
+            game.physics.arcade.velocityFromRotation(player.rotation, 500, bullet.body.velocity);
 			bulletTime = game.time.now + 500;
 
             // Play shooting sound
