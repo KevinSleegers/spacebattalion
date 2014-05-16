@@ -36,6 +36,8 @@ io.sockets.on('connection', function(socket){
         var player_nick = obj.nickname;
         var player_x = obj.x;
         var player_y = obj.y;
+        var player_lat = obj.lat;
+        var player_long = obj.long;
 
         // Save details in 'player' object
         var player = {};
@@ -43,6 +45,8 @@ io.sockets.on('connection', function(socket){
         player.nickname = player_nick;
         player.x = player_x;
         player.y = player_y;
+        player.lat = player_lat;
+        player.long = player_long;
 
         // Add player to 'players' array
         players[player.session] = player;

@@ -69,7 +69,10 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
 
     // audio
     playerBullet,
-    backgroundMusic
+    backgroundMusic,
+
+    latitude,
+    longitude
     ;
 
 function create() {
@@ -83,6 +86,15 @@ function create() {
 
     // Background
     bgtile = game.add.tileSprite(0, 0, 2000, 2000, 'mainBg');
+
+    // Haal locatie gegevens op
+    getLocation();
+
+    // Refreshen van locatie wordt bepaald door browser dus haal op uit local storage
+    if(localStorage.getItem('latitude') !== null && localStorage.getItem('longitude') !== null) {
+    	latitude = localStorage.getItem('latitude');
+    	longitude = localStorage.getItem('longitude');
+    }
 
     clouds = game.add.group();
     clouds.enableBody = true;
@@ -114,7 +126,7 @@ function create() {
 
     // Initialize sound effects
     backgroundMusic = game.add.audio('backgroundMusic');
-    backgroundMusic.play('', 0, 1, true); // loop background music
+    //backgroundMusic.play('', 0, 1, true); // loop background music
     //playerBullet = game.add.audio('playerBullet');
 
     // Create player group
@@ -170,7 +182,8 @@ function create() {
         //console.log('Online Players: ', data.);
         for(var onlinePlayer in data) {
             newPlayer(data[onlinePlayer]);
-            onlinePlayers.push(data[onlinePlayer].nickname);
+            //onlinePlayers.push(data[onlinePlayer].nickname);
+            onlinePlayers.push(data[onlinePlayer].session);
         }
         //console.log(currentDate() + " | Online players: " + onlinePlayers.toString());
         textOnlinePlayers.setText("Online Players:\nYou (" + playerName + ")\n" + onlinePlayers.join("\n"));
@@ -181,7 +194,9 @@ function create() {
         sessionid : io.socket.sessionid,
         nickname : playerName,
         x : game.world.centerX,
-        y : game.world.centerY
+        y : game.world.centerY,
+        lat : latitude,
+        long : longitude
     });
     socket.emit('newPlayer', playerData);
 
@@ -189,8 +204,8 @@ function create() {
     socket.on('sendNewPlayer', function(data) {
         console.log(currentDate() + " | Player: " + data.nickname.charAt(0).toUpperCase() + data.nickname.substring(1) + " has joined the game!");
         newPlayer(data);
-
-        onlinePlayers.push(data.nickname);
+        console.log('new player added', data.lat);
+        onlinePlayers.push(data.session);
         textOnlinePlayers.setText("Online Players:\nYou (" + playerName + ")\n" + onlinePlayers.join("\n"));
     });
 
@@ -482,6 +497,12 @@ function newPlayer(plr) {
     players[plr.session].name = plr.session;
     players[plr.session].health = 100;
 
+    // Sla gps locatie van speler op (om na te gaan of iemand anders in de buurt is)
+    players[plr.session].latitude = plr.lat;
+    players[plr.session].longitude = plr.long;
+
+    otherPlayersGPS(players[plr.session].latitude, players[plr.session].longitude);
+
     playerGroup.add(players[plr.session]);
 }
 
@@ -638,8 +659,6 @@ function createMoon() {
         randY = randY;
     }
 
-    console.log(randY);
-
     moon = game.add.sprite(-(Math.random() * 400), randY, 'moon');
     moon.angle = game.rnd.angle();
 
@@ -672,6 +691,52 @@ function currentDate() {
 
 function goFullscreen() {
     //game.scale.startFullScreen();
+}
+
+function getLocation() {
+	if(navigator.geolocation) {
+		navigator.geolocation.getCurrentPosition(foundPosition);
+	} else {
+		console.log('GPS wordt niet ondersteund door uw device.');
+	}
+}
+
+function foundPosition(position) {
+	latitude = position.coords.latitude;
+	longitude = position.coords.longitude;
+
+	localStorage.setItem('latitude', latitude);
+	localStorage.setItem('longitude', longitude);
+
+	// get google maps location details.
+	var googleMapsURL = 'http://maps.googleapis.com/maps/api/geocode/json?latlng=' + latitude + ',' + longitude + '&sensor=false';
+
+	$.ajax({
+		url: googleMapsURL,
+		type: "GET",
+		dataType: "JSON",
+		success: function(data) {
+			var straat = data["results"][0]["address_components"][1]["long_name"];
+			var plaats = data["results"][0]["address_components"][2]["long_name"];
+		},
+		error: function(error) {
+			alert(error);
+		}
+	});
+}
+
+function otherPlayersGPS(myLat, myLong) {
+	// get all positions of online players
+	console.log(onlinePlayers);
+
+	for(var a in onlinePlayers) {
+		console.log('ee');
+		//console.log('aaa', a);
+	}
+
+	console.log('test');
+	// compare to MY location
+	// if within range of 50m alert their playername!
 }
 
 function resizeGame() {
