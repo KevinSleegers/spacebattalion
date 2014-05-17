@@ -54,6 +54,10 @@ io.sockets.on('connection', function(socket){
         // Send new player to other clients
         socket.broadcast.emit('sendNewPlayer', players[player.session]);
     });      
+
+    socket.on('newCoop', function(data) {
+        socket.broadcast.emit('joinCoop', data);
+    });
     
     // Get updated position of player            
     socket.on('newPos', function(data) {  

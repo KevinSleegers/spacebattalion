@@ -14,6 +14,7 @@ function preload() {
 	//game.load.spritesheet('player', 'img/ally_sprite.png', 64, 64);
     game.load.image('player', 'assets/img/spr_myplane.png');
     game.load.image('otherPlayers', 'assets/img/spr_plane.png');
+    game.load.image('coop', 'assets/img/spr_doublePlane.png');
 	game.load.image('boss', 'assets/img/spr_boss.png');
 	game.load.image('bullet', 'assets/img/spr_bullet.png');
     game.load.image('muzzleFlash', 'assets/img/spr_muzzleFlash.png');
@@ -36,6 +37,7 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     player, 
     boss, 
     players = {}, 
+    coopPlayers = {},
     playerName, 
     onlinePlayers = [],
     cursors, 
@@ -72,7 +74,11 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     backgroundMusic,
 
     latitude,
-    longitude
+    longitude,
+
+    coop,
+    coopMovement = false,
+    coopShooting = false
     ;
 
 function create() {
@@ -136,6 +142,12 @@ function create() {
     // Create new player sprite
 	player = game.add.sprite(game.world.centerX, game.world.centerY, 'player');
 	player.anchor.setTo(.5,.5);
+	player.name = io.socket.sessionid;
+	player.allowControls = true;
+	player.latitude = latitude;
+	player.longitude = longitude;
+	player.coop = false;
+	player.move = true;
 	//player.animations.add('fly'); 
 	//player.animations.play('fly', 10, true);
 	game.physics.enable(player, Phaser.Physics.ARCADE);
@@ -207,6 +219,20 @@ function create() {
         console.log('new player added', data.lat);
         onlinePlayers.push(data.session);
         textOnlinePlayers.setText("Online Players:\nYou (" + playerName + ")\n" + onlinePlayers.join("\n"));
+    });
+
+    // Get coop Join
+    socket.on('joinCoop', function(data) {
+
+    	console.log('OMGYEAAAH',data);
+
+    	var obj = JSON.parse(data);
+    	var player1 = obj.player1;
+    	var player2 = obj.player2;
+    	var shoot = obj.shoot;
+    	var move = obj.move;
+
+    	createCoop(player1, player2, shoot, move, 'join');
     });
 
     // Update player
@@ -289,9 +315,9 @@ function create() {
                     }
 
                     if(o.z < 9.5 || o.z > 10) {
-                        changePosition('-', o.x * 20, '+', o.y * 20, game.math.wrapAngle(anglePlayer, false));
+                        changePosition('-', o.x * 20, '+', o.y * 20, game.math.wrapAngle(anglePlayer, false), 'p');
                     } else {
-                        changePosition('', '', '', '', 0);
+                        changePosition('', '', '', '', 0, 'p');
                     } 
                 });
             }
@@ -314,9 +340,9 @@ function create() {
                 }
 
                 if(z < 9.5 || z > 10) {
-                    changePosition('-', x * 40, '+', y * 40, game.math.wrapAngle(anglePlayer, false));
+                    changePosition('-', x * 40, '+', y * 40, game.math.wrapAngle(anglePlayer, false), 'p');
                 } else {
-                    changePosition('', '', '', '', 0);
+                    changePosition('', '', '', '', 0, 'p');
                 }
 
                 var interval = 10;
@@ -330,7 +356,16 @@ function create() {
 }
 
 function update() {
-	player.body.velocity.setTo(0,0);
+	// Ga na welke coopspeler je bent, andere waardes kan ik hier niet aan.. dus dan maar zo
+    if(Object.getOwnPropertyNames(coopPlayers).length !== 0) {
+	    Object.keys(coopPlayers).forEach(function(key) {
+	        if(key.indexOf(io.socket.sessionid) > -1) {
+	        	coopPlayers[key].body.velocity.setTo(0,0);
+	        }
+	    });
+	} else {
+		player.body.velocity.setTo(0,0);
+	}
 
     // Update background
     bgtile.tilePosition.x -= 1;
@@ -371,38 +406,59 @@ function update() {
 
     if(game.device.desktop) {
 
-        if(cursors.left.isDown) {            
-            if(cursors.left.isDown && cursors.down.isDown) {
-                changePosition('-', diagonalSpeed(movementSpeed), '+', diagonalSpeed(movementSpeed), 135);
-            }
-            else if(cursors.left.isDown && cursors.up.isDown) {  
-                changePosition('-', diagonalSpeed(movementSpeed), '-', diagonalSpeed(movementSpeed), -135);
-            }
-            else {
-                changePosition('-', movementSpeed, '', '', 180);
-            }
-        }
-        else if(cursors.right.isDown) {
-            if(cursors.right.isDown && cursors.down.isDown) {
-                changePosition('+', diagonalSpeed(movementSpeed), '+', diagonalSpeed(movementSpeed), 45);
-            }   
-            else if(cursors.right.isDown && cursors.up.isDown) {  
-                changePosition('+', diagonalSpeed(movementSpeed), '-', diagonalSpeed(movementSpeed), -45);         
-            }   
-            else {  
-                changePosition('+', movementSpeed, '', '', 0);
-            }
-        }
-        else if(cursors.up.isDown) {
-            changePosition('', '', '-', movementSpeed, -90);
-        }
-        else if(cursors.down.isDown) {
-            changePosition('', '', '+', movementSpeed, 90);
-        }
+    	if(player.visible === true) {
+    		var currentSprite = 'p';
+    		movementSpeed = 350;
+    	} else {
+    		var currentSprite = 'c';
+    		movementSpeed = 175;
+    	}
 
-        if(game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR).isDown) {
-            fire();
-        }        
+    	if(player.move === true || coopMovement === true) {
+    		// Ga na welke coopspeler je bent, andere waardes kan ik hier niet aan.. dus dan maar zo
+        	Object.keys(coopPlayers).forEach(function(key) {
+        		if(key.indexOf(io.socket.sessionid) > -1) {
+        			currentSprite = key;
+        		}
+        	});
+
+	        if(cursors.left.isDown) {   
+
+	            if(cursors.left.isDown && cursors.down.isDown) {
+	                changePosition('-', diagonalSpeed(movementSpeed), '+', diagonalSpeed(movementSpeed), 135, currentSprite);
+	            }
+	            else if(cursors.left.isDown && cursors.up.isDown) {  
+	                changePosition('-', diagonalSpeed(movementSpeed), '-', diagonalSpeed(movementSpeed), -135, currentSprite);
+	            }
+	            else {
+	                changePosition('-', movementSpeed, '', '', 180, currentSprite);
+	            }
+	        }
+	        else if(cursors.right.isDown) {
+	            if(cursors.right.isDown && cursors.down.isDown) {
+	                changePosition('+', diagonalSpeed(movementSpeed), '+', diagonalSpeed(movementSpeed), 45, currentSprite);
+	            }   
+	            else if(cursors.right.isDown && cursors.up.isDown) {  
+	                changePosition('+', diagonalSpeed(movementSpeed), '-', diagonalSpeed(movementSpeed), -45, currentSprite);         
+	            }   
+	            else {  
+	                changePosition('+', movementSpeed, '', '', 0, currentSprite);
+	            }
+	        }
+	        else if(cursors.up.isDown) {
+	            changePosition('', '', '-', movementSpeed, -90, currentSprite);
+	        }
+	        else if(cursors.down.isDown) {
+	            changePosition('', '', '+', movementSpeed, 90, currentSprite);
+	        }
+    	}
+
+    	if(player.shoot === true || coopShooting === true) {
+        // Check if coop exists, and if coop is allowed to move (if yes then disallow shooting)
+        	if(game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR).isDown) {
+	            fire();
+	        }
+        }    
 
         // Collisions
         game.physics.arcade.overlap(bullets, boss, bulletCollisionWithBoss, null, this);
@@ -500,8 +556,11 @@ function newPlayer(plr) {
     // Sla gps locatie van speler op (om na te gaan of iemand anders in de buurt is)
     players[plr.session].latitude = plr.lat;
     players[plr.session].longitude = plr.long;
+    players[plr.session].coop = false;
+    players[plr.session].coopPlayer = '';
 
-    otherPlayersGPS(players[plr.session].latitude, players[plr.session].longitude);
+    // Vergelijk locatie van nieuwe speler met jou
+    compareGPS(players[plr.session].latitude, players[plr.session].longitude, players[plr.session].name);
 
     playerGroup.add(players[plr.session]);
 }
@@ -514,16 +573,31 @@ function updatePlayer(plr) {
     var newPlayerY = plr.y;
 	var newPlayerAngle = plr.angle;
 
-    // change position of player
-    players[plr.session].x = plr.x;
-    players[plr.session].y = plr.y;	
-	players[plr.session].angle = plr.angle;
+	if(playerNick === '2players') {
+		coopPlayers[plr.session].x = plr.x;
+		coopPlayers[plr.session].y = plr.y;
+		coopPlayers[plr.session].angle = plr.angle;
+	} else {
+    	// change position of player
+    	players[plr.session].x = plr.x;
+    	players[plr.session].y = plr.y;	
+		players[plr.session].angle = plr.angle;
+	}
 }
 
 function removePlayer(plr) {
     var playerSession = plr;
 
-    players[playerSession].kill();
+    if(Object.getOwnPropertyNames(coopPlayers).length !== 0) {
+	    Object.keys(coopPlayers).forEach(function(key) {
+		    if(key.indexOf(io.socket.sessionid) > -1) {
+		       	coopPlayers[playerSession].kill();
+		   	}
+		});
+	}
+	else {
+	   	players[playerSession].kill();
+	}
 }
 
 function newBullet(blt) {
@@ -547,47 +621,92 @@ function newBullet(blt) {
 // yVal is positief of negatief
 // ySpeed is snelheid van y
 // angleVal is hoek van player
-function changePosition(xVal, xSpeed, yVal, ySpeed, angleVal) {
+function changePosition(xVal, xSpeed, yVal, ySpeed, angleVal, spriteVal) {
+	// Bug.. op de één of andere manier werkt spriteVal.body.velocity.x enz niet, vandaar de if-else constructie
 
-    xSpeed == '' ? xSpeed = 0 : xSpeed;
-    ySpeed == '' ? ySpeed = 0 : ySpeed;
+	if(spriteVal === 'p') {
+		xSpeed == '' ? xSpeed = 0 : xSpeed;
+	    ySpeed == '' ? ySpeed = 0 : ySpeed;
 
-    if(xVal == '+') { player.body.velocity.x += xSpeed; } 
-    else if(xVal == '-') { player.body.velocity.x -= xSpeed; } 
-    else { player.body.velocity.x += 0; }
+	    if(xVal == '+') { player.body.velocity.x += xSpeed; } 
+	    else if(xVal == '-') { player.body.velocity.x -= xSpeed; } 
+	    else { player.body.velocity.x += 0; }
 
-    if(yVal == '+') { player.body.velocity.y += ySpeed; } 
-    else if(yVal == '-') { player.body.velocity.y -= ySpeed; } 
-    else { player.body.velocity.y += 0; }
+	    if(yVal == '+') { player.body.velocity.y += ySpeed; } 
+	    else if(yVal == '-') { player.body.velocity.y -= ySpeed; } 
+	    else { player.body.velocity.y += 0; }
 
-    player.angle = angleVal;
+	    player.angle = angleVal;
 
-    if(oldX !== player.x || oldY !== player.y) {
-                    
-        var playerPosition = JSON.stringify({
-            sessionid: io.socket.sessionid,
-            nickname: playerName,
-            x : player.x,
-            y : player.y,
-            angle : player.angle
-        });   
+	    if(oldX !== player.x || oldY !== player.y) {
+	                    
+	        var playerPosition = JSON.stringify({
+	            sessionid: io.socket.sessionid,
+	            nickname: playerName,
+	            x : player.x,
+	            y : player.y,
+	            angle : player.angle
+	        });   
 
-        // Check if difference between x or y values is larger than 1
-        if(diffNumbers(player.x, oldX) >= 1 || diffNumbers(player.y, oldY) >= 1 ) {
-            
-            // Send positions to server every 200 ms (0.2 seconds)
-            /*setTimeout(function() {
-                socket.emit('positionChange', playerPosition);
-            }, 200);*/
-            
-            // Emit new position immediately, without delay
-            socket.emit('positionChange', playerPosition);
+	        // Check if difference between x or y values is larger than 1
+	        if(diffNumbers(player.x, oldX) >= 1 || diffNumbers(player.y, oldY) >= 1 ) {
+	            
+	            // Send positions to server every 200 ms (0.2 seconds)
+	            /*setTimeout(function() {
+	                socket.emit('positionChange', playerPosition);
+	            }, 200);*/
+	            
+	            // Emit new position immediately, without delay
+	            socket.emit('positionChange', playerPosition);
 
-            // store the old positions in oldX and oldY
-            oldX = player.x;
-            oldY = player.y;
-        }
-    }
+	            // store the old positions in oldX and oldY
+	            oldX = player.x;
+	            oldY = player.y;
+	        }
+	    }
+	} else {		
+		xSpeed == '' ? xSpeed = 0 : xSpeed;
+	    ySpeed == '' ? ySpeed = 0 : ySpeed;
+
+	    if(xVal == '+') { coopPlayers[spriteVal].body.velocity.x += xSpeed; } 
+	    else if(xVal == '-') { coopPlayers[spriteVal].body.velocity.x -= xSpeed; } 
+	    else { coopPlayers[spriteVal].body.velocity.x += 0; }
+
+	    if(yVal == '+') { coopPlayers[spriteVal].body.velocity.y += ySpeed; } 
+	    else if(yVal == '-') { coopPlayers[spriteVal].body.velocity.y -= ySpeed; } 
+	    else { coopPlayers[spriteVal].body.velocity.y += 0; }
+
+	    coopPlayers[spriteVal].angle = angleVal;
+
+	    if(oldX !== coopPlayers[spriteVal].x || oldY !== coopPlayers[spriteVal].y) {
+	                    
+	        var playerPosition = JSON.stringify({
+	            sessionid: coopSession,
+	            nickname: '2players',
+	            x : coopPlayers[spriteVal].x,
+	            y : coopPlayers[spriteVal].y,
+	            angle : coopPlayers[spriteVal].angle
+	        });   
+
+	        // Check if difference between x or y values is larger than 1
+	        if(diffNumbers(coopPlayers[spriteVal].x, oldX) >= 1 || diffNumbers(coopPlayers[spriteVal].y, oldY) >= 1 ) {
+	            
+	            // Send positions to server every 200 ms (0.2 seconds)
+	            /*setTimeout(function() {
+	                socket.emit('positionChange', playerPosition);
+	            }, 200);*/
+	            
+	            // Emit new position immediately, without delay
+	            socket.emit('positionChange', playerPosition);
+
+	            // store the old positions in oldX and oldY
+	            oldX = coopPlayers[spriteVal].x;
+	            oldY = coopPlayers[spriteVal].y;
+	        }
+	    }
+	}
+
+    
 }
 
 function bulletCollisionWithBoss(plr, blt)
@@ -725,19 +844,119 @@ function foundPosition(position) {
 	});
 }
 
-function otherPlayersGPS(myLat, myLong) {
+function compareGPS(playerLat, playerLong, playerSession) {
 	// get all positions of online players
-	console.log(onlinePlayers);
+	console.log(playerSession);
+	
+	// distance between you and other player in kilometers
+	var dist = distance(player.latitude, player.longitude, playerLat, playerLong, "k");
+	
+	// distance in meters
+	dist = dist * 1000;
 
-	for(var a in onlinePlayers) {
-		console.log('ee');
-		//console.log('aaa', a);
+	// check if distance is within 10 meters
+	if(dist <= 10) {
+		console.log('distance within 10 meters!');
+
+		// Coop both players
+		if(player.coop === false && players[playerSession].coop === false) {
+			createCoop(player.name, players[playerSession].name, '', '', 'new');
+		}
+	} else {
+		console.log('distance NOT within 10 meters!');
+	}
+}
+
+function createCoop(player1, player2, shoot, move, type) {
+	// combine sessions to new sessionid
+	console.log('coop player 1', player1);
+	console.log('coop player 2', player2);
+
+	shoot == '' ? shoot = player1 : shoot;
+	move == '' ? move = player2 : move;
+
+	coopSession = player1 + player2;
+
+	coopPlayers[coopSession] = game.add.sprite(game.world.centerX, game.world.centerY, 'coop');
+	coopPlayers[coopSession].player1 = player1;
+	coopPlayers[coopSession].player2 = player2;
+	coopPlayers[coopSession].coopSession = coopSession;
+	coopPlayers[coopSession].move = move;
+	coopPlayers[coopSession].shoot = shoot;
+	coopPlayers[coopSession].anchor.setTo(.5, .5);
+	coopPlayers[coopSession].enableBody = true;
+	game.physics.enable(coopPlayers[coopSession], Phaser.Physics.ARCADE);
+	coopPlayers[coopSession].physicsBodyType = Phaser.Physics.ARCADE;
+	coopPlayers[coopSession].health = 250;
+	coopPlayers[coopSession].body.collideWorldBounds = true;
+  
+	if(coopPlayers[coopSession].move === io.socket.sessionid) {
+		console.log(currentDate() + " | You may move, good sir.");
+		textPlayer.setText('COOP MODE (move)');
+		coopMovement = true;
+		coopShooting = false;
+	} else if (coopPlayers[coopSession].shoot === io.socket.sessionid) {
+		console.log(currentDate() + " | You may shoot, good sir.");
+		textPlayer.setText('COOP MODE (shoot)');
+		coopShooting = true;
+		coopMovement = false;
 	}
 
-	console.log('test');
-	// compare to MY location
-	// if within range of 50m alert their playername!
+	if(player1 === io.socket.sessionid) {
+		player.coop = true;
+		player.visible = false;
+		player.allowControls = false;
+		player.move = false;
+
+		players[player2].visible = false;
+
+		game.camera.follow(coopPlayers[coopSession]);
+	} else if (player2 === io.socket.sessionid) {
+		player.coop = true;
+		player.visible = false;
+		player.allowControls = false;
+		player.move = false;
+
+		players[player1].visible = false;
+
+		game.camera.follow(coopPlayers[coopSession]);
+	} else {
+		players[player1].visible = false;
+		players[player2].visible = false;
+	}
+
+	if(type === 'new') {
+		var coopData = JSON.stringify({
+	        player1 : player1,
+	        player2 : player2,
+	        move : player1,
+	        shoot : player2
+	    });
+		socket.emit('newCoop', coopData);
+	}
 }
+
+// source : http://www.geodatasource.com/developers/javascript
+function distance(lat1, lon1, lat2, lon2, unit) {
+    var radlat1 = Math.PI * lat1/180;
+    var radlat2 = Math.PI * lat2/180;
+    var radlon1 = Math.PI * lon1/180;
+    var radlon2 = Math.PI * lon2/180;
+
+    var theta = lon1-lon2;
+
+    var radtheta = Math.PI * theta/180;
+
+    var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+    dist = Math.acos(dist);
+    dist = dist * 180/Math.PI;
+    dist = dist * 60 * 1.1515;
+
+    if (unit=="K") { dist = dist * 1.609344 };
+    if (unit=="N") { dist = dist * 0.8684 };
+    return dist;
+}
+
 
 function resizeGame() {
     var w = window.innerWidth * window.devicePixelRatio,
