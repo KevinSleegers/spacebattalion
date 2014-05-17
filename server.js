@@ -64,6 +64,11 @@ io.sockets.on('connection', function(socket){
         newPlayer(data);
     });
 
+    socket.on('damagePlayer', function(data) {
+        // Send to all clients (including sender)
+        socket.broadcast.emit('playerShot', data);
+    });
+
     socket.on('positionChange', function(data) {        
         var obj = JSON.parse(data);
 

@@ -148,6 +148,8 @@ function create() {
 	player.longitude = longitude;
 	player.coop = false;
 	player.move = true;
+	player.shoot = true;
+	player.health = 100;
 	//player.animations.add('fly'); 
 	//player.animations.play('fly', 10, true);
 	game.physics.enable(player, Phaser.Physics.ARCADE);
@@ -240,6 +242,20 @@ function create() {
         updatePlayer(data);
     });
 
+    // Remove killed player
+    socket.on('playerShot', function(data) {
+    	if(data === io.socket.sessionid) {
+    		player.damage(10);
+
+    		if(player.health === 0) {
+    			alert('YOU DIED, GAME OVER');
+    		}
+    	}
+    	else {
+    		players[data].damage(10);
+    	}
+    });
+
     // Remove player
     socket.on('removePlayer', function(data) {
         console.log('remove', data);
@@ -278,6 +294,7 @@ function create() {
     otherBullets = game.add.group();
     otherBullets.enableBody = true;
     otherBullets.physicsBodyType = Phaser.Physics.ARCADE;
+    otherBullets.setAll('static', true);
     otherBullets.setAll('anchor.x', 0.5);
     otherBullets.setAll('anchor.y', 0.5);
     otherBullets.setAll('outOfBoundsKill', true);  
@@ -406,7 +423,7 @@ function update() {
 
     if(game.device.desktop) {
 
-    	if(player.visible === true) {
+    	if(player.visible === true || typeof player !== "undefined") {
     		var currentSprite = 'p';
     		movementSpeed = 350;
     	} else {
@@ -414,7 +431,7 @@ function update() {
     		movementSpeed = 175;
     	}
 
-    	if(player.move === true || coopMovement === true) {
+    	if(typeof player !== "undefined" && player.move === true || coopMovement === true) {
     		// Ga na welke coopspeler je bent, andere waardes kan ik hier niet aan.. dus dan maar zo
         	Object.keys(coopPlayers).forEach(function(key) {
         		if(key.indexOf(io.socket.sessionid) > -1) {
@@ -453,7 +470,7 @@ function update() {
 	        }
     	}
 
-    	if(player.shoot === true || coopShooting === true) {
+    	if(typeof player !== "undefined" && player.shoot === true || coopShooting === true) {
         // Check if coop exists, and if coop is allowed to move (if yes then disallow shooting)
         	if(game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR).isDown) {
 	            fire();
@@ -466,6 +483,7 @@ function update() {
         // Create collision detection for all players
         for(var plr in players) {
             game.physics.arcade.overlap(bullets, players[plr], bulletCollisionWithPlayer, null, this);
+            game.physics.arcade.overlap(otherBullets, players[plr], otherBulletCollisionWithPlayer, null, this);
         }
 
         game.physics.arcade.overlap(otherBullets, boss, otherBulletCollisionWithBoss, null, this);
@@ -595,7 +613,7 @@ function removePlayer(plr) {
 		   	}
 		});
 	}
-	else {
+	else if (playerSession !== io.socket.sessionid) {
 	   	players[playerSession].kill();
 	}
 }
@@ -728,13 +746,26 @@ function otherBulletCollisionWithBoss(plr, blt)
 function bulletCollisionWithPlayer(plr, blt) {
     bullet.destroy();
 
+    var damagedPlayer = players[plr.name].name;
+    socket.emit('damagePlayer', damagedPlayer);
+
     players[plr.name].damage(10);
 
-    if(players[plr.name].health == 0) {
-        alert('You have killed player: ' + players[plr.name].name + '!');
-    }
+    /*if(players[plr.name].health == 0) {
+        var killedPlayer = players[plr.name].name;
+    }*/
 
     // other player add damage..
+}
+
+function otherBulletCollisionWithPlayer(plr, blt) {
+	console.log('hit');
+    otherBullet.destroy();
+
+    var damagedPlayer = players[plr.name].name;
+    socket.emit('damagePlayer', damagedPlayer);
+
+    players[plr.name].damage(10);
 }
 
 function diagonalSpeed(speed) {
@@ -855,7 +886,8 @@ function compareGPS(playerLat, playerLong, playerSession) {
 	dist = dist * 1000;
 
 	// check if distance is within 10 meters
-	if(dist <= 10) {
+	//if(dist <= 10) {
+	if(dist > 9999999) {
 		console.log('distance within 10 meters!');
 
 		// Coop both players
@@ -907,6 +939,7 @@ function createCoop(player1, player2, shoot, move, type) {
 		player.visible = false;
 		player.allowControls = false;
 		player.move = false;
+		player.shoot = false;
 
 		players[player2].visible = false;
 
@@ -916,6 +949,7 @@ function createCoop(player1, player2, shoot, move, type) {
 		player.visible = false;
 		player.allowControls = false;
 		player.move = false;
+		player.shoot = false;
 
 		players[player1].visible = false;
 
