@@ -11,11 +11,13 @@ var game = new Phaser.Game(w, h, Phaser.AUTO, '', {
 });
 
 function preload() {
-	//game.load.spritesheet('player', 'img/ally_sprite.png', 64, 64);
-    game.load.image('player', 'assets/img/spr_myplane.png');
-    game.load.image('otherPlayers', 'assets/img/spr_plane.png');
+	game.load.spritesheet('player', 'assets/img/spr_myplane_strip2.png', 64, 64);
+	game.load.spritesheet('otherPlayers', 'assets/img/spr_plane_strip2.png', 64, 64);
+	game.load.spritesheet('boss', 'assets/img/spr_boss_strip3.png', 128, 256);
+    //game.load.image('player', 'assets/img/spr_myplane.png');
+    //game.load.image('otherPlayers', 'assets/img/spr_plane.png');
     game.load.image('coop', 'assets/img/spr_doublePlane.png');
-	game.load.image('boss', 'assets/img/spr_boss.png');
+	//game.load.image('boss', 'assets/img/spr_boss.png');
 	game.load.image('bullet', 'assets/img/spr_bullet.png');
     game.load.image('muzzleFlash', 'assets/img/spr_muzzleFlash.png');
 
@@ -150,6 +152,7 @@ function create() {
 	player.move = true;
 	player.shoot = true;
 	player.health = 100;
+	player.frame = 1;
 	//player.animations.add('fly'); 
 	//player.animations.play('fly', 10, true);
 	game.physics.enable(player, Phaser.Physics.ARCADE);
@@ -281,6 +284,7 @@ function create() {
     game.physics.enable(boss, Phaser.Physics.ARCADE);
     boss.physicsBodyType = Phaser.Physics.ARCADE;
     boss.health = 1000;
+    boss.frame = 2;
 
 	bullets = game.add.group();
 	bullets.enableBody = true;
@@ -482,8 +486,11 @@ function update() {
 
         // Create collision detection for all players
         for(var plr in players) {
+        	// your bullets hit other players
             game.physics.arcade.overlap(bullets, players[plr], bulletCollisionWithPlayer, null, this);
-            game.physics.arcade.overlap(otherBullets, players[plr], otherBulletCollisionWithPlayer, null, this);
+
+            // other bullets hit you
+            game.physics.arcade.overlap(otherBullets, player, otherBulletCollisionWithPlayer, null, this);
         }
 
         game.physics.arcade.overlap(otherBullets, boss, otherBulletCollisionWithBoss, null, this);
@@ -570,6 +577,7 @@ function newPlayer(plr) {
     players[plr.session].body.collideWorldBounds = true;
     players[plr.session].name = plr.session;
     players[plr.session].health = 100;
+    players[plr.session].frame = 1;
 
     // Sla gps locatie van speler op (om na te gaan of iemand anders in de buurt is)
     players[plr.session].latitude = plr.lat;
@@ -733,6 +741,12 @@ function bulletCollisionWithBoss(plr, blt)
 
     // damage done to boss (boss.health - boss.damage)
     boss.damage(100);
+
+    boss.frame = 0;
+
+	setTimeout(function() {
+    	boss.frame = 2;
+	}, 100);
 }
 
 function otherBulletCollisionWithBoss(plr, blt)
@@ -741,6 +755,12 @@ function otherBulletCollisionWithBoss(plr, blt)
 
     // damage done to boss (boss.health - boss.damage)
     boss.damage(100);
+
+    boss.frame = 0;
+
+	setTimeout(function() {
+    	boss.frame = 2;
+	}, 100);
 }
 
 function bulletCollisionWithPlayer(plr, blt) {
@@ -751,21 +771,21 @@ function bulletCollisionWithPlayer(plr, blt) {
 
     players[plr.name].damage(10);
 
-    /*if(players[plr.name].health == 0) {
-        var killedPlayer = players[plr.name].name;
-    }*/
+    players[plr.name].frame = 0;
 
-    // other player add damage..
+    setTimeout(function() {
+    	players[plr.name].frame = 1;
+	}, 100);
 }
 
 function otherBulletCollisionWithPlayer(plr, blt) {
-	console.log('hit');
     otherBullet.destroy();
 
-    var damagedPlayer = players[plr.name].name;
-    socket.emit('damagePlayer', damagedPlayer);
+	player.frame = 2;
 
-    players[plr.name].damage(10);
+    setTimeout(function() {
+    	player.frame = 1;
+	}, 100);
 }
 
 function diagonalSpeed(speed) {
@@ -875,10 +895,7 @@ function foundPosition(position) {
 	});
 }
 
-function compareGPS(playerLat, playerLong, playerSession) {
-	// get all positions of online players
-	console.log(playerSession);
-	
+function compareGPS(playerLat, playerLong, playerSession) {	
 	// distance between you and other player in kilometers
 	var dist = distance(player.latitude, player.longitude, playerLat, playerLong, "k");
 	
