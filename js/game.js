@@ -129,6 +129,9 @@ function create() {
 
     // Get nickname from player
     playerName = prompt("What's your battle name?");
+    if(!playerName) {
+    	playerName = randName();
+    }
     console.log(currentDate() + " | Welcome: " + playerName.charAt(0).toUpperCase() + playerName.substring(1) + ".");
     // playerName = randName();
 
