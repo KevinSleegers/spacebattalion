@@ -1007,11 +1007,15 @@ function foundPosition(position) {
 }
 
 function compareGPS(playerLat, playerLong, playerSession) {	
+	// Logging some variables to debug..
+
 	// distance between you and other player in kilometers
 	var dist = distance(player.latitude, player.longitude, playerLat, playerLong, "k");
 	
 	// distance in meters
 	dist = dist * 1000;
+
+	console.log('latitude', playerLat, 'longitude', playerLong, 'session', playerSession, 'distance', dist);
 
 	// check if distance is within given range
 	if(dist <= range && !isNaN(dist)) {
