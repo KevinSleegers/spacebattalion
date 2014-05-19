@@ -214,9 +214,11 @@ function create() {
         }
 
         for(var onlinePlayer in data) {
-        	console.log('creating new player..', data[onlinePlayer].session)
-            newPlayer(data[onlinePlayer]);
-            //onlinePlayers.push(data[onlinePlayer].nickname);
+        	if(data[onlinePlayer].session.length <= 20) {
+        		console.log('Creating player', data[onlinePlayer].session);
+            	newPlayer(data[onlinePlayer]);
+            	//onlinePlayers.push(data[onlinePlayer].nickname);
+            }
             onlinePlayers.push(data[onlinePlayer].session);
         }
         //console.log(currentDate() + " | Online players: " + onlinePlayers.toString());
@@ -552,7 +554,9 @@ function update() {
         // Create collision detection for all players
         for(var plr in players) {
         	// your bullets hit other players
-            game.physics.arcade.overlap(bullets, players[plr], bulletCollisionWithPlayer, null, this);
+        	if(player.coop === false) {
+            	game.physics.arcade.overlap(bullets, players[plr], bulletCollisionWithPlayer, null, this);
+            }
 
             // other bullets hit you
             game.physics.arcade.overlap(otherBullets, player, otherBulletCollisionWithPlayer, null, this);
@@ -877,20 +881,29 @@ function bulletCollisionWithPlayer(plr, blt) {
 
 function bulletCollisionWithCoop(plr, blt) {
 
-    bullet.destroy();
+	// if niet jezelf
+	if(Object.getOwnPropertyNames(coopPlayers).length !== 0) {
+	    Object.keys(coopPlayers).forEach(function(key) {
+	        if(key.indexOf(io.socket.sessionid) > -1) {
+	        	console.log('je hit jezelf maat');
+	        }
+	    });
+	} else {
+	    bullet.destroy();
 
-    var damagedPlayer = coopPlayers[plr.name].name;
-    socket.emit('damagePlayer', damagedPlayer);
-	
-	console.log('other player got hit!', damagedPlayer);
+	    var damagedPlayer = coopPlayers[plr.name].name;
+	    socket.emit('damagePlayer', damagedPlayer);
+		
+		console.log('other player got hit!', damagedPlayer);
 
-    coopPlayers[plr.name].damage(10);
+	    coopPlayers[plr.name].damage(10);
 
-    coopPlayers[plr.name].frame = 0;
+	    coopPlayers[plr.name].frame = 0;
 
-    setTimeout(function() {
-    	coopPlayers[plr.name].frame = 3;
-	}, 100);
+	    setTimeout(function() {
+	    	coopPlayers[plr.name].frame = 3;
+		}, 100);
+	}
 }
 
 function otherBulletCollisionWithPlayer(plr, blt) {
@@ -978,12 +991,6 @@ function goFullscreen() {
     //game.scale.startFullScreen();
 }
 
-
-
-
-
-
-
 // Function gets called if screen is resized.
 function resizeGame() {
     var w = window.innerWidth * window.devicePixelRatio,
@@ -1004,12 +1011,6 @@ function resizeGame() {
     }
 
     game.scale.setSize();
-}
-
-function render() {
-	/*for(var player in players) {
-		game.debug.spriteInfo(players[player], 32, 32);
-	}*/
 }
 
 /* ~~~~~~~ CO-OP FUNCTIONS ~~~~~~~ */
@@ -1191,4 +1192,12 @@ function distance(lat1, lon1, lat2, lon2, unit) {
     if (unit=="K") { dist = dist * 1.609344 };
     if (unit=="N") { dist = dist * 0.8684 };
     return dist;
+}
+
+
+
+function render() {
+	/*for(var player in players) {
+		game.debug.spriteInfo(players[player], 32, 32);
+	}*/
 }
