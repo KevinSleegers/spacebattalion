@@ -594,7 +594,7 @@ function fire() {
 		bullet = bullets.getFirstExists(false);
 
 		if(bullet) {
-
+			
             if(player.angle == 0 || player.angle == -90 ) {
 			    bullet.reset(player.body.x + 38, player.body.y + 38);
             } else {
@@ -602,9 +602,16 @@ function fire() {
             }
 
 			bullet.rotation = player.rotation;
-            game.physics.arcade.velocityFromRotation(player.rotation, 500, bullet.body.velocity);
-			bulletTime = game.time.now + 500;
+            game.physics.arcade.velocityFromRotation(bullet.rotation += (Math.random() * (-0.100 - 0.100) + 0.100), 625, bullet.body.velocity);
+			bulletTime = game.time.now + 250;
+			
+			bullet.y += Math.floor((Math.random() * 40) + -20);
+			muzzleFlash = game.add.sprite(bullet.x + 10, bullet.y, 'muzzleFlash');
+			muzzleFlash.anchor.setTo(0.5, 0.5);
 
+			muzzleFlash.alpha = 0;
+			game.add.tween(muzzleFlash).to( { alpha: 1 }, 100, Phaser.Easing.Linear.None, true, 0, 100, true);
+			muzzleFlash.destroy();
             // Play shooting sound
             //playerBullet.play();
 
