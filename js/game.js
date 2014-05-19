@@ -14,9 +14,10 @@ function preload() {
 	game.load.spritesheet('player', 'assets/img/spr_myplane_strip2.png', 64, 64);
 	game.load.spritesheet('otherPlayers', 'assets/img/spr_plane_strip2.png', 64, 64);
 	game.load.spritesheet('boss', 'assets/img/spr_boss_strip3.png', 128, 256);
+	game.load.spritesheet('coop', 'assets/img/spr_double_final_strip4.png', 96, 128);
     //game.load.image('player', 'assets/img/spr_myplane.png');
     //game.load.image('otherPlayers', 'assets/img/spr_plane.png');
-    game.load.image('coop', 'assets/img/spr_doublePlane.png');
+    //game.load.image('coop', 'assets/img/spr_doublePlane.png');
 	//game.load.image('boss', 'assets/img/spr_boss.png');
 	game.load.image('bullet', 'assets/img/spr_bullet.png');
     game.load.image('muzzleFlash', 'assets/img/spr_muzzleFlash.png');
@@ -77,6 +78,7 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
 
     latitude,
     longitude,
+    range = 500,
 
     coop,
     coopMovement = false,
@@ -132,7 +134,7 @@ function create() {
     if(!playerName) {
     	playerName = randName();
     }
-    console.log(currentDate() + " | Welcome: " + playerName.charAt(0).toUpperCase() + playerName.substring(1) + ".");
+    console.log(currentDate() + " | Welcome: " + playerName.charAt(0).toUpperCase() + playerName.substring(1) + ", your session is: " + io.socket.sessionid + ".");
     // playerName = randName();
 
     // Initialize sound effects
@@ -156,6 +158,7 @@ function create() {
 	player.shoot = true;
 	player.health = 100;
 	player.frame = 1;
+
 	//player.animations.add('fly'); 
 	//player.animations.play('fly', 10, true);
 	game.physics.enable(player, Phaser.Physics.ARCADE);
@@ -199,7 +202,14 @@ function create() {
 
     // Get already online players from server
     socket.on('onlinePlayer', function(data) {
-        //console.log('Online Players: ', data.);
+        if(Object.getOwnPropertyNames(data).length === 0) {
+        	console.log(currentDate() + ' | There are no other players online.');
+        } else {
+        	console.log(currentDate() + ' | There are other players online.');
+        	// Check which players are in co-op mode
+        	socket.emit('getCoopPlayers', io.socket.sessionid);
+        }
+
         for(var onlinePlayer in data) {
             newPlayer(data[onlinePlayer]);
             //onlinePlayers.push(data[onlinePlayer].nickname);
@@ -207,6 +217,24 @@ function create() {
         }
         //console.log(currentDate() + " | Online players: " + onlinePlayers.toString());
         textOnlinePlayers.setText("Online Players:\nYou (" + playerName + ")\n" + onlinePlayers.join("\n"));
+    });
+
+    // Get already online coop players
+    socket.on('onlineCoop', function(data) {
+    	for (var onlineCoop in data) {
+    		var player1 = data[onlineCoop].player1;    		
+    		var player2 = data[onlineCoop].player2;
+    		var shooter = data[onlineCoop].shoot;
+    		var mover = data[onlineCoop].move;
+    		var session = data[onlineCoop].session;
+
+    		if(player1 !== io.socket.sessionid && player2 !== io.socket.sessionid) {
+
+    			createCoop(player2, player1, shooter, mover, session, 'other');
+
+    		}
+    	}
+    	console.log('Online coop-players', data);
     });
 
     // Send new player data to server
@@ -229,18 +257,23 @@ function create() {
         textOnlinePlayers.setText("Online Players:\nYou (" + playerName + ")\n" + onlinePlayers.join("\n"));
     });
 
-    // Get coop Join
+    // Other player requests to coop
     socket.on('joinCoop', function(data) {
-
-    	console.log('OMGYEAAAH',data);
 
     	var obj = JSON.parse(data);
     	var player1 = obj.player1;
     	var player2 = obj.player2;
-    	var shoot = obj.shoot;
-    	var move = obj.move;
+    	var mover = obj.move;
+    	var shooter = obj.shoot;
 
-    	createCoop(player1, player2, shoot, move, 'join');
+    	createCoop(player1, player2, mover, shooter, 'join');
+    });
+
+    // Get players who are not in co-op mode
+    socket.on('notCoop', function(data) {
+    	for(var notCoopPlayer in data) {
+    		compareGPS(data[notCoopPlayer].lat, data[notCoopPlayer].long, data[notCoopPlayer].session);
+    	}
     });
 
     // Update player
@@ -248,16 +281,37 @@ function create() {
         updatePlayer(data);
     });
 
-    // Remove killed player
+    // Damage player
     socket.on('playerShot', function(data) {
     	if(data === io.socket.sessionid) {
     		player.damage(10);
 
     		if(player.health === 0) {
+    			game.world.removeAll();
+    			game.stage.backgroundColor = '#ff0000';
     			alert('YOU DIED, GAME OVER');
+
+    			socket.emit('playerDied', io.socket.sessionid);
     		}
     	}
-    	else {
+    	// data.length > 20 dan is het een coop speler
+    	else if(data.length > 20) {
+    		coopPlayers[data].damage(10);
+
+    		var currFrame = coopPlayers[data].frame;
+
+		    coopPlayers[data].frame = 0;
+
+			setTimeout(function() {
+		    	coopPlayers[data].frame = currFrame;
+			}, 100);
+
+			if(coopPlayers[data].health === 0) {				
+    			game.world.removeAll();
+    			game.stage.backgroundColor = '#ff0000';
+    			alert('YOU AND YOUR PAL DIED, GAME OVER');
+			}
+    	} else {
     		players[data].damage(10);
     	}
     });
@@ -391,6 +445,10 @@ function update() {
 		player.body.velocity.setTo(0,0);
 	}
 
+	if(typeof player !== "undefined") {
+		player.body.velocity.setTo(0,0);		
+	}
+
     // Update background
     bgtile.tilePosition.x -= 1;
     bgtile.tilePosition.y += .5;
@@ -496,6 +554,12 @@ function update() {
             game.physics.arcade.overlap(otherBullets, player, otherBulletCollisionWithPlayer, null, this);
         }
 
+        // Create collision detection for all co-op players
+        for(var plr in coopPlayers) {
+        	// your bullets hit co-op player
+        	game.physics.arcade.overlap(bullets, coopPlayers[plr], bulletCollisionWithCoop, null, this);
+        }
+
         game.physics.arcade.overlap(otherBullets, boss, otherBulletCollisionWithBoss, null, this);
     }
 
@@ -588,8 +652,13 @@ function newPlayer(plr) {
     players[plr.session].coop = false;
     players[plr.session].coopPlayer = '';
 
+    // Ga na of speler in co-op mode is, zo ja 'hide' deze speler dan
+    if(typeof plr.coop !== "undefined" && plr.coop === true) {
+    	players[plr.session].visible = false;
+    }
+
     // Vergelijk locatie van nieuwe speler met jou
-    compareGPS(players[plr.session].latitude, players[plr.session].longitude, players[plr.session].name);
+    //compareGPS(players[plr.session].latitude, players[plr.session].longitude, players[plr.session].name);
 
     playerGroup.add(players[plr.session]);
 }
@@ -602,7 +671,7 @@ function updatePlayer(plr) {
     var newPlayerY = plr.y;
 	var newPlayerAngle = plr.angle;
 
-	if(playerNick === '2players') {
+	if(playerNick === 'coop') {
 		coopPlayers[plr.session].x = plr.x;
 		coopPlayers[plr.session].y = plr.y;
 		coopPlayers[plr.session].angle = plr.angle;
@@ -616,16 +685,34 @@ function updatePlayer(plr) {
 
 function removePlayer(plr) {
     var playerSession = plr;
+	
+	if (playerSession !== io.socket.sessionid) {
+	   	players[playerSession].kill();
+	}
 
+	// Check if player who disconnected was in coop mode
     if(Object.getOwnPropertyNames(coopPlayers).length !== 0) {
 	    Object.keys(coopPlayers).forEach(function(key) {
 		    if(key.indexOf(io.socket.sessionid) > -1) {
-		       	coopPlayers[playerSession].kill();
+
+		       	coopPlayers[key].kill();
+		       	player.visible = true;
+		       	player.allowControls = true;
+		       	player.move = true;
+		       	player.shoot = true;
+		       	game.camera.follow(player);
+
+		       	coopMovement = false;
+
+		       	player.coop = false;
+
+		       	Object.keys(coopPlayers).forEach(function(key2) {
+        			if(key2.indexOf(key) > -1) {
+        				delete coopPlayers[key];
+        			}
+        		});
 		   	}
 		});
-	}
-	else if (playerSession !== io.socket.sessionid) {
-	   	players[playerSession].kill();
 	}
 }
 
@@ -711,7 +798,7 @@ function changePosition(xVal, xSpeed, yVal, ySpeed, angleVal, spriteVal) {
 	                    
 	        var playerPosition = JSON.stringify({
 	            sessionid: coopSession,
-	            nickname: '2players',
+	            nickname: 'coop',
 	            x : coopPlayers[spriteVal].x,
 	            y : coopPlayers[spriteVal].y,
 	            angle : coopPlayers[spriteVal].angle
@@ -767,10 +854,13 @@ function otherBulletCollisionWithBoss(plr, blt)
 }
 
 function bulletCollisionWithPlayer(plr, blt) {
+
     bullet.destroy();
 
     var damagedPlayer = players[plr.name].name;
     socket.emit('damagePlayer', damagedPlayer);
+	
+	console.log('other player got hit!', damagedPlayer);
 
     players[plr.name].damage(10);
 
@@ -778,6 +868,24 @@ function bulletCollisionWithPlayer(plr, blt) {
 
     setTimeout(function() {
     	players[plr.name].frame = 1;
+	}, 100);
+}
+
+function bulletCollisionWithCoop(plr, blt) {
+
+    bullet.destroy();
+
+    var damagedPlayer = coopPlayers[plr.name].name;
+    socket.emit('damagePlayer', damagedPlayer);
+	
+	console.log('other player got hit!', damagedPlayer);
+
+    coopPlayers[plr.name].damage(10);
+
+    coopPlayers[plr.name].frame = 0;
+
+    setTimeout(function() {
+    	coopPlayers[plr.name].frame = 3;
 	}, 100);
 }
 
@@ -905,31 +1013,48 @@ function compareGPS(playerLat, playerLong, playerSession) {
 	// distance in meters
 	dist = dist * 1000;
 
-	// check if distance is within 10 meters
-	//if(dist <= 10) {
-	if(dist > 9999999) {
-		console.log('distance within 10 meters!');
-
-		// Coop both players
-		if(player.coop === false && players[playerSession].coop === false) {
-			createCoop(player.name, players[playerSession].name, '', '', 'new');
-		}
+	// check if distance is within given range
+	if(dist <= range && !isNaN(dist)) {
+		// Coop both players (if other player is not you!)
+		if(playerSession != io.socket.sessionid) {
+			console.log('Distance between YOU and ' + playerSession + ' is: ' + dist.toString() + ' meters.');
+			if(player.coop === false && players[playerSession].coop === false) {
+				console.log('oke, maak maar coop van');
+				createCoop(player.name, players[playerSession].name, players[playerSession].name, player.name, 'new');
+			}
+		} 
 	} else {
-		console.log('distance NOT within 10 meters!');
+		console.log('Distance between YOU and ' + players[playerSession].name + ' is greater than the given range (' + range + ').');
 	}
 }
 
+// Create Coop	
+// if type = new
+	// Player1 = always you
+	// Player2 = always other player
+	// Shooter = always other player
+	// Mover = always you
 function createCoop(player1, player2, shoot, move, type) {
+	if(type == 'join') {
+		console.log(currentDate() + ' | I am now in co-op mode with ' + player2 + '.');
+	}
+
 	// combine sessions to new sessionid
-	console.log('coop player 1', player1);
-	console.log('coop player 2', player2);
+	// console.log('coop player 1 (you) : ', player1);
+	// console.log('coop player 2 (other player) : ', player2);
+	// console.log('shooter: ', shoot);
+	// console.log('mover: ', move);
+	// console.log('you', io.socket.sessionid);
 
-	shoot == '' ? shoot = player1 : shoot;
-	move == '' ? move = player2 : move;
-
-	coopSession = player1 + player2;
+	if(type == 'new') {
+		coopSession = player1 + player2;
+	}
+	else {
+		coopSession = player2 + player1;
+	}
 
 	coopPlayers[coopSession] = game.add.sprite(game.world.centerX, game.world.centerY, 'coop');
+	coopPlayers[coopSession].name = coopSession;
 	coopPlayers[coopSession].player1 = player1;
 	coopPlayers[coopSession].player2 = player2;
 	coopPlayers[coopSession].coopSession = coopSession;
@@ -940,51 +1065,64 @@ function createCoop(player1, player2, shoot, move, type) {
 	game.physics.enable(coopPlayers[coopSession], Phaser.Physics.ARCADE);
 	coopPlayers[coopSession].physicsBodyType = Phaser.Physics.ARCADE;
 	coopPlayers[coopSession].health = 250;
+	coopPlayers[coopSession].frame = 3;
 	coopPlayers[coopSession].body.collideWorldBounds = true;
   
-	if(coopPlayers[coopSession].move === io.socket.sessionid) {
+	if(coopPlayers[coopSession].move == io.socket.sessionid) {
 		console.log(currentDate() + " | You may move, good sir.");
 		textPlayer.setText('COOP MODE (move)');
+		coopPlayers[coopSession].frame = 2;
 		coopMovement = true;
 		coopShooting = false;
-	} else if (coopPlayers[coopSession].shoot === io.socket.sessionid) {
+	} else if (coopPlayers[coopSession].shoot == io.socket.sessionid) {
 		console.log(currentDate() + " | You may shoot, good sir.");
 		textPlayer.setText('COOP MODE (shoot)');
+		coopPlayers[coopSession].frame = 1;
 		coopShooting = true;
 		coopMovement = false;
 	}
 
-	if(player1 === io.socket.sessionid) {
+	if(player1 == io.socket.sessionid) {
 		player.coop = true;
 		player.visible = false;
+		player.renderable = false;
 		player.allowControls = false;
 		player.move = false;
 		player.shoot = false;
 
 		players[player2].visible = false;
+		players[player2].coop = true;
 
 		game.camera.follow(coopPlayers[coopSession]);
-	} else if (player2 === io.socket.sessionid) {
+	} else if (player2 == io.socket.sessionid) {
 		player.coop = true;
 		player.visible = false;
+		player.renderable = false;
 		player.allowControls = false;
 		player.move = false;
 		player.shoot = false;
 
 		players[player1].visible = false;
+		players[player1].coop = true;
 
 		game.camera.follow(coopPlayers[coopSession]);
 	} else {
 		players[player1].visible = false;
+		players[player1].coop = true;
+		players[player1].renderable = false;
+
 		players[player2].visible = false;
+		players[player2].coop = true;
+		players[player2].renderable = false;
 	}
 
 	if(type === 'new') {
+		// Draai alles om, omdat player 1 dan de andere speler is..
 		var coopData = JSON.stringify({
-	        player1 : player1,
-	        player2 : player2,
-	        move : player1,
-	        shoot : player2
+	        player1 : player2,
+	        player2 : player1,
+	        move : player2,
+	        shoot : player1
 	    });
 		socket.emit('newCoop', coopData);
 	}

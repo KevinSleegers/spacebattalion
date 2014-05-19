@@ -3,7 +3,8 @@ var express = require('express'),
     server = require('http').createServer(app),
     io = require('socket.io', { rememberTransport: false, transports: ['WebSocket', 'Flash Socket', 'AJAX long-polling'] }).listen(server),
     players = {},
-    bullets = {};
+    bullets = {},
+    coopPlayers = {};
 
 server.listen(process.env.PORT || 5000);
 
@@ -23,8 +24,10 @@ io.sockets.on('connection', function(socket){
     
     // 1. Send already online players to client who requested the players data
     socket.on('requestPlayers', function(data) {    
-        console.log(data);    
         io.sockets.socket(data).emit('onlinePlayer', players);
+
+        // send to all but 'data'
+        io.sockets.socket(data).emit('onlineCoop', coopPlayers);
     });
 
     // Get new player from client
@@ -56,7 +59,69 @@ io.sockets.on('connection', function(socket){
     });      
 
     socket.on('newCoop', function(data) {
+        var obj = JSON.parse(data);
+
+        var player1 = obj.player1;
+        var player2 = obj.player2;
+        var session = player1 + player2;
+        var shoot = obj.shoot;
+        var move = obj.move;
+
+        var coop = {};
+        coop.session = session;
+        coop.player2 = player1;
+        coop.player1 = player2;
+        coop.shoot = shoot;
+        coop.move = move;
+
+        coopPlayers[coop.session] = coop;
+
+        // Set players to coop = true (so new clients don't see these players)
+        players[player1].coop = true;
+        players[player2].coop = true;
+
+        // players[player1].session = session;
+        // players[player1].player2 = player1;        
+        // players[player1].player1 = player2;
+        // players[player1].shoot = shoot;
+        // players[player1].move = move;
+
+        // Send to other co-op player
         socket.broadcast.emit('joinCoop', data);
+        //io.sockets.socket(player1).emit('joinCoop', data);
+    });
+
+    socket.on('getCoopPlayers', function(data) {
+        var coopPlrs = {};
+        for(var player in players) {
+            // player = sessionid
+            //console.log('Ik ben online', player);
+
+            if(Object.getOwnPropertyNames(coopPlayers).length !== 0) {
+                Object.keys(coopPlayers).forEach(function(key) {
+                    if(key.indexOf(player) > -1) {
+                        // Al in coop mode, dus skip
+                        console.log('IS IN COOP MODE', player);
+                    }
+                    else {
+                        console.log('not in coop mode', player);
+                        // Nog niet in coop mode
+                        coopPlrs[player] = players[player];
+                        //io.sockets.socket(data).emit('newCoop', 'new');
+                    }
+                });
+            } else {
+                // coopPlayers object is empty
+                coopPlrs[player] = players[player];
+            }
+        }
+
+        console.log('alle NIET coop players', coopPlrs);
+
+        if(Object.getOwnPropertyNames(coopPlrs).length !== 0) {
+            // Send players who are NOT YET in coop mode to clientside.
+            io.sockets.socket(data).emit('notCoop', coopPlrs);
+        }
     });
     
     // Get updated position of player            
@@ -106,6 +171,12 @@ io.sockets.on('connection', function(socket){
         
         socket.broadcast.emit('newBullet', bullets[bullet.session]);
         
+    });
+
+    socket.on('playerDied', function(data) {
+        delete players[data];
+
+        console.log('Removed dead player: ', data);
     });
 
     socket.on('disconnect', function() {
