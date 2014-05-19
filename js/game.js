@@ -1,8 +1,8 @@
-// github test2
-
+/* ~~~~~~~ WIDTH AND HEIGHT ~~~~~~~ */
 var w = window.innerWidth * window.devicePixelRatio,
     h = window.innerHeight * window.devicePixelRatio;
 
+/* ~~~~~~~ NEW GAME ~~~~~~~ */
 var game = new Phaser.Game(w, h, Phaser.AUTO, '', {
 	preload: preload,
 	create: create,
@@ -10,6 +10,7 @@ var game = new Phaser.Game(w, h, Phaser.AUTO, '', {
     render: render
 });
 
+/* ~~~~~~~ PRELOAD FUNCTION ~~~~~~~ */
 function preload() {
 	game.load.spritesheet('player', 'assets/img/spr_myplane_strip2.png', 64, 64);
 	game.load.spritesheet('otherPlayers', 'assets/img/spr_plane_strip2.png', 64, 64);
@@ -36,6 +37,7 @@ function preload() {
     //game.load.audio('playerBullet', 'assets/audio/shot.wav');
 }
 
+/* ~~~~~~~ VARIABLE DECLERATION ~~~~~~~ */
 var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'Flash Socket', 'AJAX long-polling']}), 
     player, 
     boss, 
@@ -85,6 +87,7 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     coopShooting = false
     ;
 
+/* ~~~~~~~ CREATE GAME ~~~~~~~ */
 function create() {
     // Keep game running, even if out of focus
     this.stage.disableVisibilityChange = true;
@@ -211,6 +214,7 @@ function create() {
         }
 
         for(var onlinePlayer in data) {
+        	console.log('creating new player..', data[onlinePlayer].session)
             newPlayer(data[onlinePlayer]);
             //onlinePlayers.push(data[onlinePlayer].nickname);
             onlinePlayers.push(data[onlinePlayer].session);
@@ -230,7 +234,7 @@ function create() {
 
     		if(player1 !== io.socket.sessionid && player2 !== io.socket.sessionid) {
 
-    			createCoop(player2, player1, shooter, mover, session, 'other');
+    			newCoop(player2, player1, shooter, mover, session, 'other');
 
     		}
     	}
@@ -266,7 +270,7 @@ function create() {
     	var mover = obj.move;
     	var shooter = obj.shoot;
 
-    	createCoop(player1, player2, mover, shooter, 'join');
+    	newCoop(player1, player2, mover, shooter, 'join');
     });
 
     // Get players who are not in co-op mode
@@ -974,81 +978,47 @@ function goFullscreen() {
     //game.scale.startFullScreen();
 }
 
-function getLocation() {
-	if(navigator.geolocation) {
-		navigator.geolocation.getCurrentPosition(foundPosition);
-	} else {
-		console.log('GPS wordt niet ondersteund door uw device.');
-	}
+
+
+
+
+
+
+// Function gets called if screen is resized.
+function resizeGame() {
+    var w = window.innerWidth * window.devicePixelRatio,
+    h = window.innerHeight * window.devicePixelRatio;
+
+    game.width = w;
+    game.height = h;
+    game.stage.width = w;
+    game.stage.height = h;
+    game.scale.width = w;
+    game.scale.height = h;
+
+    if(game.renderType === Phaser.WEBGL) {
+        game.renderer.resize(w, h);
+    } else if (game.renderType === Phaser.CANVAS) {        
+        game.renderer.resize(w, h);
+        Phaser.Canvas.setSmoothingEnabled(game.context, false);
+    }
+
+    game.scale.setSize();
 }
 
-function foundPosition(position) {
-	latitude = position.coords.latitude;
-	longitude = position.coords.longitude;
-
-	localStorage.setItem('latitude', latitude);
-	localStorage.setItem('longitude', longitude);
-
-	// get google maps location details.
-	var googleMapsURL = 'http://maps.googleapis.com/maps/api/geocode/json?latlng=' + latitude + ',' + longitude + '&sensor=false';
-
-	$.ajax({
-		url: googleMapsURL,
-		type: "GET",
-		dataType: "JSON",
-		success: function(data) {
-			var straat = data["results"][0]["address_components"][1]["long_name"];
-			var plaats = data["results"][0]["address_components"][2]["long_name"];
-		},
-		error: function(error) {
-			alert(error);
-		}
-	});
+function render() {
+	/*for(var player in players) {
+		game.debug.spriteInfo(players[player], 32, 32);
+	}*/
 }
 
-function compareGPS(playerLat, playerLong, playerSession) {	
-	// Logging some variables to debug..
+/* ~~~~~~~ CO-OP FUNCTIONS ~~~~~~~ */
 
-	// distance between you and other player in kilometers
-	var dist = distance(player.latitude, player.longitude, playerLat, playerLong, "k");
-	
-	// distance in meters
-	dist = dist * 1000;
-
-	console.log('latitude', playerLat, 'longitude', playerLong, 'session', playerSession, 'distance', dist);
-
-	// check if distance is within given range
-	if(dist <= range && !isNaN(dist)) {
-		// Coop both players (if other player is not you!)
-		if(playerSession != io.socket.sessionid) {
-			console.log('Distance between YOU and ' + playerSession + ' is: ' + dist.toString() + ' meters.');
-			if(player.coop === false && players[playerSession].coop === false) {
-				console.log('oke, maak maar coop van');
-				createCoop(player.name, players[playerSession].name, players[playerSession].name, player.name, 'new');
-			}
-		} 
-	} else {
-		console.log('Distance between YOU and ' + players[playerSession].name + ' (' + dist + ') is greater than the given range (' + range + ').');
-	}
-}
-
-// Create Coop	
-// if type = new
-	// Player1 = always you
-	// Player2 = always other player
-	// Shooter = always other player
-	// Mover = always you
-function createCoop(player1, player2, shoot, move, type) {
+// Create new Co-op	
+function newCoop(player1, player2, shoot, move, type) {
 	if(type == 'join') {
 		console.log(currentDate() + ' | I am now in co-op mode with ' + player2 + '.');
 	}
-
-	// combine sessions to new sessionid
-	// console.log('coop player 1 (you) : ', player1);
-	// console.log('coop player 2 (other player) : ', player2);
-	// console.log('shooter: ', shoot);
-	// console.log('mover: ', move);
-	// console.log('you', io.socket.sessionid);
 
 	if(type == 'new') {
 		coopSession = player1 + player2;
@@ -1120,7 +1090,7 @@ function createCoop(player1, player2, shoot, move, type) {
 		players[player2].visible = false;
 		players[player2].coop = true;
 		players[player2].renderable = false;
-		
+
 		console.log(players[player1].visible);
 		console.log(players[player2].visible);
 	}
@@ -1137,6 +1107,71 @@ function createCoop(player1, player2, shoot, move, type) {
 	}
 }
 
+// Function to compare location of yourself to other Player
+// Decides to create newCoop if distance within range
+function compareGPS(playerLat, playerLong, playerSession) {	
+	// distance between you and other player in kilometers
+	var dist = distance(player.latitude, player.longitude, playerLat, playerLong, "k");
+	
+	// distance in meters
+	dist = dist * 1000;
+
+	console.log('latitude', playerLat, 'longitude', playerLong, 'session', playerSession, 'distance', dist);
+
+	// check if distance is within given range
+	if(dist <= range && !isNaN(dist)) {
+		// Coop both players (if other player is not you!)
+		if(playerSession != io.socket.sessionid) {
+			//console.log('Distance between YOU and ' + playerSession + ' is: ' + dist.toString() + ' meters.');
+			if(player.coop === false && players[playerSession].coop === false) {
+				//console.log('oke, maak maar coop van');
+				newCoop(player.name, players[playerSession].name, players[playerSession].name, player.name, 'new');
+			}
+		} 
+	} else {
+		//console.log('Distance between YOU and ' + players[playerSession].name + ' (' + dist + ') is greater than the given range (' + range + ').');
+	}
+}
+
+/* ~~~~~~~ GEOLOCATION FUNCTIONS ~~~~~~~ */
+// Check if user's browser supports geolocation
+function getLocation() {
+	if(navigator.geolocation) {
+		// navigator.geolocation.getCurrentPosition(foundPosition);
+		navigator.geolocation.watchPosition(foundPosition);
+	} else {
+		console.log('GPS wordt niet ondersteund door uw device.');
+	}
+}
+
+// Get exact location of user if geolocation is supported
+// Just used to store the latitude and longitude of player at the moment
+function foundPosition(position) {
+	latitude = position.coords.latitude;
+	longitude = position.coords.longitude;
+
+	// Store variables in localStorage, so they can be accessed later on (NODIG?)
+	localStorage.setItem('latitude', latitude);
+	localStorage.setItem('longitude', longitude);
+
+	// get google maps location details.
+	var googleMapsURL = 'http://maps.googleapis.com/maps/api/geocode/json?latlng=' + latitude + ',' + longitude + '&sensor=false';
+
+	$.ajax({
+		url: googleMapsURL,
+		type: "GET",
+		dataType: "JSON",
+		success: function(data) {
+			var straat = data["results"][0]["address_components"][1]["long_name"];
+			var plaats = data["results"][0]["address_components"][2]["long_name"];
+		},
+		error: function(error) {
+			alert(error);
+		}
+	});
+}
+
+// Function to calculate distance between two players.
 // source : http://www.geodatasource.com/developers/javascript
 function distance(lat1, lon1, lat2, lon2, unit) {
     var radlat1 = Math.PI * lat1/180;
@@ -1156,30 +1191,4 @@ function distance(lat1, lon1, lat2, lon2, unit) {
     if (unit=="K") { dist = dist * 1.609344 };
     if (unit=="N") { dist = dist * 0.8684 };
     return dist;
-}
-
-
-function resizeGame() {
-    var w = window.innerWidth * window.devicePixelRatio,
-    h = window.innerHeight * window.devicePixelRatio;
-
-    game.width = w;
-    game.height = h;
-    game.stage.width = w;
-    game.stage.height = h;
-    game.scale.width = w;
-    game.scale.height = h;
-
-    if(game.renderType === Phaser.WEBGL) {
-        game.renderer.resize(w, h);
-    } else if (game.renderType === Phaser.CANVAS) {        
-        game.renderer.resize(w, h);
-        Phaser.Canvas.setSmoothingEnabled(game.context, false);
-    }
-
-    game.scale.setSize();
-}
-
-function render() {
-    //game.debug.soundInfo(backgroundMusic, 100, 100);
 }
