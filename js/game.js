@@ -296,6 +296,20 @@ function create() {
     			game.world.removeAll();
     			game.stage.backgroundColor = '#ff0000';
     			alert('YOU DIED, GAME OVER');
+				
+				var emitter = game.add.emitter(player.x, player.y, 250);
+
+				emitter.makeParticles('bullet');
+				emitter.minParticleSpeed.setTo(-300, -300);
+
+				emitter.maxParticleSpeed.setTo(300, 300);
+
+				//  By setting the min and max rotation to zero, you disable rotation on the particles fully
+
+				emitter.minRotation = 0;
+				emitter.maxRotation = 0;
+
+				emitter.start(true, 4000, null, 15);				
 
     			socket.emit('playerDied', io.socket.sessionid);
     		}
@@ -851,6 +865,23 @@ function bulletCollisionWithBoss(plr, blt)
     boss.damage(100);
 
     boss.frame = 0;
+	
+	if(boss.health <= 0)
+	{
+		var emitter = game.add.emitter(boss.x, boss.y, 250);
+
+		emitter.makeParticles('bullet');
+		emitter.minParticleSpeed.setTo(-300, -300);
+
+		emitter.maxParticleSpeed.setTo(300, 300);
+
+		//  By setting the min and max rotation to zero, you disable rotation on the particles fully
+
+		emitter.minRotation = 0;
+		emitter.maxRotation = 0;
+
+		emitter.start(true, 4000, null, 15);
+	}
 
 	setTimeout(function() {
     	boss.frame = 2;
