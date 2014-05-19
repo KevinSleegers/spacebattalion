@@ -611,7 +611,10 @@ function fire() {
 
 			muzzleFlash.alpha = 0;
 			game.add.tween(muzzleFlash).to( { alpha: 1 }, 100, Phaser.Easing.Linear.None, true, 0, 100, true);
-			muzzleFlash.destroy();
+			
+			setTimeout(function() {
+				muzzleFlash.destroy();
+	        }, 100);
             // Play shooting sound
             //playerBullet.play();
 
