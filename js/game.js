@@ -1024,7 +1024,7 @@ function compareGPS(playerLat, playerLong, playerSession) {
 			}
 		} 
 	} else {
-		console.log('Distance between YOU and ' + players[playerSession].name + ' is greater than the given range (' + range + ').');
+		console.log('Distance between YOU and ' + players[playerSession].name + ' (' + dist + ') is greater than the given range (' + range + ').');
 	}
 }
 
