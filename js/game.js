@@ -1111,6 +1111,8 @@ function createCoop(player1, player2, shoot, move, type) {
 
 		game.camera.follow(coopPlayers[coopSession]);
 	} else {
+		console.log('tot hier komt ie');
+
 		players[player1].visible = false;
 		players[player1].coop = true;
 		players[player1].renderable = false;
@@ -1118,6 +1120,9 @@ function createCoop(player1, player2, shoot, move, type) {
 		players[player2].visible = false;
 		players[player2].coop = true;
 		players[player2].renderable = false;
+		
+		console.log(players[player1].visible);
+		console.log(players[player2].visible);
 	}
 
 	if(type === 'new') {
