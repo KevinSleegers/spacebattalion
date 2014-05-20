@@ -21,6 +21,7 @@ function preload() {
     //game.load.image('coop', 'assets/img/spr_doublePlane.png');
 	//game.load.image('boss', 'assets/img/spr_boss.png');
 	game.load.image('bullet', 'assets/img/spr_bullet.png');
+	game.load.image('explosion', 'assets/img/spr_explosion.png');
     game.load.image('muzzleFlash', 'assets/img/spr_muzzleFlash.png');
 
     // Animated background..
@@ -299,7 +300,7 @@ function create() {
 				
 				var emitter = game.add.emitter(player.x, player.y, 250);
 
-				emitter.makeParticles('bullet');
+				emitter.makeParticles('explosion');
 				emitter.minParticleSpeed.setTo(-300, -300);
 
 				emitter.maxParticleSpeed.setTo(300, 300);
@@ -868,19 +869,19 @@ function bulletCollisionWithBoss(plr, blt)
 	
 	if(boss.health <= 0)
 	{
-		var emitter = game.add.emitter(boss.x, boss.y, 250);
+		var emitter = game.add.emitter(boss.x, boss.y, 750);
 
-		emitter.makeParticles('bullet');
-		emitter.minParticleSpeed.setTo(-300, -300);
+		emitter.makeParticles('explosion');
+		emitter.minParticleSpeed.setTo(-400, -400);
 
-		emitter.maxParticleSpeed.setTo(300, 300);
+		emitter.maxParticleSpeed.setTo(400, 400);
 
 		//  By setting the min and max rotation to zero, you disable rotation on the particles fully
 
 		emitter.minRotation = 0;
 		emitter.maxRotation = 0;
 
-		emitter.start(true, 4000, null, 15);
+		emitter.start(true, 7000, null, 15);
 	}
 
 	setTimeout(function() {
