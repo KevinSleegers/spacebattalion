@@ -16,12 +16,14 @@ function preload() {
 	game.load.spritesheet('otherPlayers', 'assets/img/spr_plane_strip2.png', 64, 64);
 	game.load.spritesheet('boss', 'assets/img/spr_boss_strip3.png', 128, 256);
 	game.load.spritesheet('coop', 'assets/img/spr_double_final_strip4.png', 96, 128);
+	game.load.spritesheet('explosion', 'assets/img/fx_explosion_strip10.png', 64, 64);
+	game.load.spritesheet('bullet', 'assets/img/fx_bullet_impact_strip7.png', 32, 32);
     //game.load.image('player', 'assets/img/spr_myplane.png');
     //game.load.image('otherPlayers', 'assets/img/spr_plane.png');
     //game.load.image('coop', 'assets/img/spr_doublePlane.png');
 	//game.load.image('boss', 'assets/img/spr_boss.png');
-	game.load.image('bullet', 'assets/img/spr_bullet.png');
-	game.load.image('explosion', 'assets/img/spr_explosion.png');
+	//game.load.image('bullet', 'assets/img/spr_bullet.png');
+	//game.load.image('explosion', 'assets/img/spr_explosion.png');
     game.load.image('muzzleFlash', 'assets/img/spr_muzzleFlash.png');
 
     // Animated background..
@@ -49,10 +51,10 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     cursors, 
     fireButton, 
     bullets, 
+    bulletsCount = 20,
     bulletTime = 0, 
     textBullets, 
     textPlayer, 
-    bulletsCount = 100, 
     oldX = 0, 
     oldY = 0, 
     otherBullets, 
@@ -61,6 +63,7 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     vibrate = false,
     shakeScreen = 0,
     bossHealth = 100,
+    explosions,
     muzzleFlash,
 
     playerGroup,
@@ -150,6 +153,20 @@ function create() {
     playerGroup = game.add.group();
     //playerGroup.sort('y', Phaser.Group.SORT_ASCENDING);
 
+    // Initialize bullets for player
+	bullets = game.add.group();
+	// src = http://gamemechanicexplorer.com/#bullets-2
+	for(var i = 0; i < bulletsCount; i++) {
+		var bullet = this.game.add.sprite(0, 0, 'bullet');
+		bullets.add(bullet);
+
+		bullet.animations.add('bulletCollide', [1, 2, 3, 4, 5, 6]);
+		bullet.anchor.setTo(0.5, 0.5);
+		this.game.physics.enable(bullet, Phaser.Physics.ARCADE);
+
+		bullet.kill();
+	}
+
     // Create new player sprite
 	player = game.add.sprite(game.world.centerX, game.world.centerY, 'player');
 	player.anchor.setTo(.5,.5);
@@ -170,8 +187,8 @@ function create() {
 	player.enableBody = true;
 	player.body.collideWorldBounds = true;
 	player.body.immovable = true;
-    player.bringToTop();
     playerGroup.add(player);
+    player.bringToTop();
 
     // change player sprite color (new in latest Phaser, just for testing purposes! :-)
     // player.tint = 0x33CC00;
@@ -186,15 +203,7 @@ function create() {
     textPlayer.anchor.setTo(0.5, 0.5);
     textPlayer.fixedToCamera = true;
 
-    textBullets = game.add.text(window.screen.availWidth - 150, 50, "Bullets: " + bulletsCount);    
-    textBullets.font = 'Press Start 2P';
-    textBullets.fontSize = 15;
-    textBullets.fill = '#f00';
-    textBullets.align = 'left';
-    textBullets.anchor.setTo(0.5, 0.5);
-    textBullets.fixedToCamera = true;
-
-    textOnlinePlayers = game.add.text(180, 0 + window.screen.availHeight - 200, "Online Players:\nYou (" + playerName + ")");    
+    textOnlinePlayers = game.add.text(180, 0 + window.screen.availHeight - 200, "Online Players: " + onlinePlayers.length);    
     textOnlinePlayers.font = 'Press Start 2P';
     textOnlinePlayers.fontSize = 15;
     textOnlinePlayers.fill = '#f00';
@@ -224,7 +233,7 @@ function create() {
             onlinePlayers.push(data[onlinePlayer].session);
         }
         //console.log(currentDate() + " | Online players: " + onlinePlayers.toString());
-        textOnlinePlayers.setText("Online Players:\nYou (" + playerName + ")\n" + onlinePlayers.join("\n"));
+        textOnlinePlayers.setText("Online Players: " + onlinePlayers.length);
     });
 
     // Get already online coop players
@@ -262,7 +271,7 @@ function create() {
         newPlayer(data);
         console.log('new player added', data.lat);
         onlinePlayers.push(data.session);
-        textOnlinePlayers.setText("Online Players:\nYou (" + playerName + ")\n" + onlinePlayers.join("\n"));
+        textOnlinePlayers.setText("Online Players: " + onlinePlayers.length);
     });
 
     // Other player requests to coop
@@ -294,13 +303,9 @@ function create() {
     	if(data === io.socket.sessionid) {
     		player.damage(10);
 
-    		if(player.health === 0) {
-    			game.world.removeAll();
-    			game.stage.backgroundColor = '#ff0000';
-    			alert('YOU DIED, GAME OVER');
-				
+    		if(player.health === 0) {				
 				var emitter = game.add.emitter(player.x, player.y, 250);
-
+m
 				emitter.makeParticles('explosion');
 				emitter.minParticleSpeed.setTo(-300, -300);
 
@@ -328,10 +333,8 @@ function create() {
 		    	coopPlayers[data].frame = currFrame;
 			}, 100);
 
-			if(coopPlayers[data].health === 0) {				
-    			game.world.removeAll();
-    			game.stage.backgroundColor = '#ff0000';
-    			alert('YOU AND YOUR PAL DIED, GAME OVER');
+			if(coopPlayers[data].health === 0) {			
+    			//alert('YOU AND YOUR PAL DIED, GAME OVER');
 			}
     	} else {
     		players[data].damage(10);
@@ -349,13 +352,18 @@ function create() {
         if(i != -1) {
             onlinePlayers.splice(i,1);
         }        
-        textOnlinePlayers.setText("Online Players:\nYou (" + playerName + ")\n" + onlinePlayers.join("\n"));
+        textOnlinePlayers.setText("Online Players: " + onlinePlayers.length);
     });
 
     // Spawn bullet
     socket.on('newBullet', function(data) {
         newBullet(data);
     }); 
+
+
+
+    explosions = game.add.group();
+    explosions.createMultiple(30, 'explosion');
 
 	boss = game.add.sprite(100, 200, 'boss');
     boss.anchor.setTo(.5, .5);
@@ -365,15 +373,15 @@ function create() {
     boss.health = 1000;
     boss.frame = 2;
     boss.body.immovable = true;
+    boss.animations.add('explosion');
 
-	bullets = game.add.group();
-	bullets.enableBody = true;
+	/*bullets.enableBody = true;
     bullets.physicsBodyType = Phaser.Physics.ARCADE;
     bullets.createMultiple(bulletsCount, 'bullet');
     bullets.setAll('static', true);
     bullets.setAll('anchor.x', 0.5);
     bullets.setAll('anchor.y', 1);
-    bullets.setAll('outOfBoundsKill', true);	
+    bullets.setAll('outOfBoundsKill', true);	*/
 
     otherBullets = game.add.group();
     otherBullets.enableBody = true;
@@ -609,13 +617,22 @@ function update() {
 function fire() {
 
 	if(game.time.now > bulletTime) {
-		bullet = bullets.getFirstExists(false);
+		//bullet = bullets.getFirstExists(false);
+		var bullet = bullets.getFirstDead();
 
 		if(bullet) {
+
+			bullet.revive();
+
+			bullet.frame = 0;
+            bullet.checkWorldBounds = true;
+            bullet.outOfBoundsKill = true;
 			
             if(player.angle == 0 || player.angle == -90 ) {
+            	console.log('angle 0 of 90');
 			    bullet.reset(player.body.x + 38, player.body.y + 38);
             } else {
+            	console.log('angle anders');
                 bullet.reset(player.body.x + 26, player.body.y + 26);
             }
 
@@ -625,7 +642,11 @@ function fire() {
 
 			console.log(currentDate() + ' | Bullet has been fired on sender client');
 			
-			bullet.y += Math.floor((Math.random() * 40) + -20);
+			if(player.angle !== 0 && player.angle !== -90) {
+				bullet.y += Math.floor((Math.random() * 40) + -20);
+			} else {				
+				bullet.x += Math.floor((Math.random() * 40) -20);
+			}
 			muzzleFlash = game.add.sprite(bullet.x + 10, bullet.y, 'muzzleFlash');
 			muzzleFlash.anchor.setTo(0.5, 0.5);
 
@@ -645,10 +666,6 @@ function fire() {
 
             // Shake screen for n frames
             shakeScreen = 15;
-
-			// Update bullet counter
-			bulletsCount --;
-			textBullets.setText("Bullets: " + bulletsCount);
 
             // send position of bullet to server
             var bulletPosition = JSON.stringify({
@@ -670,6 +687,7 @@ function newPlayer(plr) {
     var newPlayerNick = plr.nickname;
     var newPlayerX = plr.x;
     var newPlayerY = plr.y;
+    var newPlayerAngle = plr.angle;
 
     players[plr.session] = game.add.sprite(plr.x, plr.y, 'otherPlayers');
 
@@ -683,6 +701,7 @@ function newPlayer(plr) {
     players[plr.session].name = plr.session;
     players[plr.session].health = 100;
     players[plr.session].frame = 1;
+    players[plr.session].angle = plr.angle;
     players[plr.session].body.immovable = true;
 
     // Sla gps locatie van speler op (om na te gaan of iemand anders in de buurt is)
@@ -870,7 +889,11 @@ function bulletCollisionWithBoss(plr, blt)
 {
 	console.log(currentDate() + ' | Your Bullet hit boss');
 
-    bullet.destroy();  
+	blt.animations.play('bulletCollide');
+
+	blt.events.onAnimationComplete.add(function() {
+    	blt.kill();
+	}, this);
 
     // damage done to boss (boss.health - boss.damage)
     boss.damage(100);
@@ -879,9 +902,13 @@ function bulletCollisionWithBoss(plr, blt)
 	
 	if(boss.health <= 0)
 	{
-		var emitter = game.add.emitter(boss.x, boss.y, 750);
+		var explosion = explosions.getFirstExists(false);
+		explosion.reset(boss.x, boss.y);
+		explosion.play('explosion', 9, false, true);
 
-		emitter.makeParticles('explosion');
+		/*var emitter = game.add.emitter(boss.x, boss.y, 750);
+
+		emitter.makeParticles('explosion', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 		emitter.minParticleSpeed.setTo(-400, -400);
 
 		emitter.maxParticleSpeed.setTo(400, 400);
@@ -890,8 +917,11 @@ function bulletCollisionWithBoss(plr, blt)
 
 		emitter.minRotation = 0;
 		emitter.maxRotation = 0;
+		emitter.gravity = 0;
 
-		emitter.start(true, 7000, null, 15);
+		//emitter.start(false, 4000, 15);
+
+		emitter.start(true, 7000, null, 15);*/
 	}
 
 	setTimeout(function() {
@@ -903,7 +933,11 @@ function otherBulletCollisionWithBoss(plr, blt)
 {
 	console.log(currentDate() + ' | Other Bullet hit boss');
 
-    otherBullet.destroy();  
+	blt.animations.play('bulletCollide');
+
+	blt.events.onAnimationComplete.add(function() {
+    	blt.kill();
+	}, this); 
 
     // damage done to boss (boss.health - boss.damage)
     boss.damage(100);
@@ -919,7 +953,11 @@ function bulletCollisionWithPlayer(plr, blt) {
 
 	console.log(currentDate() + ' | Bullet hit player');
 
-    bullet.destroy();
+	blt.animations.play('bulletCollide');
+
+	blt.events.onAnimationComplete.add(function() {
+    	blt.kill();
+	}, this);
 
     var damagedPlayer = players[plr.name].name;
     socket.emit('damagePlayer', damagedPlayer);
@@ -945,7 +983,12 @@ function bulletCollisionWithCoop(plr, blt) {
 	        }
 	    });
 	} else {
-	    bullet.destroy();
+
+		blt.animations.play('bulletCollide');
+
+		blt.events.onAnimationComplete.add(function() {
+	    	blt.kill();
+		}, this);
 
 	    var damagedPlayer = coopPlayers[plr.name].name;
 	    socket.emit('damagePlayer', damagedPlayer);
@@ -963,11 +1006,13 @@ function bulletCollisionWithCoop(plr, blt) {
 }
 
 function otherBulletCollisionWithPlayer(plr, blt) {
-
-
 	console.log(currentDate() + ' | Other Bullet hit player');
 
-    otherBullet.destroy();
+	blt.animations.play('bulletCollide');
+
+	blt.events.onAnimationComplete.add(function() {
+    	blt.kill();
+	}, this);
 
 	player.frame = 2;
 
@@ -1142,8 +1187,6 @@ function newCoop(player1, player2, shoot, move, type) {
 
 		game.camera.follow(coopPlayers[coopSession]);
 	} else {
-		console.log('tot hier komt ie');
-
 		players[player1].visible = false;
 		players[player1].coop = true;
 		players[player1].renderable = false;
