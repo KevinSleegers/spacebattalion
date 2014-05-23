@@ -605,6 +605,7 @@ function update() {
 }
 
 function fire() {
+
 	if(game.time.now > bulletTime) {
 		bullet = bullets.getFirstExists(false);
 
@@ -619,6 +620,8 @@ function fire() {
 			bullet.rotation = player.rotation;
             game.physics.arcade.velocityFromRotation(bullet.rotation += (Math.random() * (-0.100 - 0.100) + 0.100), 625, bullet.body.velocity);
 			bulletTime = game.time.now + 250;
+
+			console.log(currentDate() + ' | Bullet has been fired on sender client');
 			
 			bullet.y += Math.floor((Math.random() * 40) + -20);
 			muzzleFlash = game.add.sprite(bullet.x + 10, bullet.y, 'muzzleFlash');
@@ -750,13 +753,15 @@ function removePlayer(plr) {
 }
 
 function newBullet(blt) {
+	console.log(currentDate() + ' | Bullet has been fired on OTHER client');
+
     otherBullets.createMultiple(1, 'bullet');
     otherBullet = otherBullets.getFirstExists(false);
     
     if(otherBullet) {
         otherBullet.reset(blt.x, blt.y);
         otherBullet.rotation = blt.rotation;
-        game.physics.arcade.velocityFromRotation(blt.rotation, 400, otherBullet.body.velocity);
+        game.physics.arcade.velocityFromRotation(blt.rotation, 520, otherBullet.body.velocity);
 
         // Play bullet sound with lowered volume    
         //playerBullet.play();
@@ -905,12 +910,14 @@ function otherBulletCollisionWithBoss(plr, blt)
 
 function bulletCollisionWithPlayer(plr, blt) {
 
+	console.log(currentDate() + ' | Bullet hit player');
+
     bullet.destroy();
 
     var damagedPlayer = players[plr.name].name;
     socket.emit('damagePlayer', damagedPlayer);
 	
-	console.log('other player got hit!', damagedPlayer);
+	console.log(currentDate() + ' | other player got hit!', damagedPlayer);
 
     players[plr.name].damage(10);
 
@@ -949,6 +956,10 @@ function bulletCollisionWithCoop(plr, blt) {
 }
 
 function otherBulletCollisionWithPlayer(plr, blt) {
+
+
+	console.log(currentDate() + ' | Other Bullet hit player');
+
     otherBullet.destroy();
 
 	player.frame = 2;
