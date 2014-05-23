@@ -163,14 +163,13 @@ function create() {
 	player.health = 100;
 	player.frame = 1;
 
-	player.body.immovable = true;
-
 	//player.animations.add('fly'); 
 	//player.animations.play('fly', 10, true);
 	game.physics.enable(player, Phaser.Physics.ARCADE);
 
 	player.enableBody = true;
 	player.body.collideWorldBounds = true;
+	player.body.immovable = true;
     player.bringToTop();
     playerGroup.add(player);
 
