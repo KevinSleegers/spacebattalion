@@ -363,6 +363,7 @@ function create() {
     boss.physicsBodyType = Phaser.Physics.ARCADE;
     boss.health = 1000;
     boss.frame = 2;
+    boss.body.immovable = true;
 
 	bullets = game.add.group();
 	bullets.enableBody = true;
@@ -564,7 +565,7 @@ function update() {
         }    
 
         // Collisions
-        game.physics.arcade.overlap(bullets, boss, bulletCollisionWithBoss, null, this);
+        game.physics.arcade.collide(bullets, boss, bulletCollisionWithBoss, null, this);
 
         // Create collision detection for all players
         for(var plr in players) {
@@ -865,6 +866,8 @@ function changePosition(xVal, xSpeed, yVal, ySpeed, angleVal, spriteVal) {
 
 function bulletCollisionWithBoss(plr, blt)
 {
+	console.log(currentDate() + ' | Your Bullet hit boss');
+
     bullet.destroy();  
 
     // damage done to boss (boss.health - boss.damage)
@@ -896,6 +899,8 @@ function bulletCollisionWithBoss(plr, blt)
 
 function otherBulletCollisionWithBoss(plr, blt)
 {
+	console.log(currentDate() + ' | Other Bullet hit boss');
+
     otherBullet.destroy();  
 
     // damage done to boss (boss.health - boss.damage)
