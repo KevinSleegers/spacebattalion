@@ -571,20 +571,20 @@ function update() {
         for(var plr in players) {
         	// your bullets hit other players
         	if(player.coop === false) {
-            	game.physics.arcade.overlap(bullets, players[plr], bulletCollisionWithPlayer, null, this);
+            	game.physics.arcade.collide(bullets, players[plr], bulletCollisionWithPlayer, null, this);
             }
 
             // other bullets hit you
-            game.physics.arcade.overlap(otherBullets, player, otherBulletCollisionWithPlayer, null, this);
+            game.physics.arcade.collide(otherBullets, player, otherBulletCollisionWithPlayer, null, this);
         }
 
         // Create collision detection for all co-op players
         for(var plr in coopPlayers) {
         	// your bullets hit co-op player
-        	game.physics.arcade.overlap(bullets, coopPlayers[plr], bulletCollisionWithCoop, null, this);
+        	game.physics.arcade.collide(bullets, coopPlayers[plr], bulletCollisionWithCoop, null, this);
         }
 
-        game.physics.arcade.overlap(otherBullets, boss, otherBulletCollisionWithBoss, null, this);
+        game.physics.arcade.collide(otherBullets, boss, otherBulletCollisionWithBoss, null, this);
     }
 
     // Screen shake
