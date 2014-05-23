@@ -163,6 +163,8 @@ function create() {
 	player.health = 100;
 	player.frame = 1;
 
+	player.body.immovable = true;
+
 	//player.animations.add('fly'); 
 	//player.animations.play('fly', 10, true);
 	game.physics.enable(player, Phaser.Physics.ARCADE);
@@ -682,6 +684,7 @@ function newPlayer(plr) {
     players[plr.session].name = plr.session;
     players[plr.session].health = 100;
     players[plr.session].frame = 1;
+    players[plr.session].body.immovable = true;
 
     // Sla gps locatie van speler op (om na te gaan of iemand anders in de buurt is)
     players[plr.session].latitude = plr.lat;
