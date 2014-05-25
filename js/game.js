@@ -53,7 +53,6 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     bullets, 
     bulletsCount = 20,
     bulletTime = 0, 
-    textBullets, 
     textPlayer, 
     oldX = 0, 
     oldY = 0, 
@@ -63,7 +62,6 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     vibrate = false,
     shakeScreen = 0,
     bossHealth = 100,
-    explosions,
     muzzleFlash,
 
     playerGroup,
@@ -88,11 +86,17 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
 
     coop,
     coopMovement = false,
-    coopShooting = false
+    coopShooting = false,
+
+    logging = true;
     ;
 
 /* ~~~~~~~ CREATE GAME ~~~~~~~ */
 function create() {
+	if(logging === false) {
+		console.log = function() {};
+	}
+
     // Keep game running, even if out of focus
     this.stage.disableVisibilityChange = true;
 
@@ -101,7 +105,7 @@ function create() {
     game.physics.startSystem(Phaser.Physics.ARCADE);    
     game.world.setBounds(0, 0, 2000, 2000);
 
-    // Background
+    // Geanimeerde achtergrond
     bgtile = game.add.tileSprite(0, 0, 2000, 2000, 'mainBg');
 
     // Haal locatie gegevens op
@@ -144,18 +148,14 @@ function create() {
     console.log(currentDate() + " | Welcome: " + playerName.charAt(0).toUpperCase() + playerName.substring(1) + ", your session is: " + io.socket.sessionid + ".");
     // playerName = randName();
 
-    // Initialize sound effects
+    // Geluidseffecten aanmaken
     backgroundMusic = game.add.audio('backgroundMusic');
-    //backgroundMusic.play('', 0, 1, true); // loop background music
+    // backgroundMusic.play('', 0, 1, true); // loop background music
     //playerBullet = game.add.audio('playerBullet');
 
-    // Create player group
-    playerGroup = game.add.group();
-    //playerGroup.sort('y', Phaser.Group.SORT_ASCENDING);
-
-    // Initialize bullets for player
+    // Bullets aanmaken
+    // -> Bullets aanmaken voordat players er zijn zodat de bullets achter de player spawnen
 	bullets = game.add.group();
-	// src = http://gamemechanicexplorer.com/#bullets-2
 	for(var i = 0; i < bulletsCount; i++) {
 		var bullet = this.game.add.sprite(0, 0, 'bullet');
 		bullets.add(bullet);
@@ -167,7 +167,10 @@ function create() {
 		bullet.kill();
 	}
 
-    // Create new player sprite
+    // Player group aanmaken
+    playerGroup = game.add.group();
+
+    // Player aanmaken
 	player = game.add.sprite(game.world.centerX, game.world.centerY, 'player');
 	player.anchor.setTo(.5,.5);
 	player.name = io.socket.sessionid;
@@ -179,20 +182,19 @@ function create() {
 	player.shoot = true;
 	player.health = 100;
 	player.frame = 1;
-
-	//player.animations.add('fly'); 
-	//player.animations.play('fly', 10, true);
+	player.bringToTop();
 	game.physics.enable(player, Phaser.Physics.ARCADE);
-
 	player.enableBody = true;
 	player.body.collideWorldBounds = true;
 	player.body.immovable = true;
+
+	// Player toevoegen aan Player group
     playerGroup.add(player);
-    player.bringToTop();
 
-    // change player sprite color (new in latest Phaser, just for testing purposes! :-)
-    // player.tint = 0x33CC00;
+    // Player group bovenaan plaatsen
+   	game.world.bringToTop(playerGroup);
 
+   	// Camera volgt player
     game.camera.follow(player);
 
     textPlayer = game.add.text(game.world.centerX, 50, "Player: " + playerName);
@@ -202,6 +204,14 @@ function create() {
     textPlayer.align = 'center';
     textPlayer.anchor.setTo(0.5, 0.5);
     textPlayer.fixedToCamera = true;
+
+    textHealth = game.add.text(window.screen.availWidth - 200, 50, "Health: " + player.health);
+    textHealth.font = 'Press Start 2P';
+    textHealth.fontSize = 15;
+    textHealth.fill = '#f00';
+    textHealth.align = 'center';
+    textHealth.anchor.setTo(0.5, 0.5);
+    textHealth.fixedToCamera = true;
 
     textOnlinePlayers = game.add.text(180, 0 + window.screen.availHeight - 200, "Online Players: " + onlinePlayers.length);    
     textOnlinePlayers.font = 'Press Start 2P';
@@ -303,9 +313,10 @@ function create() {
     	if(data === io.socket.sessionid) {
     		player.damage(10);
 
+        	textHealth.setText("Health: " + player.health);
+
     		if(player.health === 0) {				
-				var emitter = game.add.emitter(player.x, player.y, 250);
-m
+				/*var emitter = game.add.emitter(player.x, player.y, 250);
 				emitter.makeParticles('explosion');
 				emitter.minParticleSpeed.setTo(-300, -300);
 
@@ -316,7 +327,9 @@ m
 				emitter.minRotation = 0;
 				emitter.maxRotation = 0;
 
-				emitter.start(true, 4000, null, 15);				
+				emitter.start(true, 4000, null, 15);*/
+
+				explode(player.x, player.y);			
 
     			socket.emit('playerDied', io.socket.sessionid);
     		}
@@ -338,6 +351,10 @@ m
 			}
     	} else {
     		players[data].damage(10);
+
+    		if(players[data].health === 0) {
+    			explode(players[data].x, players[data].y);
+    		}
     	}
     });
 
@@ -360,11 +377,6 @@ m
         newBullet(data);
     }); 
 
-
-
-    explosions = game.add.group();
-    explosions.createMultiple(30, 'explosion');
-
 	boss = game.add.sprite(100, 200, 'boss');
     boss.anchor.setTo(.5, .5);
 	boss.enableBody = true;
@@ -373,7 +385,6 @@ m
     boss.health = 1000;
     boss.frame = 2;
     boss.body.immovable = true;
-    boss.animations.add('explosion');
 
 	/*bullets.enableBody = true;
     bullets.physicsBodyType = Phaser.Physics.ARCADE;
@@ -627,27 +638,21 @@ function fire() {
 			bullet.frame = 0;
             bullet.checkWorldBounds = true;
             bullet.outOfBoundsKill = true;
-			
-            if(player.angle == 0 || player.angle == -90 ) {
-            	console.log('angle 0 of 90');
-			    bullet.reset(player.body.x + 38, player.body.y + 38);
-            } else {
-            	console.log('angle anders');
-                bullet.reset(player.body.x + 26, player.body.y + 26);
-            }
+
+            // Reset bullet at exact center of player
+            bullet.reset(player.body.x + (player.width / 2), player.body.y + (player.height / 2));
 
 			bullet.rotation = player.rotation;
+            
             game.physics.arcade.velocityFromRotation(bullet.rotation += (Math.random() * (-0.100 - 0.100) + 0.100), 625, bullet.body.velocity);
+
 			bulletTime = game.time.now + 250;
 
 			console.log(currentDate() + ' | Bullet has been fired on sender client');
-			
-			if(player.angle !== 0 && player.angle !== -90) {
-				bullet.y += Math.floor((Math.random() * 40) + -20);
-			} else {				
-				bullet.x += Math.floor((Math.random() * 40) -20);
-			}
-			muzzleFlash = game.add.sprite(bullet.x + 10, bullet.y, 'muzzleFlash');
+
+			bullet.y += Math.floor((Math.random() * 40) + -20);
+
+			muzzleFlash = game.add.sprite(bullet.x, bullet.y, 'muzzleFlash');
 			muzzleFlash.anchor.setTo(0.5, 0.5);
 
 			muzzleFlash.alpha = 0;
@@ -679,6 +684,16 @@ function fire() {
             socket.emit('bulletChange', bulletPosition);
 		}
 	}
+}
+
+function explode(x, y) {
+	explosion = game.add.sprite(x, y, 'explosion');
+	explosion.anchor.setTo(0.5, 0.5);
+	explosion.alpha = 0;
+	game.add.tween(explosion).to( { alpha: 1 }, 100, Phaser.Easing.Linear.None, true, 0, 100, true);
+
+	explosion.animations.add('explosion');
+	explosion.play('explosion', '', false, true);
 }
 
 function newPlayer(plr) {
@@ -743,6 +758,7 @@ function updatePlayer(plr) {
 
 function removePlayer(plr) {
     var playerSession = plr;
+    console.log('remove player, player session', plr);
 	
 	if (playerSession !== io.socket.sessionid) {
 	   	players[playerSession].kill();
@@ -784,6 +800,7 @@ function newBullet(blt) {
         otherBullet.reset(blt.x, blt.y);
         otherBullet.rotation = blt.rotation;
         game.physics.arcade.velocityFromRotation(blt.rotation, 520, otherBullet.body.velocity);
+        otherBullet.animations.add('bulletCollide', [1, 2, 3, 4, 5, 6]);
 
         // Play bullet sound with lowered volume    
         //playerBullet.play();
@@ -902,9 +919,7 @@ function bulletCollisionWithBoss(plr, blt)
 	
 	if(boss.health <= 0)
 	{
-		var explosion = explosions.getFirstExists(false);
-		explosion.reset(boss.x, boss.y);
-		explosion.play('explosion', 9, false, true);
+		explode(boss.x, boss.y);
 
 		/*var emitter = game.add.emitter(boss.x, boss.y, 750);
 
