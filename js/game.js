@@ -233,6 +233,7 @@ function create() {
 
     // Player group bovenaan plaatsen
    	game.world.bringToTop(playerGroup);
+    playerGroup.bringToTop(player);
 
    	// Camera volgt player
     game.camera.follow(player);
@@ -780,7 +781,8 @@ function newPlayer(plr) {
     // Vergelijk locatie van nieuwe speler met jou
     // compareGPS(players[plr.session].latitude, players[plr.session].longitude, players[plr.session].name);
 
-    playerGroup.add(players[plr.session]);
+    playerGroup.add(players[plr.session]);    
+    playerGroup.bringToTop(player);
 }
 
 function updatePlayer(plr) {
