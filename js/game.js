@@ -114,7 +114,13 @@ function createText() {
     textPlayer.anchor.setTo(0.5, 0.5);
     textPlayer.fixedToCamera = true;
 
-    textHealth = game.add.text(window.screen.availWidth - 200, 50, "Health: " + player.health);
+    if(typeof player.health === 'undefined') {
+        var playerHealth = 100;
+    } else {
+        var playerHealth = player.health;
+    }
+
+    textHealth = game.add.text(window.screen.availWidth - 200, 50, "Health: " + playerHealth);
     textHealth.font = 'Press Start 2P';
     textHealth.fontSize = 15;
     textHealth.fill = '#f00';
@@ -122,7 +128,7 @@ function createText() {
     textHealth.anchor.setTo(0.5, 0.5);
     textHealth.fixedToCamera = true;
 
-    textOnlinePlayers = game.add.text(180, 0 + window.screen.availHeight - 200, "Online Players: " + onlinePlayers.length);    
+    textOnlinePlayers = game.add.text(180, 0 + window.screen.availHeight - 200, "Online Players: " + (onlinePlayers.length + 1));    
     textOnlinePlayers.font = 'Press Start 2P';
     textOnlinePlayers.fontSize = 15;
     textOnlinePlayers.fill = '#f00';
@@ -137,6 +143,9 @@ function create() {
 		console.log = function() {};
 	}
 
+    // Haal locatie gegevens op
+    getLocation();
+
     // Keep game running, even if out of focus
     this.stage.disableVisibilityChange = true;
 
@@ -147,9 +156,6 @@ function create() {
 
     // Geanimeerde achtergrond
     bgtile = game.add.tileSprite(0, 0, 2000, 2000, 'mainBg');
-
-    // Haal locatie gegevens op
-    getLocation();
 
     // Refreshen van locatie wordt bepaald door browser dus haal op uit local storage
     if(localStorage.getItem('latitude') !== null && localStorage.getItem('longitude') !== null) {
@@ -265,7 +271,7 @@ function create() {
         
         //console.log(currentDate() + " | Online players: " + onlinePlayers.toString());
         if(textOnlinePlayers !== undefined) {
-            textOnlinePlayers.setText("Online Players: " + onlinePlayers.length);
+            textOnlinePlayers.setText("Online Players: " + (onlinePlayers.length + 1));
         }
     });
 
@@ -306,7 +312,7 @@ function create() {
         newPlayer(data);
         //console.log('new player added', data.lat);
         onlinePlayers.push(data.session);
-        textOnlinePlayers.setText("Online Players: " + onlinePlayers.length);
+        textOnlinePlayers.setText("Online Players: " + (onlinePlayers.length + 1));
     });
 
     // Other player requests to coop
@@ -394,7 +400,7 @@ function create() {
         if(i != -1) {
             onlinePlayers.splice(i,1);
         }        
-        textOnlinePlayers.setText("Online Players: " + onlinePlayers.length);
+        textOnlinePlayers.setText("Online Players: " + (onlinePlayers.length + 1));
     });
 
     // Spawn bullet
@@ -627,7 +633,7 @@ function update() {
         // Create collision detection for all co-op players
         for(var plr in coopPlayers) {
         	// your bullets hit co-op player
-        	//game.physics.arcade.collide(bullets, coopPlayers[plr], bulletCollisionWithCoop, null, this);
+        	game.physics.arcade.collide(bullets, coopPlayers[plr], bulletCoop, null, this);
         }
 
         game.physics.arcade.collide(bullets, boss, bulletBoss, null, this);
@@ -673,8 +679,6 @@ function fire() {
         });
         
         socket.emit('bulletChange', bulletPosition);
-
-        console.log(currentDate() + ' | Bullet has been fired!');
     }
 
 		/*var bullet = bullets.getFirstDead();
@@ -842,9 +846,6 @@ function removePlayer(plr) {
 }
 
 function newBullet(blt) {
-	console.log(currentDate() + ' | Bullet has been fired on OTHER client');
-
-    bullets.createMultiple(1, 'bullet');
     var bullet = bullets.getFirstDead();
 
     if(bullet) {
@@ -1008,7 +1009,7 @@ function bulletOtherPlayer(plr, blt) {
 	}, 100);
 }
 
-function bulletCollisionWithCoop(plr, blt) {
+function bulletCoop(plr, blt) {
 
 	// if niet jezelf
 	if(Object.getOwnPropertyNames(coopPlayers).length !== 0) {
@@ -1281,15 +1282,30 @@ function compareGPS(playerLat, playerLong, playerSession) {
 function getLocation() {
 	if(navigator.geolocation) {
 		// navigator.geolocation.getCurrentPosition(foundPosition);
-		navigator.geolocation.watchPosition(foundPosition);
+		navigator.geolocation.watchPosition(foundPosition, function(error) {
+            if(error.code == error.PERMISSION_DENIED) {
+                latitude = 0;
+                longitude = 0;
+            }
+        }, {maximumAge: 500, timeout: 5000, enableHighAccuracy: true});
 	} else {
-		console.log('GPS wordt niet ondersteund door uw device.');
+		console.log('Het ophalen van uw locatie is mislukt\nGPS wordt niet ondersteund op uw smart device.');
 	}
 }
+
+window.setInterval(function() {
+    getLocation();
+}, 1000);
 
 // Get exact location of user if geolocation is supported
 // Just used to store the latitude and longitude of player at the moment
 function foundPosition(position) {
+    console.log(currentDate() + ' | Getting updated Location');
+
+    if(position.coords.latitude !== latitude || position.coords.longitude !== longitude) {
+        console.log(currentDate() + ' | NEW LOCATION!');
+    }
+
 	latitude = position.coords.latitude;
 	longitude = position.coords.longitude;
 
