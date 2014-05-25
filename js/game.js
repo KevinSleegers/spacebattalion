@@ -10,8 +10,19 @@ var game = new Phaser.Game(w, h, Phaser.AUTO, '', {
     render: render
 });
 
+// Google WebFont Loader
+WebFontConfig = {
+    active: function() { game.time.events.add(Phaser.Timer.SECOND, createText, this); },
+    google: {
+        families: ['Press Start 2P']
+    }
+};
+
 /* ~~~~~~~ PRELOAD FUNCTION ~~~~~~~ */
 function preload() {
+    // Load font
+    game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
+
 	game.load.spritesheet('player', 'assets/img/spr_myplane_strip2.png', 64, 64);
 	game.load.spritesheet('otherPlayers', 'assets/img/spr_plane_strip2.png', 64, 64);
 	game.load.spritesheet('boss', 'assets/img/spr_boss_strip3.png', 128, 256);
@@ -54,6 +65,8 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     bulletsCount = 20,
     bulletTime = 0, 
     textPlayer, 
+    textOnlinePlayers,
+    textHealth,
     oldX = 0, 
     oldY = 0, 
     otherBullets, 
@@ -90,6 +103,34 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
 
     logging = true;
     ;
+
+
+
+function createText() {
+    textPlayer = game.add.text(game.world.centerX, 50, "Player: " + playerName);
+    textPlayer.font = 'Press Start 2P';
+    textPlayer.fontSize = 15;
+    textPlayer.fill = '#f00';
+    textPlayer.align = 'center';
+    textPlayer.anchor.setTo(0.5, 0.5);
+    textPlayer.fixedToCamera = true;
+
+    textHealth = game.add.text(window.screen.availWidth - 200, 50, "Health: " + player.health);
+    textHealth.font = 'Press Start 2P';
+    textHealth.fontSize = 15;
+    textHealth.fill = '#f00';
+    textHealth.align = 'center';
+    textHealth.anchor.setTo(0.5, 0.5);
+    textHealth.fixedToCamera = true;
+
+    textOnlinePlayers = game.add.text(180, 0 + window.screen.availHeight - 200, "Online Players: " + onlinePlayers.length);    
+    textOnlinePlayers.font = 'Press Start 2P';
+    textOnlinePlayers.fontSize = 15;
+    textOnlinePlayers.fill = '#f00';
+    textOnlinePlayers.align = 'left';
+    textOnlinePlayers.anchor.setTo(0.5, 0.5);
+    textOnlinePlayers.fixedToCamera = true;
+}
 
 /* ~~~~~~~ CREATE GAME ~~~~~~~ */
 function create() {
@@ -197,29 +238,7 @@ function create() {
    	// Camera volgt player
     game.camera.follow(player);
 
-    textPlayer = game.add.text(game.world.centerX, 50, "Player: " + playerName);
-    textPlayer.font = 'Press Start 2P';
-    textPlayer.fontSize = 15;
-    textPlayer.fill = '#f00';
-    textPlayer.align = 'center';
-    textPlayer.anchor.setTo(0.5, 0.5);
-    textPlayer.fixedToCamera = true;
-
-    textHealth = game.add.text(window.screen.availWidth - 200, 50, "Health: " + player.health);
-    textHealth.font = 'Press Start 2P';
-    textHealth.fontSize = 15;
-    textHealth.fill = '#f00';
-    textHealth.align = 'center';
-    textHealth.anchor.setTo(0.5, 0.5);
-    textHealth.fixedToCamera = true;
-
-    textOnlinePlayers = game.add.text(180, 0 + window.screen.availHeight - 200, "Online Players: " + onlinePlayers.length);    
-    textOnlinePlayers.font = 'Press Start 2P';
-    textOnlinePlayers.fontSize = 15;
-    textOnlinePlayers.fill = '#f00';
-    textOnlinePlayers.align = 'left';
-    textOnlinePlayers.anchor.setTo(0.5, 0.5);
-    textOnlinePlayers.fixedToCamera = true;
+    
 
     // Request already online players
     socket.emit('requestPlayers', io.socket.sessionid);
@@ -242,8 +261,11 @@ function create() {
             }
             onlinePlayers.push(data[onlinePlayer].session);
         }
+        
         //console.log(currentDate() + " | Online players: " + onlinePlayers.toString());
-        textOnlinePlayers.setText("Online Players: " + onlinePlayers.length);
+        if(textOnlinePlayers !== undefined) {
+            textOnlinePlayers.setText("Online Players: " + onlinePlayers.length);
+        }
     });
 
     // Get already online coop players
@@ -271,15 +293,17 @@ function create() {
         x : game.world.centerX,
         y : game.world.centerY,
         lat : latitude,
-        long : longitude
+        long : longitude,
+        angle : 0
     });
     socket.emit('newPlayer', playerData);
 
     // Get new player
     socket.on('sendNewPlayer', function(data) {
+        console.log('Getting a new player', data);
         console.log(currentDate() + " | Player: " + data.nickname.charAt(0).toUpperCase() + data.nickname.substring(1) + " has joined the game!");
         newPlayer(data);
-        console.log('new player added', data.lat);
+        //console.log('new player added', data.lat);
         onlinePlayers.push(data.session);
         textOnlinePlayers.setText("Online Players: " + onlinePlayers.length);
     });
@@ -585,13 +609,13 @@ function update() {
         }    
 
         // Collisions
-        game.physics.arcade.collide(bullets, boss, bulletCollisionWithBoss, null, this);
+        //game.physics.arcade.collide(bullets, boss, bulletCollisionWithBoss, null, this);
 
         // Create collision detection for all players
         for(var plr in players) {
         	// your bullets hit other players
         	if(player.coop === false) {
-            	game.physics.arcade.collide(bullets, players[plr], bulletCollisionWithPlayer, null, this);
+            	game.physics.arcade.collide(otherBullets, players[plr], otherBulletCollisionWithOtherPlayer, null, this);
             }
 
             // other bullets hit you
@@ -601,7 +625,7 @@ function update() {
         // Create collision detection for all co-op players
         for(var plr in coopPlayers) {
         	// your bullets hit co-op player
-        	game.physics.arcade.collide(bullets, coopPlayers[plr], bulletCollisionWithCoop, null, this);
+        	//game.physics.arcade.collide(bullets, coopPlayers[plr], bulletCollisionWithCoop, null, this);
         }
 
         game.physics.arcade.collide(otherBullets, boss, otherBulletCollisionWithBoss, null, this);
@@ -633,7 +657,7 @@ function fire() {
 
 		if(bullet) {
 
-			bullet.revive();
+			/*bullet.revive();
 
 			bullet.frame = 0;
             bullet.checkWorldBounds = true;
@@ -679,9 +703,28 @@ function fire() {
                 nickname: playerName,
                 x : bullet.x,
                 y : bullet.y
+            });*/
+
+            bulletTime = game.time.now + 250;
+            
+            var resetX = player.body.x + (player.width / 2);
+            var resetY = player.body.y + (player.height / 2);
+            var bulletY = Math.floor((Math.random() * 40) + -20);
+            var randomVelocity = (Math.random() * (-0.100 - 0.100) + 0.100);
+            
+            var bulletPosition = JSON.stringify({
+                sessionid: io.socket.sessionid,
+                rotation: player.rotation,
+                nickname: playerName,
+                resetX: resetX,
+                resetY: resetY,
+                bulletY: bulletY,
+                randVelocity: randomVelocity
             });
             
             socket.emit('bulletChange', bulletPosition);
+
+            console.log(currentDate() + ' | Bullet has been fired!');
 		}
 	}
 }
@@ -697,6 +740,8 @@ function explode(x, y) {
 }
 
 function newPlayer(plr) {
+    console.log('New player data', plr);
+
     // new player variables
     var newSession = plr.session;
     var newPlayerNick = plr.nickname;
@@ -731,7 +776,7 @@ function newPlayer(plr) {
     }
 
     // Vergelijk locatie van nieuwe speler met jou
-    //compareGPS(players[plr.session].latitude, players[plr.session].longitude, players[plr.session].name);
+    // compareGPS(players[plr.session].latitude, players[plr.session].longitude, players[plr.session].name);
 
     playerGroup.add(players[plr.session]);
 }
@@ -797,9 +842,11 @@ function newBullet(blt) {
     otherBullet = otherBullets.getFirstExists(false);
     
     if(otherBullet) {
-        otherBullet.reset(blt.x, blt.y);
+        otherBullet.reset(blt.resetX, blt.resetY);
         otherBullet.rotation = blt.rotation;
-        game.physics.arcade.velocityFromRotation(blt.rotation, 520, otherBullet.body.velocity);
+        otherBullet.y += blt.bulletY;
+        game.physics.arcade.velocityFromRotation(blt.rotation += blt.randVelocity, 625, otherBullet.body.velocity);
+        //game.physics.arcade.velocityFromRotation(blt.rotation, 450, otherBullet.body.velocity);
         otherBullet.animations.add('bulletCollide', [1, 2, 3, 4, 5, 6]);
 
         // Play bullet sound with lowered volume    
@@ -902,7 +949,7 @@ function changePosition(xVal, xSpeed, yVal, ySpeed, angleVal, spriteVal) {
     
 }
 
-function bulletCollisionWithBoss(plr, blt)
+/*function bulletCollisionWithBoss(plr, blt)
 {
 	console.log(currentDate() + ' | Your Bullet hit boss');
 
@@ -936,13 +983,13 @@ function bulletCollisionWithBoss(plr, blt)
 
 		//emitter.start(false, 4000, 15);
 
-		emitter.start(true, 7000, null, 15);*/
+		emitter.start(true, 7000, null, 15);
 	}
 
 	setTimeout(function() {
     	boss.frame = 2;
 	}, 100);
-}
+}*/
 
 function otherBulletCollisionWithBoss(plr, blt)
 {
@@ -964,9 +1011,9 @@ function otherBulletCollisionWithBoss(plr, blt)
 	}, 100);
 }
 
-function bulletCollisionWithPlayer(plr, blt) {
+function otherBulletCollisionWithOtherPlayer(plr, blt) {
 
-	console.log(currentDate() + ' | Bullet hit player');
+	console.log(currentDate() + ' | Bullet hit other player');
 
 	blt.animations.play('bulletCollide');
 

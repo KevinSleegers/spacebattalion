@@ -41,6 +41,15 @@ io.sockets.on('connection', function(socket){
         var player_y = obj.y;
         var player_lat = obj.lat;
         var player_long = obj.long;
+        var player_angle = obj.angle;
+
+        if(typeof player_lat === 'undefined') {
+            player_lat = 0;
+        }
+
+        if(typeof player_long === 'undefined') {
+            player_long = 0;
+        }
 
         // Save details in 'player' object
         var player = {};
@@ -48,6 +57,7 @@ io.sockets.on('connection', function(socket){
         player.nickname = player_nick;
         player.x = player_x;
         player.y = player_y;
+        player.angle = player_angle;
         player.lat = player_lat;
         player.long = player_long;
 
@@ -163,14 +173,16 @@ io.sockets.on('connection', function(socket){
         var bullet = {};
         bullet.session =  obj.sessionid;
         bullet.nickname = obj.nickname;
-        bullet.x = obj.x;
-        bullet.y = obj.y;
+        bullet.resetX = obj.resetX;
+        bullet.resetY = obj.resetY;
+        bullet.bulletY = obj.bulletY;
         bullet.rotation = obj.rotation;
+        bullet.randVelocity = obj.randVelocity;
         
         bullets[bullet.session] = bullet;
         
-        socket.broadcast.emit('newBullet', bullets[bullet.session]);
-        
+        //socket.broadcast.emit('newBullet', bullets[bullet.session]);
+        io.sockets.emit('newBullet', bullets[bullet.session]);
     });
 
     socket.on('playerDied', function(data) {
