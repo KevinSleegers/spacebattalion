@@ -69,7 +69,6 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     textHealth,
     oldX = 0, 
     oldY = 0, 
-    otherBullets, 
     movementSpeed = 350,
     diagonalSpeed,
     vibrate = false,
@@ -196,7 +195,7 @@ function create() {
 
     // Bullets aanmaken
     // -> Bullets aanmaken voordat players er zijn zodat de bullets achter de player spawnen
-	bullets = game.add.group();
+	/*bullets = game.add.group();
 	for(var i = 0; i < bulletsCount; i++) {
 		var bullet = this.game.add.sprite(0, 0, 'bullet');
 		bullets.add(bullet);
@@ -206,7 +205,7 @@ function create() {
 		this.game.physics.enable(bullet, Phaser.Physics.ARCADE);
 
 		bullet.kill();
-	}
+	}*/
 
     // Player group aanmaken
     playerGroup = game.add.group();
@@ -418,13 +417,13 @@ function create() {
     bullets.setAll('anchor.y', 1);
     bullets.setAll('outOfBoundsKill', true);	*/
 
-    otherBullets = game.add.group();
-    otherBullets.enableBody = true;
-    otherBullets.physicsBodyType = Phaser.Physics.ARCADE;
-    otherBullets.setAll('static', true);
-    otherBullets.setAll('anchor.x', 0.5);
-    otherBullets.setAll('anchor.y', 0.5);
-    otherBullets.setAll('outOfBoundsKill', true);  
+    bullets = game.add.group();
+    bullets.enableBody = true;
+    bullets.physicsBodyType = Phaser.Physics.ARCADE;
+    bullets.setAll('static', true);
+    bullets.setAll('anchor.x', 0.5);
+    bullets.setAll('anchor.y', 0.5);
+    bullets.setAll('outOfBoundsKill', true);  
 
     muzzleFlash = game.add.group();
     muzzleFlash.createMultiple(30, 'muzzleFlash');
@@ -615,11 +614,11 @@ function update() {
         for(var plr in players) {
         	// your bullets hit other players
         	if(player.coop === false) {
-            	game.physics.arcade.collide(otherBullets, players[plr], otherBulletCollisionWithOtherPlayer, null, this);
+            	game.physics.arcade.collide(bullets, players[plr], bulletOtherPlayer, null, this);
             }
 
             // other bullets hit you
-            game.physics.arcade.collide(otherBullets, player, otherBulletCollisionWithPlayer, null, this);
+            game.physics.arcade.collide(bullets, player, bulletPlayer, null, this);
         }
 
         // Create collision detection for all co-op players
@@ -628,7 +627,7 @@ function update() {
         	//game.physics.arcade.collide(bullets, coopPlayers[plr], bulletCollisionWithCoop, null, this);
         }
 
-        game.physics.arcade.collide(otherBullets, boss, otherBulletCollisionWithBoss, null, this);
+        game.physics.arcade.collide(bullets, boss, bulletBoss, null, this);
     }
 
     // Screen shake
@@ -653,7 +652,29 @@ function fire() {
 
 	if(game.time.now > bulletTime) {
 		//bullet = bullets.getFirstExists(false);
-		var bullet = bullets.getFirstDead();
+        bulletTime = game.time.now + 250;
+            
+        var resetX = player.body.x + (player.width / 2);
+        var resetY = player.body.y + (player.height / 2);
+        var bulletY = Math.floor((Math.random() * 40) + -20);
+        var randomVelocity = (Math.random() * (-0.100 - 0.100) + 0.100);
+        
+        var bulletPosition = JSON.stringify({
+            sessionid: io.socket.sessionid,
+            rotation: player.rotation,
+            nickname: playerName,
+            resetX: resetX,
+            resetY: resetY,
+            bulletY: bulletY,
+            randVelocity: randomVelocity
+        });
+        
+        socket.emit('bulletChange', bulletPosition);
+
+        console.log(currentDate() + ' | Bullet has been fired!');
+    }
+
+		/*var bullet = bullets.getFirstDead();
 
 		if(bullet) {
 
@@ -703,30 +724,11 @@ function fire() {
                 nickname: playerName,
                 x : bullet.x,
                 y : bullet.y
-            });*/
-
-            bulletTime = game.time.now + 250;
-            
-            var resetX = player.body.x + (player.width / 2);
-            var resetY = player.body.y + (player.height / 2);
-            var bulletY = Math.floor((Math.random() * 40) + -20);
-            var randomVelocity = (Math.random() * (-0.100 - 0.100) + 0.100);
-            
-            var bulletPosition = JSON.stringify({
-                sessionid: io.socket.sessionid,
-                rotation: player.rotation,
-                nickname: playerName,
-                resetX: resetX,
-                resetY: resetY,
-                bulletY: bulletY,
-                randVelocity: randomVelocity
             });
-            
-            socket.emit('bulletChange', bulletPosition);
 
-            console.log(currentDate() + ' | Bullet has been fired!');
+            
 		}
-	}
+	}*/
 }
 
 function explode(x, y) {
@@ -838,8 +840,8 @@ function removePlayer(plr) {
 function newBullet(blt) {
 	console.log(currentDate() + ' | Bullet has been fired on OTHER client');
 
-    otherBullets.createMultiple(1, 'bullet');
-    otherBullet = otherBullets.getFirstExists(false);
+    bullets.createMultiple(1, 'bullet');
+    otherBullet = bullets.getFirstExists(false);
     
     if(otherBullet) {
         otherBullet.reset(blt.resetX, blt.resetY);
@@ -944,56 +946,12 @@ function changePosition(xVal, xSpeed, yVal, ySpeed, angleVal, spriteVal) {
 	            oldY = coopPlayers[spriteVal].y;
 	        }
 	    }
-	}
-
-    
+	}    
 }
 
-/*function bulletCollisionWithBoss(plr, blt)
+function bulletBoss(plr, blt)
 {
-	console.log(currentDate() + ' | Your Bullet hit boss');
-
-	blt.animations.play('bulletCollide');
-
-	blt.events.onAnimationComplete.add(function() {
-    	blt.kill();
-	}, this);
-
-    // damage done to boss (boss.health - boss.damage)
-    boss.damage(100);
-
-    boss.frame = 0;
-	
-	if(boss.health <= 0)
-	{
-		explode(boss.x, boss.y);
-
-		/*var emitter = game.add.emitter(boss.x, boss.y, 750);
-
-		emitter.makeParticles('explosion', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
-		emitter.minParticleSpeed.setTo(-400, -400);
-
-		emitter.maxParticleSpeed.setTo(400, 400);
-
-		//  By setting the min and max rotation to zero, you disable rotation on the particles fully
-
-		emitter.minRotation = 0;
-		emitter.maxRotation = 0;
-		emitter.gravity = 0;
-
-		//emitter.start(false, 4000, 15);
-
-		emitter.start(true, 7000, null, 15);
-	}
-
-	setTimeout(function() {
-    	boss.frame = 2;
-	}, 100);
-}*/
-
-function otherBulletCollisionWithBoss(plr, blt)
-{
-	console.log(currentDate() + ' | Other Bullet hit boss');
+	console.log(currentDate() + ' | A bullet hit the Boss!');
 
 	blt.animations.play('bulletCollide');
 
@@ -1006,14 +964,16 @@ function otherBulletCollisionWithBoss(plr, blt)
 
     boss.frame = 0;
 
+    if(boss.health <= 0) {
+        explode(boss.x, boss.y);
+    }
+
 	setTimeout(function() {
     	boss.frame = 2;
 	}, 100);
 }
 
-function otherBulletCollisionWithOtherPlayer(plr, blt) {
-
-	console.log(currentDate() + ' | Bullet hit other player');
+function bulletOtherPlayer(plr, blt) {
 
 	blt.animations.play('bulletCollide');
 
@@ -1024,11 +984,15 @@ function otherBulletCollisionWithOtherPlayer(plr, blt) {
     var damagedPlayer = players[plr.name].name;
     socket.emit('damagePlayer', damagedPlayer);
 	
-	console.log(currentDate() + ' | other player got hit!', damagedPlayer);
+	console.log(currentDate() + ' | A bullet hit another player!');
 
     players[plr.name].damage(10);
 
     players[plr.name].frame = 0;
+
+    if(players[plr.name].health <= 0) {
+        explode(players[plr.name].x, players[plr.name].y);
+    }
 
     setTimeout(function() {
     	players[plr.name].frame = 1;
@@ -1067,8 +1031,8 @@ function bulletCollisionWithCoop(plr, blt) {
 	}
 }
 
-function otherBulletCollisionWithPlayer(plr, blt) {
-	console.log(currentDate() + ' | Other Bullet hit player');
+function bulletPlayer(plr, blt) {
+	console.log(currentDate() + ' | A bullet hit you!');
 
 	blt.animations.play('bulletCollide');
 
@@ -1077,6 +1041,10 @@ function otherBulletCollisionWithPlayer(plr, blt) {
 	}, this);
 
 	player.frame = 2;
+
+    if(player.health <= 0) {
+        explode(player.x, player.y);
+    }
 
     setTimeout(function() {
     	player.frame = 1;
