@@ -144,6 +144,10 @@ io.sockets.on('connection', function(socket){
         socket.broadcast.emit('playerShot', data);
     });
 
+    socket.on('bossDied', function(data) {
+        socket.broadcast.emit('bossDead', data);
+    });
+
     socket.on('positionChange', function(data) {        
         var obj = JSON.parse(data);
 

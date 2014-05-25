@@ -144,7 +144,10 @@ function create() {
 	}
 
     // Haal locatie gegevens op
-    getLocation();
+	window.setInterval(function() {
+		console.log(currentDate() + ' | getting new location.');
+		getLocation();
+	}, 1000);
 
     // Keep game running, even if out of focus
     this.stage.disableVisibilityChange = true;
@@ -244,8 +247,6 @@ function create() {
 
    	// Camera volgt player
     game.camera.follow(player);
-
-    
 
     // Request already online players
     socket.emit('requestPlayers', io.socket.sessionid);
@@ -401,6 +402,11 @@ function create() {
             onlinePlayers.splice(i,1);
         }        
         textOnlinePlayers.setText("Online Players: " + (onlinePlayers.length + 1));
+    });
+
+    // Boss gekillt in andere client
+    socket.on('bossDead', function(data) {    	
+        explode(boss.x, boss.y);
     });
 
     // Spawn bullet
@@ -861,6 +867,8 @@ function newBullet(blt) {
         //game.physics.arcade.velocityFromRotation(blt.rotation, 450, otherBullet.body.velocity);
         bullet.animations.add('bulletCollide', [1, 2, 3, 4, 5, 6]);
 
+        shakeScreen = 15;
+
         // Play bullet sound with lowered volume    
         //playerBullet.play();
         //playerBullet.volume = 0.5;
@@ -976,6 +984,8 @@ function bulletBoss(plr, blt)
 
     if(boss.health <= 0) {
         explode(boss.x, boss.y);
+
+        socket.emit('bossDied', io.socket.sessionid);
     }
 
 	setTimeout(function() {
@@ -1292,10 +1302,6 @@ function getLocation() {
 		console.log('Het ophalen van uw locatie is mislukt\nGPS wordt niet ondersteund op uw smart device.');
 	}
 }
-
-window.setInterval(function() {
-    getLocation();
-}, 1000);
 
 // Get exact location of user if geolocation is supported
 // Just used to store the latitude and longitude of player at the moment
