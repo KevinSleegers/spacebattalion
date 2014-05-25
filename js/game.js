@@ -195,17 +195,18 @@ function create() {
 
     // Bullets aanmaken
     // -> Bullets aanmaken voordat players er zijn zodat de bullets achter de player spawnen
-	/*bullets = game.add.group();
-	for(var i = 0; i < bulletsCount; i++) {
-		var bullet = this.game.add.sprite(0, 0, 'bullet');
-		bullets.add(bullet);
+	bullets = game.add.group();
 
-		bullet.animations.add('bulletCollide', [1, 2, 3, 4, 5, 6]);
-		bullet.anchor.setTo(0.5, 0.5);
-		this.game.physics.enable(bullet, Phaser.Physics.ARCADE);
+    for(var i = 0; i < bulletsCount; i++) {
+        var bullet = this.game.add.sprite(0, 0, 'bullet');
+        bullets.add(bullet);
 
-		bullet.kill();
-	}*/
+        bullet.animations.add('bulletCollide', [1, 2, 3, 4, 5, 6]);
+        bullet.anchor.setTo(0.5, 0.5);
+        this.game.physics.enable(bullet, Phaser.Physics.ARCADE);
+
+        bullet.kill();
+    }
 
     // Player group aanmaken
     playerGroup = game.add.group();
@@ -418,13 +419,14 @@ function create() {
     bullets.setAll('anchor.y', 1);
     bullets.setAll('outOfBoundsKill', true);	*/
 
-    bullets = game.add.group();
-    bullets.enableBody = true;
+    
+    
+    /*bullets.enableBody = true;
     bullets.physicsBodyType = Phaser.Physics.ARCADE;
     bullets.setAll('static', true);
     bullets.setAll('anchor.x', 0.5);
     bullets.setAll('anchor.y', 0.5);
-    bullets.setAll('outOfBoundsKill', true);  
+    bullets.setAll('outOfBoundsKill', true); */ 
 
     muzzleFlash = game.add.group();
     muzzleFlash.createMultiple(30, 'muzzleFlash');
@@ -843,15 +845,20 @@ function newBullet(blt) {
 	console.log(currentDate() + ' | Bullet has been fired on OTHER client');
 
     bullets.createMultiple(1, 'bullet');
-    otherBullet = bullets.getFirstExists(false);
-    
-    if(otherBullet) {
-        otherBullet.reset(blt.resetX, blt.resetY);
-        otherBullet.rotation = blt.rotation;
-        otherBullet.y += blt.bulletY;
-        game.physics.arcade.velocityFromRotation(blt.rotation += blt.randVelocity, 625, otherBullet.body.velocity);
+    var bullet = bullets.getFirstDead();
+
+    if(bullet) {
+        bullet.revive();
+
+        bullet.checkWorldBounds = true;
+        bullet.outOfBoundsKill = true
+
+        bullet.reset(blt.resetX, blt.resetY);
+        bullet.rotation = blt.rotation;
+        bullet.y += blt.bulletY;
+        game.physics.arcade.velocityFromRotation(blt.rotation += blt.randVelocity, 625, bullet.body.velocity);
         //game.physics.arcade.velocityFromRotation(blt.rotation, 450, otherBullet.body.velocity);
-        otherBullet.animations.add('bulletCollide', [1, 2, 3, 4, 5, 6]);
+        bullet.animations.add('bulletCollide', [1, 2, 3, 4, 5, 6]);
 
         // Play bullet sound with lowered volume    
         //playerBullet.play();
