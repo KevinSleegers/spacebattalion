@@ -83,6 +83,9 @@ io.sockets.on('connection', function(socket){
         coop.player1 = player2;
         coop.shoot = shoot;
         coop.move = move;
+        coop.x = obj.x;
+        coop.y = obj.y;
+        coop.angle = obj.angle;
 
         coopPlayers[coop.session] = coop;
 

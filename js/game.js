@@ -293,13 +293,16 @@ function create() {
     		var shooter = data[onlineCoop].shoot;
     		var mover = data[onlineCoop].move;
     		var session = data[onlineCoop].session;
+    		var coopX = data[onlineCoop].x;
+    		var coopY = data[onlineCoop].y;
+    		var coopAngle = data[onlineCoop].angle;
+
+    		console.log('AAAAAAAAAAAAAAAAAAAAAAAAA', onlineCoop);
 
     		if(player1 !== io.socket.sessionid && player2 !== io.socket.sessionid) {
 
     			console.log('Creating new Co-op (other players)');
-    			//newCoop(player2, player1, shooter, mover, session, 'other');
-
-    			newCoop(player1, player2, shooter, mover, session, 'other');
+    			newCoop(player2, player1, shooter, mover, session, coopX, coopY, coopAngle, 'other');
     		}
     	}
     	console.log('Online coop-players', data);
@@ -337,7 +340,7 @@ function create() {
     	var shooter = obj.shoot;
 
     	console.log('Creating new Co-op (joined)');
-    	newCoop(player1, player2, mover, shooter, 'join');
+    	newCoop(player1, player2, mover, shooter, '', '', '', 'join');
     });
 
     // Ga na welke spelers niet in co-op modus zitten (en al online waren)
@@ -670,6 +673,10 @@ function update() {
         	game.physics.arcade.collide(bullets, coopPlayers[plr], bulletCoop, null, this);
         }
 
+        if(player.coop === true) {
+
+        }
+
         game.physics.arcade.collide(bullets, boss, bulletBoss, null, this);
     }
 
@@ -698,19 +705,21 @@ function fire() {
         bulletTime = game.time.now + 250;
 
         if(player.coop === true) {
-        	console.log('You are in Co-op mode');
-        } else {
-        	console.log('Not in co-op mode.');
+        	var resetX = coopPlayers[coopSession].body.x + (coopPlayers[coopSession].width / 2);
+        	var resetY = coopPlayers[coopSession].body.y + (coopPlayers[coopSession].height / 2);
+        	var rotation = coopPlayers[coopSession].rotation;
+        } else {            
+        	var resetX = player.body.x + (player.width / 2);
+        	var resetY = player.body.y + (player.height / 2);
+        	var rotation = player.rotation;
         }
-            
-        var resetX = player.body.x + (player.width / 2);
-        var resetY = player.body.y + (player.height / 2);
+
         var bulletY = Math.floor((Math.random() * 40) + -20);
         var randomVelocity = (Math.random() * (-0.100 - 0.100) + 0.100);
         
         var bulletPosition = JSON.stringify({
             sessionid: io.socket.sessionid,
-            rotation: player.rotation,
+            rotation: rotation,
             nickname: playerName,
             resetX: resetX,
             resetY: resetY,
@@ -820,7 +829,7 @@ function newPlayer(plr) {
     players[plr.session].coopPlayer = '';
 
     players[plr.session].inputEnabled = true;
-    players[plr.session].events.onInputOver.add(clickedPlayer, this);
+    players[plr.session].events.onInputDown.add(clickedPlayer, this);
 
     // Ga na of speler in co-op mode is, zo ja 'hide' deze speler dan
     if(typeof plr.coop !== "undefined" && plr.coop === true) {
@@ -844,6 +853,7 @@ function updatePlayer(plr) {
 	var newPlayerAngle = plr.angle;
 
 	if(playerNick === 'coop') {
+		console.log('jajajajaja');
 		coopPlayers[plr.session].x = plr.x;
 		coopPlayers[plr.session].y = plr.y;
 		coopPlayers[plr.session].angle = plr.angle;
@@ -857,36 +867,37 @@ function updatePlayer(plr) {
 
 function removePlayer(plr) {
     var playerSession = plr;
-    console.log('remove player, player session', plr);
 	
 	if (playerSession !== io.socket.sessionid) {
-	   	players[playerSession].kill();
+	   	// Check if player who disconnected was in coop mode
+	    if(Object.getOwnPropertyNames(coopPlayers).length !== 0) {
+		    Object.keys(coopPlayers).forEach(function(key) {
+			    if(key.indexOf(io.socket.sessionid) > -1) {
+
+			       	coopPlayers[key].kill();
+			       	player.visible = true;
+			       	player.allowControls = true;
+			       	player.move = true;
+			       	player.shoot = true;
+			       	game.camera.follow(player);
+
+			       	coopMovement = false;
+
+			       	player.coop = false;
+
+			       	Object.keys(coopPlayers).forEach(function(key2) {
+	        			if(key2.indexOf(key) > -1) {
+	        				delete coopPlayers[key];
+	        			}
+	        		});
+			   	}
+			});
+		} else {
+	   		players[playerSession].kill();
+	   	}
 	}
 
-	// Check if player who disconnected was in coop mode
-    if(Object.getOwnPropertyNames(coopPlayers).length !== 0) {
-	    Object.keys(coopPlayers).forEach(function(key) {
-		    if(key.indexOf(io.socket.sessionid) > -1) {
-
-		       	coopPlayers[key].kill();
-		       	player.visible = true;
-		       	player.allowControls = true;
-		       	player.move = true;
-		       	player.shoot = true;
-		       	game.camera.follow(player);
-
-		       	coopMovement = false;
-
-		       	player.coop = false;
-
-		       	Object.keys(coopPlayers).forEach(function(key2) {
-        			if(key2.indexOf(key) > -1) {
-        				delete coopPlayers[key];
-        			}
-        		});
-		   	}
-		});
-	}
+	
 }
 
 function newBullet(blt) {
@@ -1059,34 +1070,24 @@ function bulletOtherPlayer(plr, blt) {
 
 function bulletCoop(plr, blt) {
 
-	// if niet jezelf
-	if(Object.getOwnPropertyNames(coopPlayers).length !== 0) {
-	    Object.keys(coopPlayers).forEach(function(key) {
-	        if(key.indexOf(io.socket.sessionid) > -1) {
-	        	console.log('je hit jezelf maat');
-	        }
-	    });
-	} else {
+	blt.animations.play('bulletCollide');
 
-		blt.animations.play('bulletCollide');
+	blt.events.onAnimationComplete.add(function() {
+    	blt.kill();
+	}, this);
 
-		blt.events.onAnimationComplete.add(function() {
-	    	blt.kill();
-		}, this);
+    var damagedPlayer = coopPlayers[plr.name].name;
+    socket.emit('damagePlayer', damagedPlayer);
+	
+	console.log('other player got hit!', damagedPlayer);
 
-	    var damagedPlayer = coopPlayers[plr.name].name;
-	    socket.emit('damagePlayer', damagedPlayer);
-		
-		console.log('other player got hit!', damagedPlayer);
+    coopPlayers[plr.name].damage(10);
 
-	    coopPlayers[plr.name].damage(10);
+    coopPlayers[plr.name].frame = 0;
 
-	    coopPlayers[plr.name].frame = 0;
-
-	    setTimeout(function() {
-	    	coopPlayers[plr.name].frame = 3;
-		}, 100);
-	}
+    setTimeout(function() {
+    	coopPlayers[plr.name].frame = 3;
+	}, 100);
 }
 
 function bulletPlayer(plr, blt) {
@@ -1227,7 +1228,7 @@ function resizeGame() {
 /* ~~~~~~~ CO-OP FUNCTIONS ~~~~~~~ */
 
 // Create new Co-op	
-function newCoop(player1, player2, shoot, move, type) {
+function newCoop(player1, player2, shoot, move, x, y, angle, type) {
 	if(type == 'join') {
 		console.log(currentDate() + ' | I am now in co-op mode with ' + player2 + '.');
 	}
@@ -1261,6 +1262,13 @@ function newCoop(player1, player2, shoot, move, type) {
 	coopPlayers[coopSession].health = 250;
 	coopPlayers[coopSession].frame = 3;
 	coopPlayers[coopSession].body.collideWorldBounds = true;
+	coopPlayers[coopSession].body.immovable = true;
+
+	if(x !== '' && y !== '' && angle !== '') {
+		coopPlayers[coopSession].x = x;
+		coopPlayers[coopSession].y = y;
+		coopPlayers[coopSession].angle = angle;
+	}
   
 	if(coopPlayers[coopSession].move == io.socket.sessionid) {
 		console.log(currentDate() + " | You may move, good sir.");
@@ -1329,7 +1337,10 @@ function newCoop(player1, player2, shoot, move, type) {
 	        player1 : player2,
 	        player2 : player1,
 	        move : player2,
-	        shoot : player1
+	        shoot : player1,
+	        x : coopPlayers[coopSession].x,
+	        y : coopPlayers[coopSession].y,
+	        angle : coopPlayers[coopSession].angle
 	    });
 		socket.emit('newCoop', coopData);
 	}
@@ -1357,7 +1368,7 @@ function compareGPS(playerLat, playerLong, playerSession) {
 					if(players[playerSession].coop === false) {
 						console.log(currentDate() + ' | ' + playerSession + ' is ook nog niet in co-op modus');
 
-						newCoop(player.name, players[playerSession].name, players[playerSession].name, player.name, 'new');
+						newCoop(player.name, players[playerSession].name, players[playerSession].name, player.name, '', '', '', 'new');
 					}
 				} else {
 					console.log('NEEEEEEEEEEEEEEEEEEEEEEE');
