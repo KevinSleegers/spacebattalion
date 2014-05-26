@@ -170,6 +170,15 @@ io.sockets.on('connection', function(socket){
         socket.broadcast.emit('updatePlayer', players[player.session]);
     });
 
+    socket.on('locationUpdate', function(data) {
+        var obj = JSON.parse(data);
+
+        players[obj.sessionid].lat = obj.lat;
+        players[obj.sessionid].long = obj.long;
+
+        socket.broadcast.emit('updatedLocation', players[obj.sessionid]);
+    });
+
     socket.on('bulletChange', function(data) {
     
         var obj = JSON.parse(data);

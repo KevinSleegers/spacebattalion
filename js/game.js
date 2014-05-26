@@ -148,11 +148,7 @@ function create() {
 		console.log = function() {};
 	}
 
-    // Haal locatie gegevens op
-	window.setInterval(function() {
-		console.log(currentDate() + ' | getting new location.');
-		getLocation();
-	}, 1000);
+	getLocation();
 
     // Keep game running, even if out of focus
     this.stage.disableVisibilityChange = true;
@@ -300,8 +296,10 @@ function create() {
 
     		if(player1 !== io.socket.sessionid && player2 !== io.socket.sessionid) {
 
-    			newCoop(player2, player1, shooter, mover, session, 'other');
+    			console.log('Creating new Co-op (other players)');
+    			//newCoop(player2, player1, shooter, mover, session, 'other');
 
+    			newCoop(player1, player2, shooter, mover, session, 'other');
     		}
     	}
     	console.log('Online coop-players', data);
@@ -338,13 +336,15 @@ function create() {
     	var mover = obj.move;
     	var shooter = obj.shoot;
 
+    	console.log('Creating new Co-op (joined)');
     	newCoop(player1, player2, mover, shooter, 'join');
     });
 
-    // Get players who are not in co-op mode
+    // Ga na welke spelers niet in co-op modus zitten (en al online waren)
     socket.on('notCoop', function(data) {
     	for(var notCoopPlayer in data) {
-    		compareGPS(data[notCoopPlayer].lat, data[notCoopPlayer].long, data[notCoopPlayer].session);
+    		//console.log('CompareGPS notCoop speler');
+    		//compareGPS(data[notCoopPlayer].lat, data[notCoopPlayer].long, data[notCoopPlayer].session);
     	}
     });
 
@@ -420,6 +420,15 @@ function create() {
     // Boss gekillt in andere client
     socket.on('bossDead', function(data) {    	
         explode(boss.x, boss.y);
+    });
+
+    // Nieuwe locatie van (bestaande) speler ophalen
+    socket.on('updatedLocation', function(data) {
+    	players[data.session].lat = data.lat;
+    	players[data.session].long = data.long;
+
+   		//console.log('CompareGPS nieuwe locatie');
+    	//compareGPS(players[data.session].lat, players[data.session].long, players[data.session].name);
     });
 
     // Spawn bullet
@@ -595,6 +604,7 @@ function update() {
     	}
 
     	if(typeof player !== "undefined" && player.move === true || coopMovement === true) {
+
     		// Ga na welke coopspeler je bent, andere waardes kan ik hier niet aan.. dus dan maar zo
         	Object.keys(coopPlayers).forEach(function(key) {
         		if(key.indexOf(io.socket.sessionid) > -1) {
@@ -686,6 +696,12 @@ function fire() {
 	if(game.time.now > bulletTime) {
 		//bullet = bullets.getFirstExists(false);
         bulletTime = game.time.now + 250;
+
+        if(player.coop === true) {
+        	console.log('You are in Co-op mode');
+        } else {
+        	console.log('Not in co-op mode.');
+        }
             
         var resetX = player.body.x + (player.width / 2);
         var resetY = player.body.y + (player.height / 2);
@@ -773,7 +789,7 @@ function explode(x, y) {
 }
 
 function newPlayer(plr) {
-    console.log('New player data', plr);
+    console.log('New player data', plr.lat);
 
     // new player variables
     var newSession = plr.session;
@@ -803,13 +819,17 @@ function newPlayer(plr) {
     players[plr.session].coop = false;
     players[plr.session].coopPlayer = '';
 
+    players[plr.session].inputEnabled = true;
+    players[plr.session].events.onInputOver.add(clickedPlayer, this);
+
     // Ga na of speler in co-op mode is, zo ja 'hide' deze speler dan
     if(typeof plr.coop !== "undefined" && plr.coop === true) {
     	players[plr.session].visible = false;
     }
 
-    // Vergelijk locatie van nieuwe speler met jou
-    // compareGPS(players[plr.session].latitude, players[plr.session].longitude, players[plr.session].name);
+    // Vergelijk locatie van nieuwe speler met jouw locatie
+    //console.log('CompareGPS nieuwe speler');
+    //compareGPS(players[plr.session].latitude, players[plr.session].longitude, players[plr.session].name);
 
     playerGroup.add(players[plr.session]);    
     playerGroup.bringToTop(player);
@@ -1219,6 +1239,14 @@ function newCoop(player1, player2, shoot, move, type) {
 		coopSession = player2 + player1;
 	}
 
+	console.log('player 1', player1);
+	console.log('player 2', player2);
+	console.log('coop session', coopSession);
+
+	if(player1 === io.socket.sessionid || player2 === io.socket.sessionid) {
+		player.coop = true;
+	}
+
 	coopPlayers[coopSession] = game.add.sprite(game.world.centerX, game.world.centerY, 'coop');
 	coopPlayers[coopSession].name = coopSession;
 	coopPlayers[coopSession].player1 = player1;
@@ -1240,15 +1268,20 @@ function newCoop(player1, player2, shoot, move, type) {
 		coopPlayers[coopSession].frame = 2;
 		coopMovement = true;
 		coopShooting = false;
-	} else if (coopPlayers[coopSession].shoot == io.socket.sessionid) {
+	} 
+
+	if(coopPlayers[coopSession].shoot == io.socket.sessionid) {
 		console.log(currentDate() + " | You may shoot, good sir.");
 		textPlayer.setText('COOP MODE (shoot)');
 		coopPlayers[coopSession].frame = 1;
 		coopShooting = true;
 		coopMovement = false;
+		player.move = false;
 	}
 
 	if(player1 == io.socket.sessionid) {
+		console.log('jij bent player 1');
+
 		player.coop = true;
 		player.visible = false;
 		player.renderable = false;
@@ -1260,7 +1293,11 @@ function newCoop(player1, player2, shoot, move, type) {
 		players[player2].coop = true;
 
 		game.camera.follow(coopPlayers[coopSession]);
-	} else if (player2 == io.socket.sessionid) {
+	}
+
+	else if (player2 == io.socket.sessionid) {
+		console.log('jij bent player 2');
+
 		player.coop = true;
 		player.visible = false;
 		player.renderable = false;
@@ -1272,7 +1309,11 @@ function newCoop(player1, player2, shoot, move, type) {
 		players[player1].coop = true;
 
 		game.camera.follow(coopPlayers[coopSession]);
-	} else {
+	} 
+
+	else {
+		console.log('jij bent geen van beide');
+
 		players[player1].visible = false;
 		players[player1].coop = true;
 		players[player1].renderable = false;
@@ -1280,9 +1321,6 @@ function newCoop(player1, player2, shoot, move, type) {
 		players[player2].visible = false;
 		players[player2].coop = true;
 		players[player2].renderable = false;
-
-		console.log(players[player1].visible);
-		console.log(players[player2].visible);
 	}
 
 	if(type === 'new') {
@@ -1300,26 +1338,39 @@ function newCoop(player1, player2, shoot, move, type) {
 // Function to compare location of yourself to other Player
 // Decides to create newCoop if distance within range
 function compareGPS(playerLat, playerLong, playerSession) {	
-	// distance between you and other player in kilometers
-	var dist = distance(player.latitude, player.longitude, playerLat, playerLong, "k");
-	
-	// distance in meters
-	dist = dist * 1000;
+	if(playerLat !== '' && playerLong !== '') {
+		// distance between you and other player in kilometers
+		var dist = distance(latitude, longitude, playerLat, playerLong, "k");
 
-	console.log('latitude', playerLat, 'longitude', playerLong, 'session', playerSession, 'distance', dist);
+		// distance in meters
+		dist = dist * 1000;
 
-	// check if distance is within given range
-	if(dist <= range && !isNaN(dist)) {
-		// Coop both players (if other player is not you!)
-		if(playerSession != io.socket.sessionid) {
-			//console.log('Distance between YOU and ' + playerSession + ' is: ' + dist.toString() + ' meters.');
-			if(player.coop === false && players[playerSession].coop === false) {
-				//console.log('oke, maak maar coop van');
-				newCoop(player.name, players[playerSession].name, players[playerSession].name, player.name, 'new');
-			}
-		} 
-	} else {
-		//console.log('Distance between YOU and ' + players[playerSession].name + ' (' + dist + ') is greater than the given range (' + range + ').');
+		// check if distance is within given range
+		if(dist <= range && !isNaN(dist)) {
+			// Ga na of te vergelijken speler niet jijzelf is (je kunt niet co-oppen met jezelf :p)
+			if(playerSession != io.socket.sessionid) {
+				console.log(currentDate() + ' | Distance between YOU and ' + playerSession + ' is: ' + dist.toString() + ' meters.');
+				// Ga na of jijzelf nog niet in co-op bent
+
+				if(player.coop === false) {
+					console.log(currentDate() + ' | Ik ben nog niet in co-op modus');
+					if(players[playerSession].coop === false) {
+						console.log(currentDate() + ' | ' + playerSession + ' is ook nog niet in co-op modus');
+
+						newCoop(player.name, players[playerSession].name, players[playerSession].name, player.name, 'new');
+					}
+				} else {
+					console.log('NEEEEEEEEEEEEEEEEEEEEEEE');
+				}
+
+				/*if(player.coop === false && players[playerSession].coop === false) {
+					console.log('oke, maak maar coop van');
+					newCoop(player.name, players[playerSession].name, players[playerSession].name, player.name, 'new');
+				}*/
+			} 
+		} else {
+			console.log(currentDate() + ' | Distance between YOU and ' + players[playerSession].name + ' (' + dist + ') is greater than the given range (' + range + ').');
+		}
 	}
 }
 
@@ -1327,13 +1378,14 @@ function compareGPS(playerLat, playerLong, playerSession) {
 // Check if user's browser supports geolocation
 function getLocation() {
 	if(navigator.geolocation) {
-		// navigator.geolocation.getCurrentPosition(foundPosition);
 		navigator.geolocation.watchPosition(foundPosition, function(error) {
+			console.log('Error', error);
             if(error.code == error.PERMISSION_DENIED) {
                 latitude = 0;
                 longitude = 0;
             }
-        }, {maximumAge: 500, timeout: 5000, enableHighAccuracy: true});
+        }, {enableHighAccuracy: false});
+        // HighAccuracy staat uit i.v.m. accu duur
 	} else {
 		console.log('Het ophalen van uw locatie is mislukt\nGPS wordt niet ondersteund op uw smart device.');
 	}
@@ -1342,34 +1394,17 @@ function getLocation() {
 // Get exact location of user if geolocation is supported
 // Just used to store the latitude and longitude of player at the moment
 function foundPosition(position) {
-    console.log(currentDate() + ' | Getting updated Location');
-
     if(position.coords.latitude !== latitude || position.coords.longitude !== longitude) {
-        console.log(currentDate() + ' | NEW LOCATION!');
+    	latitude = position.coords.latitude;
+		longitude = position.coords.longitude;
+
+		var updatedLocation = JSON.stringify({
+			sessionid : io.socket.sessionid,
+			lat : latitude,
+			long : longitude
+		});
+		socket.emit('locationUpdate', updatedLocation);
     }
-
-	latitude = position.coords.latitude;
-	longitude = position.coords.longitude;
-
-	// Store variables in localStorage, so they can be accessed later on (NODIG?)
-	localStorage.setItem('latitude', latitude);
-	localStorage.setItem('longitude', longitude);
-
-	// get google maps location details.
-	var googleMapsURL = 'http://maps.googleapis.com/maps/api/geocode/json?latlng=' + latitude + ',' + longitude + '&sensor=false';
-
-	$.ajax({
-		url: googleMapsURL,
-		type: "GET",
-		dataType: "JSON",
-		success: function(data) {
-			var straat = data["results"][0]["address_components"][1]["long_name"];
-			var plaats = data["results"][0]["address_components"][2]["long_name"];
-		},
-		error: function(error) {
-			alert(error);
-		}
-	});
 }
 
 // Function to calculate distance between two players.
@@ -1394,7 +1429,9 @@ function distance(lat1, lon1, lat2, lon2, unit) {
     return dist;
 }
 
-
+function clickedPlayer(event, sprite) {
+	compareGPS(players[event.name].latitude, players[event.name].longitude, players[event.name].name);
+}
 
 function render() {
 	/*for(var player in players) {
