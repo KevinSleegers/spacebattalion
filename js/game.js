@@ -29,6 +29,7 @@ function preload() {
 	game.load.spritesheet('coop', 'assets/img/spr_double_final_strip4.png', 96, 128);
 	game.load.spritesheet('explosion', 'assets/img/fx_explosion_strip10.png', 64, 64);
 	game.load.spritesheet('bullet', 'assets/img/fx_bullet_impact_strip7.png', 32, 32);
+	game.load.image('star', 'assets/img/spr_star.png', 64, 64);
     //game.load.image('player', 'assets/img/spr_myplane.png');
     //game.load.image('otherPlayers', 'assets/img/spr_plane.png');
     //game.load.image('coop', 'assets/img/spr_doublePlane.png');
@@ -84,6 +85,10 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     // Cloud image
     clouds,
     cloudTimer = 0,
+	
+	// Star image
+	stars,
+	starTimer = 0,
 
     // Moon image
     moon,
@@ -172,7 +177,15 @@ function create() {
     clouds.setAll('anchor.x', 0.5);
     clouds.setAll('anchor.y', 0.5);
     clouds.setAll('outOfBoundsKill', true);  
-
+	
+	
+	stars = game.add.group();
+    stars.enableBody = true;
+    stars.physicsBodyType = Phaser.Physics.ARCADE;
+    stars.setAll('anchor.x', 0.5);
+    stars.setAll('anchor.y', 0.5);
+    stars.setAll('outOfBoundsKill', true);  
+	createStar();
     // Generate 5 clouds to start with.
     for(i = 0; i < 5; i++) {
         createCloud();
@@ -536,6 +549,11 @@ function update() {
     // create clouds
     if(game.time.now > cloudTimer) {          
         createCloud();
+    }
+	
+	// create stars
+    if(game.time.now > starTimer) {          
+        createStar();
     }
 
     if(moon.x > (game.world.width + moon.width)) {
@@ -1097,6 +1115,24 @@ function createCloud() {
     cloudTimer = game.time.now + 5000;
 
     clouds.add(cloud);
+}
+
+
+function createStar() {
+    // random getal tussen 0 en 1
+    var randStar = Math.floor((Math.random() * 10) + 1);
+
+    // random x waarde tussen 800 en 400
+    var random = Math.floor(Math.random() * (800 - 400 + 1)) + 400;
+
+    
+    var star = game.add.sprite(-(Math.random() * random), game.world.randomY, 'star');
+    
+
+
+    starTimer = game.time.now + 5000;
+
+    stars.add(star);
 }
 
 function createMoon() {
