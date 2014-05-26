@@ -23,7 +23,7 @@ function preload() {
     // Load font
     game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
 
-	game.load.spritesheet('player', 'assets/img/spr_myplane_strip2.png', 64, 64);
+	game.load.spritesheet('player', 'assets/img/spr_plane_strip11.png', 64, 64);
 	game.load.spritesheet('otherPlayers', 'assets/img/spr_plane_strip2.png', 64, 64);
 	game.load.spritesheet('boss', 'assets/img/spr_boss_strip3.png', 128, 256);
 	game.load.spritesheet('coop', 'assets/img/spr_double_final_strip4.png', 96, 128);
@@ -226,6 +226,22 @@ function create() {
         bullet.kill();
     }
 
+    /*muzzleFlash = game.add.group();
+
+    for(var i = 0; i < 30; i++) {
+    	var muzzle = this.game.add.sprite(0, 0, 'muzzleFlash');
+
+    	muzzleFlash.add(muzzle);
+
+    	muzzle.anchor.setTo(0.5, 0.5);
+    	this.game.physics.enable(muzzle, Phaser.Physics.ARCADE);
+
+    	muzzle.kill();
+    }
+
+
+    //muzzleFlash.createMultiple(30, 'muzzleFlash');*/
+
     // Player group aanmaken
     playerGroup = game.add.group();
 
@@ -240,7 +256,7 @@ function create() {
 	player.move = true;
 	player.shoot = true;
 	player.health = 100;
-	player.frame = 1;
+	player.frame = 3;
 	player.bringToTop();
 	game.physics.enable(player, Phaser.Physics.ARCADE);
 	player.enableBody = true;
@@ -363,23 +379,22 @@ function create() {
 
         	textHealth.setText("Health: " + player.health);
 
-    		if(player.health === 0) {				
-				/*var emitter = game.add.emitter(player.x, player.y, 250);
-				emitter.makeParticles('explosion');
-				emitter.minParticleSpeed.setTo(-300, -300);
+        	console.log('ik wordt gehit');
 
-				emitter.maxParticleSpeed.setTo(300, 300);
+        	if(player.health <= 70 && player.health > 30) {
+        		player.frame = 4;
+        	} else if(player.health <= 30 && player.health > 0) {
+        		player.frame = 5;
+        	} else if(player.health === 0) {	
+        		player.frame = 9;
 
-				//  By setting the min and max rotation to zero, you disable rotation on the particles fully
-
-				emitter.minRotation = 0;
-				emitter.maxRotation = 0;
-
-				emitter.start(true, 4000, null, 15);*/
-
-				explode(player.x, player.y);			
+        		setTimeout(function() {
+					explode(player.x, player.y);
+        		}, 300);			
 
     			socket.emit('playerDied', io.socket.sessionid);
+    		} else {
+    			player.frame = 3;
     		}
     	}
     	// data.length > 20 dan is het een coop speler
@@ -464,9 +479,6 @@ function create() {
     bullets.setAll('anchor.x', 0.5);
     bullets.setAll('anchor.y', 0.5);
     bullets.setAll('outOfBoundsKill', true); */ 
-
-    muzzleFlash = game.add.group();
-    muzzleFlash.createMultiple(30, 'muzzleFlash');
 
     //game.stage.backgroundColor = '#FFF';
 
@@ -907,7 +919,18 @@ function newBullet(blt) {
         bullet.revive();
 
         bullet.checkWorldBounds = true;
-        bullet.outOfBoundsKill = true
+        bullet.outOfBoundsKill = true;
+
+        // Muzzleflash
+        muzzleFlash = game.add.sprite(blt.resetX, blt.resetY, 'muzzleFlash');
+		muzzleFlash.anchor.setTo(0.5, 0.5);
+
+		muzzleFlash.alpha = 0;
+		game.add.tween(muzzleFlash).to( { alpha: 1 }, 100, Phaser.Easing.Linear.None, true, 0, 100, true);
+			
+		setTimeout(function() {
+			muzzleFlash.destroy();
+	       }, 100);
 
         bullet.reset(blt.resetX, blt.resetY);
         bullet.rotation = blt.rotation;
@@ -1099,14 +1122,14 @@ function bulletPlayer(plr, blt) {
     	blt.kill();
 	}, this);
 
-	player.frame = 2;
+	player.frame = 10;
 
     if(player.health <= 0) {
         explode(player.x, player.y);
     }
 
     setTimeout(function() {
-    	player.frame = 1;
+    	player.frame = 3;
 	}, 100);
 }
 
