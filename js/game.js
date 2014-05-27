@@ -586,11 +586,10 @@ function update() {
 	        }
 	    });
 	} else {
-		player.body.velocity.setTo(0,0);
-	}
-
-	if(typeof player !== "undefined") {
-		player.body.velocity.setTo(0,0);		
+		//player.body.velocity.setTo(0,0);
+		if(typeof player !== "undefined") {
+			player.body.velocity.setTo(0,0);		
+		}
 	}
 
     // Update background
