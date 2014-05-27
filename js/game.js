@@ -654,7 +654,7 @@ function update() {
 
     if(game.device.desktop) {
 
-    	if(player.visible === true || typeof player !== "undefined") {
+    	if(typeof player !== "undefined" && player.visible === true && player.coop === false) {
     		var currentSprite = 'p';
     		movementSpeed = 350;
     	} else {
