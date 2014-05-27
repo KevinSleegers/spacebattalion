@@ -212,6 +212,10 @@ function create() {
     	playerName = randName();
     }
     console.log(currentDate() + " | Welcome: " + playerName.charAt(0).toUpperCase() + playerName.substring(1) + ", your session is: " + io.socket.sessionid + ".");
+
+    if(playerName !== '' && typeof textPlayer !== 'undefined') {
+    	textPlayer.setText('Player: ' + playerName);
+    }
     // playerName = randName();
 
     // Geluidseffecten aanmaken
@@ -1391,6 +1395,7 @@ function newCoop(player1, player2, shoot, move, x, y, angle, type) {
 		player.allowControls = false;
 		player.move = false;
 		player.shoot = false;
+		player.enableBody = false;
 
 		players[player2].visible = false;
 		players[player2].coop = true;
@@ -1409,6 +1414,7 @@ function newCoop(player1, player2, shoot, move, x, y, angle, type) {
 		player.allowControls = false;
 		player.move = false;
 		player.shoot = false;
+		player.enableBody = false;
 
 		players[player1].visible = false;
 		players[player1].coop = true;
@@ -1421,15 +1427,25 @@ function newCoop(player1, player2, shoot, move, x, y, angle, type) {
 	else {
 		console.log('jij bent geen van beide');
 
-		players[player1].visible = false;
-		players[player1].coop = true;
-		players[player1].renderable = false;
-		players[player1].enableBody = false;
+		if(typeof players[player1] !== 'undefined') {
+			players[player1].visible = false;
+			players[player1].coop = true;
+			players[player1].renderable = false;
+			players[player1].enableBody = false;
+		}
+		else {
+			console.log('player 1 bestaat niet');
+		}
 
-		players[player2].visible = false;
-		players[player2].coop = true;
-		players[player2].renderable = false;
-		players[player2].enableBody = false;
+		if(typeof players[player2] !== 'undefined') {
+			players[player2].visible = false;
+			players[player2].coop = true;
+			players[player2].renderable = false;
+			players[player2].enableBody = false;
+		}
+		else {
+			console.log('player 2 bestaat niet');
+		}
 	}
 
 	if(type === 'new') {
