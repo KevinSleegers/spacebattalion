@@ -38,6 +38,7 @@ function preload() {
 	//game.load.image('bullet', 'assets/img/spr_bullet.png');
 	//game.load.image('explosion', 'assets/img/spr_explosion.png');
     game.load.image('muzzleFlash', 'assets/img/spr_muzzleFlash.png');
+    game.load.image('flyRail', 'assets/img/fly_rail.png');
 
     // Animated background..
     game.load.spritesheet('mainBg', 'assets/img/spr_backgroundOverlay.png', 160, 160);
@@ -68,6 +69,7 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     bulletsCount = 20,
     bulletTime = 0, 
     textPlayer, 
+	curPlayerFrame,
     textOnlinePlayers,
     textHealth,
     oldX = 0, 
@@ -591,6 +593,22 @@ function update() {
 			player.body.velocity.setTo(0,0);		
 		}
 	}
+	
+	// Particles (vliegspoor) achter schip
+	/*
+    emitter = game.add.emitter(player.x, player.y, 1);
+
+    emitter.makeParticles('flyRail');
+
+    emitter.setRotation(0, 0);
+    emitter.setAlpha(0.3, 0.8);
+    emitter.setScale(0.5, 1);
+    emitter.gravity = 200;
+
+    //	false means don't explode all the sprites at once, but instead release at a rate of one particle per 100ms
+    //	The 5000 value is the lifespan of each particle before it's killed
+    emitter.start(false, 5000, 100);	
+	*/
 
     // Update background
     bgtile.tilePosition.x -= 1;
@@ -1136,7 +1154,7 @@ function bulletBoss(plr, blt)
 			boss.visible = true;		
 
 			boss.animations.add('boss');
-			boss.animations.play('boss', 15, false, true);	
+			boss.animations.play('boss', 8, false, true);	
 
 			socket.emit('bossDied', io.socket.sessionid);
 		}
@@ -1155,9 +1173,13 @@ function bulletBoss(plr, blt)
 function bulletOtherPlayer(plr, blt) {
 
 	blt.animations.play('bulletCollide');
+	curPlayerFrame = players[plr.name].frame;
+	
+	players[plr.name].frame = 12;
 
 	blt.events.onAnimationComplete.add(function() {
     	blt.kill();
+		players[plr.name].frame = curPlayerFrame;
 	}, this);
 
     var damagedPlayer = players[plr.name].name;
