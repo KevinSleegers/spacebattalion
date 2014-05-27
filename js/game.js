@@ -23,40 +23,58 @@ function preload() {
     // Load font
     game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
 
+    // player sprite -> 64x64
 	game.load.spritesheet('player', 'assets/img/spr_plane_strip11.png', 64, 64);
+
+	// other players sprite -> 64x64
 	game.load.spritesheet('otherPlayers', 'assets/img/spr_plane_strip2.png', 64, 64);
 
-	// ?????
+	// boss sprite -> 256x128
 	// game.load.spritesheet('boss', 'assets/img/spr_boss_die_strip13.png', 256, 128);
 	game.load.spritesheet('boss', 'assets/img/spr_boss_die_strip13_TEST.png', 256, 256);
 
-	// ?????
+	// coop sprite -> 96x128
 	//game.load.spritesheet('coop', 'assets/img/spr_double_final_strip4.png', 96, 128);
 	game.load.spritesheet('coop', 'assets/img/spr_double_final_strip4_TEST.png', 128, 128);
 
+	// minion sprite -> 64x64
 	game.load.spritesheet('minion', 'assets/img/spr_minion_strip3.png', 64, 64);
+
+	// explosion sprite -> 64x64
 	game.load.spritesheet('explosion', 'assets/img/fx_explosion_strip10.png', 64, 64);
+
+	// bullet sprite -> 32x32
 	game.load.spritesheet('bullet', 'assets/img/fx_bullet_impact_strip7.png', 32, 32);
-	game.load.image('star', 'assets/img/spr_star.png', 64, 64);
+
+	// star sprite -> 64x64
+	game.load.image('star', 'assets/img/spr_star.png');
     //game.load.image('player', 'assets/img/spr_myplane.png');
     //game.load.image('otherPlayers', 'assets/img/spr_plane.png');
     //game.load.image('coop', 'assets/img/spr_doublePlane.png');
 	//game.load.image('boss', 'assets/img/spr_boss.png');
 	//game.load.image('bullet', 'assets/img/spr_bullet.png');
 	//game.load.image('explosion', 'assets/img/spr_explosion.png');
+
+	// muzzleflash sprite -> 32x32
     game.load.image('muzzleFlash', 'assets/img/spr_muzzleFlash.png');
-    game.load.image('flyRail', 'assets/img/fly_rail.png');
+
+    // flyRail sprite -> 12x12
+    //game.load.image('flyRail', 'assets/img/fly_rail.png');
+    game.load.image('flyRail', 'assets/img/fly_rail_TEST.png');
 
     // Animated background..
     // game.load.spritesheet('mainBg', 'assets/img/spr_backgroundOverlay.png', 160, 160);
     game.load.spritesheet('mainBg', 'assets/img/spr_backgroundOverlay.png', 128, 128);
 
     // Cloud sprites
-    game.load.image('cloud1', 'assets/img/spr_cloud1.png');
-    game.load.image('cloud2', 'assets/img/spr_cloud2.png');
+    //game.load.image('cloud1', 'assets/img/spr_cloud1.png');
+    //game.load.image('cloud2', 'assets/img/spr_cloud2.png');
+    game.load.image('cloud1', 'assets/img/spr_cloud1_TEST.png');
+    game.load.image('cloud2', 'assets/img/spr_cloud2_TEST.png');
 
-    // Moon sprite
-    game.load.image('moon', 'assets/img/spr_moon.png');
+    // Moon sprite -> 192x192
+    //game.load.image('moon', 'assets/img/spr_moon.png');
+    game.load.image('moon', 'assets/img/spr_moon_TEST.png');
 
     game.load.audio('backgroundMusic', ['assets/audio/TakingFlight.mp3', 'assets/audio/TakingFlight.ogg']);
     //game.load.audio('playerBullet', 'assets/audio/shot.wav');
