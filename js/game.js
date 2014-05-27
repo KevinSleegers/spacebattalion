@@ -550,10 +550,11 @@ function createText() {
     textPlayer.anchor.setTo(0.5, 0.5);
     textPlayer.fixedToCamera = true;
 
-    if(typeof player.health === 'undefined') {
-        var playerHealth = 100;
+    // Check om na te gaan of 'player' al bestaat
+    if(typeof player !== 'undefined') {
+    	var playerHealth = player.health;
     } else {
-        var playerHealth = player.health;
+    	var playerHealth = 100;
     }
 
     textHealth = game.add.text(window.screen.availWidth - 200, 50, "Health: " + playerHealth);
