@@ -700,12 +700,14 @@ function update() {
         // Create collision detection for all players
         for(var plr in players) {
         	// your bullets hit other players
-        	if(player.coop === false) {
+        	if(players[plr].visible !== false) {
             	game.physics.arcade.collide(bullets, players[plr], bulletOtherPlayer, null, this);
             }
 
-            // other bullets hit you
-            game.physics.arcade.collide(bullets, player, bulletPlayer, null, this);
+            if(player.visible !== false) {
+            	// other bullets hit you
+            	game.physics.arcade.collide(bullets, player, bulletPlayer, null, this);
+            }
         }
 
         // Create collision detection for all co-op players
