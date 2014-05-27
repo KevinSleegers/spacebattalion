@@ -1451,7 +1451,7 @@ function compareGPS(playerLat, playerLong, playerSession) {
 		dist = dist * 1000;
 
 		// check if distance is within given range
-		if(dist <= range && !isNaN(dist)) {
+		//if(dist <= range && !isNaN(dist)) {
 			// Ga na of te vergelijken speler niet jijzelf is (je kunt niet co-oppen met jezelf :p)
 			if(playerSession != io.socket.sessionid) {
 				console.log(currentDate() + ' | Distance between YOU and ' + playerSession + ' is: ' + dist.toString() + ' meters.');
@@ -1472,7 +1472,6 @@ function compareGPS(playerLat, playerLong, playerSession) {
 					console.log('oke, maak maar coop van');
 					newCoop(player.name, players[playerSession].name, players[playerSession].name, player.name, 'new');
 				}*/
-			} 
 		} else {
 			console.log(currentDate() + ' | Distance between YOU and ' + players[playerSession].name + ' (' + dist + ') is greater than the given range (' + range + ').');
 		}
