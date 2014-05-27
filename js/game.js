@@ -41,7 +41,8 @@ function preload() {
     game.load.image('flyRail', 'assets/img/fly_rail.png');
 
     // Animated background..
-    game.load.spritesheet('mainBg', 'assets/img/spr_backgroundOverlay.png', 160, 160);
+    // game.load.spritesheet('mainBg', 'assets/img/spr_backgroundOverlay.png', 160, 160);
+    game.load.spritesheet('mainBg', 'assets/img/spr_backgroundOverlay.png', 128, 128);
 
     // Cloud sprites
     game.load.image('cloud1', 'assets/img/spr_cloud1.png');
