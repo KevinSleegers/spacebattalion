@@ -25,8 +25,9 @@ function preload() {
 
 	game.load.spritesheet('player', 'assets/img/spr_plane_strip11.png', 64, 64);
 	game.load.spritesheet('otherPlayers', 'assets/img/spr_plane_strip2.png', 64, 64);
-	game.load.spritesheet('boss', 'assets/img/spr_boss_strip3.png', 128, 256);
+	game.load.spritesheet('boss', 'assets/img/spr_boss_die_strip13.png', 256, 128);
 	game.load.spritesheet('coop', 'assets/img/spr_double_final_strip4.png', 96, 128);
+	game.load.spritesheet('minion', 'assets/img/spr_minion_strip3.png', 64, 64);
 	game.load.spritesheet('explosion', 'assets/img/fx_explosion_strip10.png', 64, 64);
 	game.load.spritesheet('bullet', 'assets/img/fx_bullet_impact_strip7.png', 32, 32);
 	game.load.image('star', 'assets/img/spr_star.png', 64, 64);
@@ -63,6 +64,7 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     cursors, 
     fireButton, 
     bullets, 
+	currentDirection,
     bulletsCount = 20,
     bulletTime = 0, 
     textPlayer, 
@@ -76,6 +78,8 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     shakeScreen = 0,
     bossHealth = 100,
     muzzleFlash,
+	bossIsDying = false.
+	playerIsMinion = false,
 
     playerGroup,
 
@@ -383,11 +387,28 @@ function create() {
 
         	if(player.health <= 70 && player.health > 30) {
         		player.frame = 4;
+				player.tint = 0xFF9933;				
         	} else if(player.health <= 30 && player.health > 0) {
         		player.frame = 5;
-        	} else if(player.health === 0) {	
-        		player.frame = 9;
-
+				player.tint = 0xFF3300;	
+        	} else if(player.health <= 0) {	
+			
+				//player.frame = 9;
+				
+				//if(boss over speler gaat)
+				//{
+					player.tint = 0xFFFFFF;
+					player.frame = 12;
+					player.health = 100;				
+					playerIsMinion = true;
+				//}
+				
+				// Standaard als via de function: damage() iets gekilled wordt, dan worden de statussen: alive, exist en visible op false gezet 
+				// verder worden ook alle events gebonden aan de speler removed
+				player.alive = true;
+				player.exists = true;
+				player.visible = true;
+				
         		setTimeout(function() {
 					explode(player.x, player.y);
         		}, 300);			
@@ -415,7 +436,7 @@ function create() {
     	} else {
     		players[data].damage(10);
 
-    		if(players[data].health === 0) {
+    		if(players[data].health <= 0) {		
     			explode(players[data].x, players[data].y);
     		}
     	}
@@ -460,7 +481,7 @@ function create() {
     game.physics.enable(boss, Phaser.Physics.ARCADE);
     boss.physicsBodyType = Phaser.Physics.ARCADE;
     boss.health = 1000;
-    boss.frame = 2;
+    boss.frame = 1;
     boss.body.immovable = true;
 
 	/*bullets.enableBody = true;
@@ -631,30 +652,38 @@ function update() {
 
 	            if(cursors.left.isDown && cursors.down.isDown) {
 	                changePosition('-', diagonalSpeed(movementSpeed), '+', diagonalSpeed(movementSpeed), 135, currentSprite);
+					currentDirection = 'left-down';
 	            }
 	            else if(cursors.left.isDown && cursors.up.isDown) {  
 	                changePosition('-', diagonalSpeed(movementSpeed), '-', diagonalSpeed(movementSpeed), -135, currentSprite);
+					currentDirection = 'left-up';
 	            }
 	            else {
 	                changePosition('-', movementSpeed, '', '', 180, currentSprite);
+					currentDirection = 'left';
 	            }
 	        }
 	        else if(cursors.right.isDown) {
 	            if(cursors.right.isDown && cursors.down.isDown) {
 	                changePosition('+', diagonalSpeed(movementSpeed), '+', diagonalSpeed(movementSpeed), 45, currentSprite);
+					currentDirection = 'right-down';
 	            }   
 	            else if(cursors.right.isDown && cursors.up.isDown) {  
-	                changePosition('+', diagonalSpeed(movementSpeed), '-', diagonalSpeed(movementSpeed), -45, currentSprite);         
+	                changePosition('+', diagonalSpeed(movementSpeed), '-', diagonalSpeed(movementSpeed), -45, currentSprite);    
+					currentDirection = 'right-up';					
 	            }   
 	            else {  
 	                changePosition('+', movementSpeed, '', '', 0, currentSprite);
+					currentDirection = 'right';
 	            }
 	        }
 	        else if(cursors.up.isDown) {
 	            changePosition('', '', '-', movementSpeed, -90, currentSprite);
+				currentDirection = 'up';
 	        }
 	        else if(cursors.down.isDown) {
 	            changePosition('', '', '+', movementSpeed, 90, currentSprite);
+				currentDirection = 'down';
 	        }
     	}
 
@@ -917,20 +946,50 @@ function newBullet(blt) {
 
     if(bullet) {
         bullet.revive();
-
-        bullet.checkWorldBounds = true;
-        bullet.outOfBoundsKill = true;
-
+		
         // Muzzleflash
         muzzleFlash = game.add.sprite(blt.resetX, blt.resetY, 'muzzleFlash');
-		muzzleFlash.anchor.setTo(0.5, 0.5);
+		
+		console.log(player.rotation);
+		
+		// Positie van muzzleflash, kon even geen andere manier bedenken dus dan maar zo :D
+		if(currentDirection == 'left')
+		{
+			muzzleFlash.anchor.setTo(1.9, .4);
+		}else if(currentDirection == 'left-up')
+		{
+			muzzleFlash.anchor.setTo(2.2, 2.1);
+		}else if(currentDirection == 'left-down')
+		{
+			muzzleFlash.anchor.setTo(2.2, -1.4);
+		}else if(currentDirection == 'right-up')
+		{
+			muzzleFlash.anchor.setTo(-1.2, 2.1);
+		}else if(currentDirection == 'right-down')
+		{
+			muzzleFlash.anchor.setTo(-1.2, -1.2);
+		}else if(currentDirection == 'right')
+		{
+			muzzleFlash.anchor.setTo(-.9, .6);
+		}else if(currentDirection == 'down')
+		{
+			muzzleFlash.anchor.setTo(.5, -1.0);
+		}else if(currentDirection == 'up')
+		{
+			muzzleFlash.anchor.setTo(.5, 1.9);
+		}else
+		{
+			muzzleFlash.anchor.setTo(.5, .5);		
+		}
 
 		muzzleFlash.alpha = 0;
 		game.add.tween(muzzleFlash).to( { alpha: 1 }, 100, Phaser.Easing.Linear.None, true, 0, 100, true);
-			
-		setTimeout(function() {
-			muzzleFlash.destroy();
-	       }, 100);
+		
+		// Muzzleflash wordt automatisch verwijdert na 200ms
+		muzzleFlash.lifespan = 200;					
+
+        bullet.checkWorldBounds = true;
+        bullet.outOfBoundsKill = true;
 
         bullet.reset(blt.resetX, blt.resetY);
         bullet.rotation = blt.rotation;
@@ -1041,28 +1100,48 @@ function changePosition(xVal, xSpeed, yVal, ySpeed, angleVal, spriteVal) {
 
 function bulletBoss(plr, blt)
 {
-	console.log(currentDate() + ' | A bullet hit the Boss!');
+	if(!bossIsDying)
+	{
+		console.log(currentDate() + ' | A bullet hit the Boss!');
 
+		// damage done to boss (boss.health - boss.damage)
+		boss.damage(100);
+
+		boss.frame = 0;
+	
+		if(boss.health <= 500 && boss.health > 200) 
+		{
+			boss.tint = 0xFF9933;				
+		} 
+		else if(boss.health <= 200 && boss.health > 0)
+		{
+			boss.tint = 0xFF0000;	
+		} 
+		else if(boss.health <= 0) 
+		{
+			bossIsDying = true;
+			boss.tint = 0xFFFFFF;		
+			explode(boss.x, boss.y);
+			
+			boss.alive = true;
+			boss.exists = true;
+			boss.visible = true;		
+
+			boss.animations.add('boss');
+			boss.animations.play('boss', 15, false, true);	
+
+			socket.emit('bossDied', io.socket.sessionid);
+		}
+		
+		setTimeout(function() {
+			boss.frame = 1;
+		}, 100);	
+	}
+	
 	blt.animations.play('bulletCollide');
-
 	blt.events.onAnimationComplete.add(function() {
-    	blt.kill();
+		blt.kill();
 	}, this); 
-
-    // damage done to boss (boss.health - boss.damage)
-    boss.damage(100);
-
-    boss.frame = 0;
-
-    if(boss.health <= 0) {
-        explode(boss.x, boss.y);
-
-        socket.emit('bossDied', io.socket.sessionid);
-    }
-
-	setTimeout(function() {
-    	boss.frame = 2;
-	}, 100);
 }
 
 function bulletOtherPlayer(plr, blt) {
@@ -1080,15 +1159,9 @@ function bulletOtherPlayer(plr, blt) {
 
     players[plr.name].damage(10);
 
-    players[plr.name].frame = 0;
-
     if(players[plr.name].health <= 0) {
         explode(players[plr.name].x, players[plr.name].y);
     }
-
-    setTimeout(function() {
-    	players[plr.name].frame = 1;
-	}, 100);
 }
 
 function bulletCoop(plr, blt) {
@@ -1122,15 +1195,9 @@ function bulletPlayer(plr, blt) {
     	blt.kill();
 	}, this);
 
-	player.frame = 10;
-
     if(player.health <= 0) {
         explode(player.x, player.y);
-    }
-
-    setTimeout(function() {
-    	player.frame = 3;
-	}, 100);
+    }  
 }
 
 function diagonalSpeed(speed) {
