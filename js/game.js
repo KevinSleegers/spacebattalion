@@ -114,37 +114,7 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
 
 
 
-function createText() {
-    textPlayer = game.add.text(game.world.centerX, 50, "Player: " + playerName);
-    textPlayer.font = 'Press Start 2P';
-    textPlayer.fontSize = 15;
-    textPlayer.fill = '#f00';
-    textPlayer.align = 'center';
-    textPlayer.anchor.setTo(0.5, 0.5);
-    textPlayer.fixedToCamera = true;
 
-    if(typeof player.health === 'undefined') {
-        var playerHealth = 100;
-    } else {
-        var playerHealth = player.health;
-    }
-
-    textHealth = game.add.text(window.screen.availWidth - 200, 50, "Health: " + playerHealth);
-    textHealth.font = 'Press Start 2P';
-    textHealth.fontSize = 15;
-    textHealth.fill = '#f00';
-    textHealth.align = 'center';
-    textHealth.anchor.setTo(0.5, 0.5);
-    textHealth.fixedToCamera = true;
-
-    textOnlinePlayers = game.add.text(180, 0 + window.screen.availHeight - 200, "Online Players: " + (onlinePlayers.length + 1));    
-    textOnlinePlayers.font = 'Press Start 2P';
-    textOnlinePlayers.fontSize = 15;
-    textOnlinePlayers.fill = '#f00';
-    textOnlinePlayers.align = 'left';
-    textOnlinePlayers.anchor.setTo(0.5, 0.5);
-    textOnlinePlayers.fixedToCamera = true;
-}
 
 /* ~~~~~~~ CREATE GAME ~~~~~~~ */
 function create() {
@@ -569,6 +539,38 @@ function create() {
 		// Player is on desktop, enable cursors for arrow keys..
         cursors = game.input.keyboard.createCursorKeys();
     }
+}
+
+function createText() {
+    textPlayer = game.add.text(game.world.centerX, 50, "Player: " + playerName);
+    textPlayer.font = 'Press Start 2P';
+    textPlayer.fontSize = 15;
+    textPlayer.fill = '#f00';
+    textPlayer.align = 'center';
+    textPlayer.anchor.setTo(0.5, 0.5);
+    textPlayer.fixedToCamera = true;
+
+    if(typeof player.health === 'undefined') {
+        var playerHealth = 100;
+    } else {
+        var playerHealth = player.health;
+    }
+
+    textHealth = game.add.text(window.screen.availWidth - 200, 50, "Health: " + playerHealth);
+    textHealth.font = 'Press Start 2P';
+    textHealth.fontSize = 15;
+    textHealth.fill = '#f00';
+    textHealth.align = 'center';
+    textHealth.anchor.setTo(0.5, 0.5);
+    textHealth.fixedToCamera = true;
+
+    textOnlinePlayers = game.add.text(180, 0 + window.screen.availHeight - 200, "Online Players: " + (onlinePlayers.length + 1));    
+    textOnlinePlayers.font = 'Press Start 2P';
+    textOnlinePlayers.fontSize = 15;
+    textOnlinePlayers.fill = '#f00';
+    textOnlinePlayers.align = 'left';
+    textOnlinePlayers.anchor.setTo(0.5, 0.5);
+    textOnlinePlayers.fixedToCamera = true;
 }
 
 function update() {
