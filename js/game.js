@@ -594,21 +594,20 @@ function update() {
 		}
 	}
 	
-	// Particles (vliegspoor) achter schip
-	/*
+	// Particles achter het schip
     emitter = game.add.emitter(player.x, player.y, 1);
 
     emitter.makeParticles('flyRail');
 
     emitter.setRotation(0, 0);
     emitter.setAlpha(0.3, 0.8);
-    emitter.setScale(0.5, 1);
-    emitter.gravity = 200;
+    emitter.setScale(0.8, 3);
+    emitter.gravity = 400;
 
     //	false means don't explode all the sprites at once, but instead release at a rate of one particle per 100ms
     //	The 5000 value is the lifespan of each particle before it's killed
-    emitter.start(false, 5000, 100);	
-	*/
+    emitter.start(true, 150, 100);	
+	game.world.bringToTop(playerGroup);
 
     // Update background
     bgtile.tilePosition.x -= 1;
