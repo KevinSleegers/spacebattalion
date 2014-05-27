@@ -112,9 +112,43 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     logging = true;
     ;
 
+function createText() {
+	// Check om na te gaan of playerName bestaat
+	if(typeof playerName === 'undefined') {
+		playerName = 'Onbekend';
+	}
 
+    textPlayer = game.add.text(game.world.centerX, 50, "Player: " + playerName);
+    textPlayer.font = 'Press Start 2P';
+    textPlayer.fontSize = 15;
+    textPlayer.fill = '#f00';
+    textPlayer.align = 'center';
+    textPlayer.anchor.setTo(0.5, 0.5);
+    textPlayer.fixedToCamera = true;
 
+    // Check om na te gaan of 'player' al bestaat
+    if(typeof player !== 'undefined') {
+    	var playerHealth = player.health;
+    } else {
+    	var playerHealth = 100;
+    }
 
+    textHealth = game.add.text(window.screen.availWidth - 200, 50, "Health: " + playerHealth);
+    textHealth.font = 'Press Start 2P';
+    textHealth.fontSize = 15;
+    textHealth.fill = '#f00';
+    textHealth.align = 'center';
+    textHealth.anchor.setTo(0.5, 0.5);
+    textHealth.fixedToCamera = true;
+
+    textOnlinePlayers = game.add.text(180, 0 + window.screen.availHeight - 200, "Online Players: " + (onlinePlayers.length + 1));    
+    textOnlinePlayers.font = 'Press Start 2P';
+    textOnlinePlayers.fontSize = 15;
+    textOnlinePlayers.fill = '#f00';
+    textOnlinePlayers.align = 'left';
+    textOnlinePlayers.anchor.setTo(0.5, 0.5);
+    textOnlinePlayers.fixedToCamera = true;
+}
 
 /* ~~~~~~~ CREATE GAME ~~~~~~~ */
 function create() {
@@ -286,8 +320,6 @@ function create() {
     		var coopX = data[onlineCoop].x;
     		var coopY = data[onlineCoop].y;
     		var coopAngle = data[onlineCoop].angle;
-
-    		console.log('AAAAAAAAAAAAAAAAAAAAAAAAA', onlineCoop);
 
     		if(player1 !== io.socket.sessionid && player2 !== io.socket.sessionid) {
 
@@ -539,39 +571,6 @@ function create() {
 		// Player is on desktop, enable cursors for arrow keys..
         cursors = game.input.keyboard.createCursorKeys();
     }
-}
-
-function createText() {
-    textPlayer = game.add.text(game.world.centerX, 50, "Player: " + playerName);
-    textPlayer.font = 'Press Start 2P';
-    textPlayer.fontSize = 15;
-    textPlayer.fill = '#f00';
-    textPlayer.align = 'center';
-    textPlayer.anchor.setTo(0.5, 0.5);
-    textPlayer.fixedToCamera = true;
-
-    // Check om na te gaan of 'player' al bestaat
-    if(typeof player !== 'undefined') {
-    	var playerHealth = player.health;
-    } else {
-    	var playerHealth = 100;
-    }
-
-    textHealth = game.add.text(window.screen.availWidth - 200, 50, "Health: " + playerHealth);
-    textHealth.font = 'Press Start 2P';
-    textHealth.fontSize = 15;
-    textHealth.fill = '#f00';
-    textHealth.align = 'center';
-    textHealth.anchor.setTo(0.5, 0.5);
-    textHealth.fixedToCamera = true;
-
-    textOnlinePlayers = game.add.text(180, 0 + window.screen.availHeight - 200, "Online Players: " + (onlinePlayers.length + 1));    
-    textOnlinePlayers.font = 'Press Start 2P';
-    textOnlinePlayers.fontSize = 15;
-    textOnlinePlayers.fill = '#f00';
-    textOnlinePlayers.align = 'left';
-    textOnlinePlayers.anchor.setTo(0.5, 0.5);
-    textOnlinePlayers.fixedToCamera = true;
 }
 
 function update() {
@@ -925,6 +924,7 @@ function removePlayer(plr) {
 			       	player.allowControls = true;
 			       	player.move = true;
 			       	player.shoot = true;
+			       	player.enableBody = true;
 			       	game.camera.follow(player);
 
 			       	coopMovement = false;
@@ -1394,6 +1394,8 @@ function newCoop(player1, player2, shoot, move, x, y, angle, type) {
 
 		players[player2].visible = false;
 		players[player2].coop = true;
+		players[player2].renderable = false;
+		players[player2].enableBody = false;
 
 		game.camera.follow(coopPlayers[coopSession]);
 	}
@@ -1410,6 +1412,8 @@ function newCoop(player1, player2, shoot, move, x, y, angle, type) {
 
 		players[player1].visible = false;
 		players[player1].coop = true;
+		players[player1].renderable = false;
+		players[player1].enableBody = false;
 
 		game.camera.follow(coopPlayers[coopSession]);
 	} 
@@ -1420,10 +1424,12 @@ function newCoop(player1, player2, shoot, move, x, y, angle, type) {
 		players[player1].visible = false;
 		players[player1].coop = true;
 		players[player1].renderable = false;
+		players[player1].enableBody = false;
 
 		players[player2].visible = false;
 		players[player2].coop = true;
 		players[player2].renderable = false;
+		players[player2].enableBody = false;
 	}
 
 	if(type === 'new') {
