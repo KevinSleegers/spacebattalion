@@ -25,8 +25,15 @@ function preload() {
 
 	game.load.spritesheet('player', 'assets/img/spr_plane_strip11.png', 64, 64);
 	game.load.spritesheet('otherPlayers', 'assets/img/spr_plane_strip2.png', 64, 64);
-	game.load.spritesheet('boss', 'assets/img/spr_boss_die_strip13.png', 256, 128);
-	game.load.spritesheet('coop', 'assets/img/spr_double_final_strip4.png', 96, 128);
+
+	// ?????
+	// game.load.spritesheet('boss', 'assets/img/spr_boss_die_strip13.png', 256, 128);
+	game.load.spritesheet('boss', 'assets/img/spr_boss_die_strip13_TEST.png', 256, 256);
+
+	// ?????
+	//game.load.spritesheet('coop', 'assets/img/spr_double_final_strip4.png', 96, 128);
+	game.load.spritesheet('coop', 'assets/img/spr_double_final_strip4_TEST.png', 128, 128);
+
 	game.load.spritesheet('minion', 'assets/img/spr_minion_strip3.png', 64, 64);
 	game.load.spritesheet('explosion', 'assets/img/fx_explosion_strip10.png', 64, 64);
 	game.load.spritesheet('bullet', 'assets/img/fx_bullet_impact_strip7.png', 32, 32);
