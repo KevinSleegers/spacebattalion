@@ -118,6 +118,7 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     shakeScreen = 0,
     bossHealth = 100,
     muzzleFlash,
+    playerType,
 	bossIsDying = false,
 	playerIsMinion = false,
 
@@ -334,14 +335,31 @@ function create() {
 	player.move = true;
 	player.shoot = true;
 	player.health = 100;
-	player.frame = 3;
 	player.bringToTop();
 	game.physics.enable(player, Phaser.Physics.ARCADE);
 	player.enableBody = true;
 	player.body.collideWorldBounds = true;
-	player.body.immovable = true;
-
+	player.body.immovable = true;	
 	player.score = 0;
+	
+	boss = game.add.sprite(100, 100, 'boss');
+    boss.anchor.setTo(.5, .5);
+	boss.allowControls = true;
+	boss.enableBody = true;
+    game.physics.enable(boss, Phaser.Physics.ARCADE);
+    boss.physicsBodyType = Phaser.Physics.ARCADE;
+    boss.health = 1000;
+    boss.frame = 1;
+    boss.body.immovable = true;
+	
+	if(playerName == "boss")
+	{
+		playerType = boss;
+	}
+	else
+	{
+		playerType = player;
+	}		
 
 	// Player toevoegen aan Player group
     playerGroup.add(player);
@@ -351,7 +369,7 @@ function create() {
     playerGroup.bringToTop(player);
 
    	// Camera volgt player
-    game.camera.follow(player, Phaser.Camera.FOLLOW_TOPDOWN);
+    game.camera.follow(playerType, Phaser.Camera.FOLLOW_TOPDOWN);
 
     // Request already online players
     socket.emit('requestPlayers', io.socket.sessionid);
@@ -547,15 +565,6 @@ function create() {
         newBullet(data);
     }); 
 
-	boss = game.add.sprite(100, 200, 'boss');
-    boss.anchor.setTo(.5, .5);
-	boss.enableBody = true;
-    game.physics.enable(boss, Phaser.Physics.ARCADE);
-    boss.physicsBodyType = Phaser.Physics.ARCADE;
-    boss.health = 1000;
-    boss.frame = 1;
-    boss.body.immovable = true;
-
 	/*bullets.enableBody = true;
     bullets.physicsBodyType = Phaser.Physics.ARCADE;
     bullets.createMultiple(bulletsCount, 'bullet');
@@ -663,13 +672,8 @@ function update() {
 			player.body.velocity.setTo(0,0);		
 		}
 	}
-	
-<<<<<<< HEAD
-	// Particles achter het schip
 
-=======
 	/* Particles achter het schip
->>>>>>> 1a339817ae57c6bf010b02a980482a33b226a2d5
     emitter = game.add.emitter(player.x, player.y, 1);
 
     emitter.makeParticles('flyRail');
@@ -681,9 +685,9 @@ function update() {
 
     //	false means don't explode all the sprites at once, but instead release at a rate of one particle per 100ms
     //	The 5000 value is the lifespan of each particle before it's killed
-    emitter.start(true, 150, 100);	*/
-	//game.world.bringToTop(playerGroup);
-
+    emitter.start(true, 150, 100);	
+	game.world.bringToTop(playerGroup);
+	*/
 
     // Update background
     if(game.device.desktop && detectIE() === false) {
@@ -855,9 +859,9 @@ function fire() {
         	var resetY = coopPlayers[coopSession].body.y + (coopPlayers[coopSession].height / 2);
         	var rotation = coopPlayers[coopSession].rotation;
         } else {            
-        	var resetX = player.body.x + (player.width / 2);
-        	var resetY = player.body.y + (player.height / 2);
-        	var rotation = player.rotation;
+        	var resetX = playerType.body.x + (playerType.width / 2);
+        	var resetY = playerType.body.y + (playerType.height / 2);
+        	var rotation = playerType.rotation;
         }
 
         var bulletY = Math.floor((Math.random() * 40) + -20);
@@ -1026,7 +1030,7 @@ function removePlayer(plr) {
 			       	player.move = true;
 			       	player.shoot = true;
 			       	player.enableBody = true;
-			       	game.camera.follow(player, Phaser.Camera.FOLLOW_TOPDOWN);
+			       	game.camera.follow(playerType, Phaser.Camera.FOLLOW_TOPDOWN);
 
 			       	coopMovement = false;
 
@@ -1127,28 +1131,28 @@ function changePosition(xVal, xSpeed, yVal, ySpeed, angleVal, spriteVal) {
 		xSpeed == '' ? xSpeed = 0 : xSpeed;
 	    ySpeed == '' ? ySpeed = 0 : ySpeed;
 
-	    if(xVal == '+') { player.body.velocity.x += xSpeed; } 
-	    else if(xVal == '-') { player.body.velocity.x -= xSpeed; } 
-	    else { player.body.velocity.x += 0; }
+	    if(xVal == '+') { playerType.body.velocity.x += xSpeed; } 
+	    else if(xVal == '-') { playerType.body.velocity.x -= xSpeed; } 
+	    else { playerType.body.velocity.x += 0; }
 
-	    if(yVal == '+') { player.body.velocity.y += ySpeed; } 
-	    else if(yVal == '-') { player.body.velocity.y -= ySpeed; } 
-	    else { player.body.velocity.y += 0; }
+	    if(yVal == '+') { playerType.body.velocity.y += ySpeed; } 
+	    else if(yVal == '-') { playerType.body.velocity.y -= ySpeed; } 
+	    else { playerType.body.velocity.y += 0; }
 
-	    player.angle = angleVal;
+	    playerType.angle = angleVal;
 
-	    if(oldX !== player.x || oldY !== player.y) {
+	    if(oldX !== playerType.x || oldY !== playerType.y) {
 	                    
 	        var playerPosition = JSON.stringify({
 	            sessionid: io.socket.sessionid,
 	            nickname: playerName,
-	            x : player.x,
-	            y : player.y,
-	            angle : player.angle
+	            x : playerType.x,
+	            y : playerType.y,
+	            angle : playerType.angle
 	        });   
 
 	        // Check if difference between x or y values is larger than 1
-	        if(diffNumbers(player.x, oldX) >= 1 || diffNumbers(player.y, oldY) >= 1 ) {
+	        if(diffNumbers(playerType.x, oldX) >= 1 || diffNumbers(playerType.y, oldY) >= 1 ) {
 	            
 	            // Send positions to server every 200 ms (0.2 seconds)
 	            /*setTimeout(function() {
@@ -1159,8 +1163,8 @@ function changePosition(xVal, xSpeed, yVal, ySpeed, angleVal, spriteVal) {
 	            socket.emit('positionChange', playerPosition);
 
 	            // store the old positions in oldX and oldY
-	            oldX = player.x;
-	            oldY = player.y;
+	            oldX = playerType.x;
+	            oldY = playerType.y;
 	        }
 	    }
 	} else {		
