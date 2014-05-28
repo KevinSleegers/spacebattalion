@@ -107,10 +107,9 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
 	currentDirection,
     bulletsCount = 20,
     bulletTime = 0, 
-    textPlayer, 
+    textPlayers, 
 	curPlayerFrame,
-    textOnlinePlayers,
-    textHealth,
+    textScore,
     oldX = 0, 
     oldY = 0, 
     movementSpeed = 350,
@@ -119,7 +118,7 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     shakeScreen = 0,
     bossHealth = 100,
     muzzleFlash,
-	bossIsDying = false.
+	bossIsDying = false,
 	playerIsMinion = false,
 
     playerGroup,
@@ -159,36 +158,28 @@ function createText() {
 		playerName = 'Onbekend';
 	}
 
-    textPlayer = game.add.text(game.world.centerX, 50, "Player: " + playerName);
-    textPlayer.font = 'Press Start 2P';
-    textPlayer.fontSize = 15;
-    textPlayer.fill = '#f00';
-    textPlayer.align = 'center';
-    textPlayer.anchor.setTo(0.5, 0.5);
-    textPlayer.fixedToCamera = true;
+    textPlayers = game.add.text(180, 50, "Players: " + (onlinePlayers.length + 1) + "/40");
+    textPlayers.font = 'Press Start 2P';
+    textPlayers.fontSize = 15;
+    textPlayers.fill = '#d77e00';
+    textPlayers.align = 'center';
+    textPlayers.anchor.setTo(0.5, 0.5);
+    textPlayers.fixedToCamera = true;
 
     // Check om na te gaan of 'player' al bestaat
     if(typeof player !== 'undefined') {
-    	var playerHealth = player.health;
+    	var score = player.score;
     } else {
-    	var playerHealth = 100;
+    	var score = 0;
     }
 
-    textHealth = game.add.text(window.screen.availWidth - 200, 50, "Health: " + playerHealth);
-    textHealth.font = 'Press Start 2P';
-    textHealth.fontSize = 15;
-    textHealth.fill = '#f00';
-    textHealth.align = 'center';
-    textHealth.anchor.setTo(0.5, 0.5);
-    textHealth.fixedToCamera = true;
-
-    textOnlinePlayers = game.add.text(180, 0 + window.screen.availHeight - 200, "Online Players: " + (onlinePlayers.length + 1));    
-    textOnlinePlayers.font = 'Press Start 2P';
-    textOnlinePlayers.fontSize = 15;
-    textOnlinePlayers.fill = '#f00';
-    textOnlinePlayers.align = 'left';
-    textOnlinePlayers.anchor.setTo(0.5, 0.5);
-    textOnlinePlayers.fixedToCamera = true;
+    textScore = game.add.text(window.screen.availWidth - 200, 50, "Score: " + score);
+    textScore.font = 'Press Start 2P';
+    textScore.fontSize = 15;
+    textScore.fill = '#d77e00';
+    textScore.align = 'center';
+    textScore.anchor.setTo(0.5, 0.5);
+    textScore.fixedToCamera = true;
 }
 
 /* ~~~~~~~ CREATE GAME ~~~~~~~ */
@@ -286,8 +277,8 @@ function create() {
     }
     console.log(currentDate() + " | Welcome: " + playerName.charAt(0).toUpperCase() + playerName.substring(1) + ", your session is: " + io.socket.sessionid + ".");
 
-    if(playerName !== '' && typeof textPlayer !== 'undefined') {
-    	textPlayer.setText('Player: ' + playerName);
+    if(playerName !== '' && typeof textPlayers !== 'undefined') {
+    	textPlayers.setText('Player: ' + playerName);
     }
     // playerName = randName();
 
@@ -306,6 +297,8 @@ function create() {
 
         bullet.animations.add('bulletCollide', [1, 2, 3, 4, 5, 6]);
         bullet.anchor.setTo(0.5, 0.5);
+        bullet.frame = 0;
+        console.log('bullet frame', bullet.frame);
         this.game.physics.enable(bullet, Phaser.Physics.ARCADE);
 
         bullet.kill();
@@ -348,6 +341,8 @@ function create() {
 	player.body.collideWorldBounds = true;
 	player.body.immovable = true;
 
+	player.score = 0;
+
 	// Player toevoegen aan Player group
     playerGroup.add(player);
 
@@ -381,8 +376,8 @@ function create() {
         }
         
         //console.log(currentDate() + " | Online players: " + onlinePlayers.toString());
-        if(textOnlinePlayers !== undefined) {
-            textOnlinePlayers.setText("Online Players: " + (onlinePlayers.length + 1));
+        if(typeof textPlayers !== 'undefined') {
+            textPlayers.setText("Players: " + (onlinePlayers.length + 1) + "/40");
         }
     });
 
@@ -426,7 +421,7 @@ function create() {
         newPlayer(data);
         //console.log('new player added', data.lat);
         onlinePlayers.push(data.session);
-        textOnlinePlayers.setText("Online Players: " + (onlinePlayers.length + 1));
+        textPlayers.setText("Players: " + (onlinePlayers.length + 1) + "/40");
     });
 
     // Other player requests to coop
@@ -460,8 +455,6 @@ function create() {
     	if(data === io.socket.sessionid) {
     		player.damage(10);
 
-        	textHealth.setText("Health: " + player.health);
-
         	console.log('ik wordt gehit');
 
         	if(player.health <= 70 && player.health > 30) {
@@ -476,10 +469,10 @@ function create() {
 				
 				//if(boss over speler gaat)
 				//{
-					player.tint = 0xFFFFFF;
-					player.frame = 12;
-					player.health = 100;				
-					playerIsMinion = true;
+					//player.tint = 0xFFFFFF;
+					//player.frame = 12;
+					//player.health = 100;				
+					//playerIsMinion = true;
 				//}
 				
 				// Standaard als via de function: damage() iets gekilled wordt, dan worden de statussen: alive, exist en visible op false gezet 
@@ -532,7 +525,7 @@ function create() {
         if(i != -1) {
             onlinePlayers.splice(i,1);
         }        
-        textOnlinePlayers.setText("Online Players: " + (onlinePlayers.length + 1));
+        textPlayers.setText("Players: " + (onlinePlayers.length + 1) + "/40");
     });
 
     // Boss gekillt in andere client
@@ -671,7 +664,7 @@ function update() {
 		}
 	}
 	
-	// Particles achter het schip
+	/* Particles achter het schip
     emitter = game.add.emitter(player.x, player.y, 1);
 
     emitter.makeParticles('flyRail');
@@ -683,7 +676,7 @@ function update() {
 
     //	false means don't explode all the sprites at once, but instead release at a rate of one particle per 100ms
     //	The 5000 value is the lifespan of each particle before it's killed
-    emitter.start(true, 150, 100);	
+    emitter.start(true, 150, 100);	*/
 	//game.world.bringToTop(playerGroup);
 
     // Update background
@@ -817,11 +810,14 @@ function update() {
         	game.physics.arcade.collide(bullets, coopPlayers[plr], bulletCoop, null, this);
         }
 
-        if(player.coop === true) {
-
-        }
-
         game.physics.arcade.collide(bullets, boss, bulletBoss, null, this);
+
+        // Overlap tussen boss en player
+        game.physics.arcade.overlap(player, boss, overlapPlayer, null, this);
+    } else {
+    	// Doe dingen die alleen op mobiel gebeuren hier..
+		// Ga na waar je op het scherm drukt, links / rechts
+		game.input.onTap.add(tapped, this);
     }
 
     // Screen shake
@@ -1098,9 +1094,11 @@ function newBullet(blt) {
         bullet.reset(blt.resetX, blt.resetY);
         bullet.rotation = blt.rotation;
         bullet.y += blt.bulletY;
+        bullet.session = blt.session;
+
         game.physics.arcade.velocityFromRotation(blt.rotation += blt.randVelocity, 625, bullet.body.velocity);
         //game.physics.arcade.velocityFromRotation(blt.rotation, 450, otherBullet.body.velocity);
-        bullet.animations.add('bulletCollide', [1, 2, 3, 4, 5, 6]);
+        bullet.animations.add('bulletCollide');
 
         shakeScreen = 15;
 
@@ -1204,10 +1202,16 @@ function changePosition(xVal, xSpeed, yVal, ySpeed, angleVal, spriteVal) {
 
 function bulletBoss(plr, blt)
 {
+	if(blt.session === io.socket.sessionid) {
+		player.score += 10;
+		textScore.setText('Score: ' + player.score);
+		console.log(currentDate() + ' | Your bullet hit the Boss!');
+	} else {		
+		console.log(currentDate() + ' | A bullet hit the Boss!');
+	}
+
 	if(!bossIsDying)
 	{
-		console.log(currentDate() + ' | A bullet hit the Boss!');
-
 		// damage done to boss (boss.health - boss.damage)
 		boss.damage(100);
 
@@ -1306,6 +1310,15 @@ function bulletPlayer(plr, blt) {
     if(player.health <= 0) {
         explode(player.x, player.y);
     }  
+}
+
+function overlapPlayer(plr, boss) {
+	if(plr.name === io.socket.sessionid) {
+		console.log('playerIsMinion', playerIsMinion);
+		if(!playerIsMinion) {
+			playerIsMinion = true;
+		} 
+	}
 }
 
 function diagonalSpeed(speed) {
@@ -1478,7 +1491,6 @@ function newCoop(player1, player2, shoot, move, x, y, angle, type) {
   
 	if(coopPlayers[coopSession].move == io.socket.sessionid) {
 		console.log(currentDate() + " | You may move, good sir.");
-		textPlayer.setText('COOP MODE (move)');
 		coopPlayers[coopSession].frame = 2;
 		coopMovement = true;
 		coopShooting = false;
@@ -1486,7 +1498,6 @@ function newCoop(player1, player2, shoot, move, x, y, angle, type) {
 
 	if(coopPlayers[coopSession].shoot == io.socket.sessionid) {
 		console.log(currentDate() + " | You may shoot, good sir.");
-		textPlayer.setText('COOP MODE (shoot)');
 		coopPlayers[coopSession].frame = 1;
 		coopShooting = true;
 		coopMovement = false;
@@ -1686,6 +1697,12 @@ function detectIE() {
     // other browser
     return false;
 }
+
+
+
+	function tapped(pointer) {
+ 		console.log('tapped!');
+	}
 
 function render() {
 	/*for(var player in players) {
