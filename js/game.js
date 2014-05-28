@@ -1,6 +1,9 @@
 /* ~~~~~~~ WIDTH AND HEIGHT ~~~~~~~ */
-var w = window.innerWidth * window.devicePixelRatio,
-    h = window.innerHeight * window.devicePixelRatio;
+//var w = window.innerWidth * window.devicePixelRatio,
+  //  h = window.innerHeight * window.devicePixelRatio;
+
+  var w = window.innerWidth,
+  h = window.innerHeight;
 
 /* ~~~~~~~ NEW GAME ~~~~~~~ */
 var game = new Phaser.Game(w, h, Phaser.AUTO, '', {
@@ -23,32 +26,68 @@ function preload() {
     // Load font
     game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
 
+    // player sprite -> 64x64
 	game.load.spritesheet('player', 'assets/img/spr_plane_strip11.png', 64, 64);
+
+	// other players sprite -> 64x64
 	game.load.spritesheet('otherPlayers', 'assets/img/spr_plane_strip2.png', 64, 64);
+
+	// boss sprite -> 256x128
 	game.load.spritesheet('boss', 'assets/img/spr_boss_die_strip13.png', 256, 128);
+	//game.load.spritesheet('boss', 'assets/img/spr_boss_die_strip13_TEST.png', 256, 256);
+
+	// coop sprite -> 96x128
 	game.load.spritesheet('coop', 'assets/img/spr_double_final_strip4.png', 96, 128);
+	//game.load.spritesheet('coop', 'assets/img/spr_double_final_strip4_TEST.png', 128, 128);
+
+	// minion sprite -> 64x64
 	game.load.spritesheet('minion', 'assets/img/spr_minion_strip3.png', 64, 64);
+
+	// explosion sprite -> 64x64
 	game.load.spritesheet('explosion', 'assets/img/fx_explosion_strip10.png', 64, 64);
+
+	// bullet sprite -> 32x32
 	game.load.spritesheet('bullet', 'assets/img/fx_bullet_impact_strip7.png', 32, 32);
-	game.load.image('star', 'assets/img/spr_star.png', 64, 64);
+
+	// star sprite -> 64x64
+	game.load.image('star', 'assets/img/spr_star.png');
     //game.load.image('player', 'assets/img/spr_myplane.png');
     //game.load.image('otherPlayers', 'assets/img/spr_plane.png');
     //game.load.image('coop', 'assets/img/spr_doublePlane.png');
 	//game.load.image('boss', 'assets/img/spr_boss.png');
 	//game.load.image('bullet', 'assets/img/spr_bullet.png');
 	//game.load.image('explosion', 'assets/img/spr_explosion.png');
+
+	// muzzleflash sprite -> 32x32
     game.load.image('muzzleFlash', 'assets/img/spr_muzzleFlash.png');
+
+    // flyRail sprite -> 12x12
     game.load.image('flyRail', 'assets/img/fly_rail.png');
 
+    // 16x16
+    //game.load.image('flyRail', 'assets/img/fly_rail_TEST.png');
+
     // Animated background..
-    game.load.spritesheet('mainBg', 'assets/img/spr_backgroundOverlay.png', 160, 160);
+    game.load.spritesheet('mainBg', 'assets/img/_spr_backgroundOverlay.png', 160, 160);
+    //game.load.spritesheet('mainBg', 'assets/img/spr_backgroundOverlay.png', 128, 128);
 
     // Cloud sprites
     game.load.image('cloud1', 'assets/img/spr_cloud1.png');
     game.load.image('cloud2', 'assets/img/spr_cloud2.png');
 
-    // Moon sprite
+    // 128x128
+    //game.load.image('cloud1', 'assets/img/spr_cloud1_TEST.png');
+
+    // 256x256
+    //game.load.image('cloud2', 'assets/img/spr_cloud2_TEST.png');
+
+    // Moon sprite -> 192x192
     game.load.image('moon', 'assets/img/spr_moon.png');
+
+    game.load.image('portraitMode', 'assets/img/portrait_mode.png');
+
+    // 256x256
+    //game.load.image('moon', 'assets/img/spr_moon_TEST.png');
 
     game.load.audio('backgroundMusic', ['assets/audio/TakingFlight.mp3', 'assets/audio/TakingFlight.ogg']);
     //game.load.audio('playerBullet', 'assets/audio/shot.wav');
@@ -68,10 +107,9 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
 	currentDirection,
     bulletsCount = 20,
     bulletTime = 0, 
-    textPlayer, 
+    textPlayers, 
 	curPlayerFrame,
-    textOnlinePlayers,
-    textHealth,
+    textScore,
     oldX = 0, 
     oldY = 0, 
     movementSpeed = 350,
@@ -80,7 +118,7 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     shakeScreen = 0,
     bossHealth = 100,
     muzzleFlash,
-	bossIsDying = false.
+	bossIsDying = false,
 	playerIsMinion = false,
 
     playerGroup,
@@ -120,56 +158,88 @@ function createText() {
 		playerName = 'Onbekend';
 	}
 
-    textPlayer = game.add.text(game.world.centerX, 50, "Player: " + playerName);
-    textPlayer.font = 'Press Start 2P';
-    textPlayer.fontSize = 15;
-    textPlayer.fill = '#f00';
-    textPlayer.align = 'center';
-    textPlayer.anchor.setTo(0.5, 0.5);
-    textPlayer.fixedToCamera = true;
+    textPlayers = game.add.text(180, 50, "Players: " + (onlinePlayers.length + 1) + "/40");
+    textPlayers.font = 'Press Start 2P';
+    textPlayers.fontSize = 15;
+    textPlayers.fill = '#d77e00';
+    textPlayers.align = 'center';
+    textPlayers.anchor.setTo(0.5, 0.5);
+    textPlayers.fixedToCamera = true;
 
     // Check om na te gaan of 'player' al bestaat
     if(typeof player !== 'undefined') {
-    	var playerHealth = player.health;
+    	var score = player.score;
     } else {
-    	var playerHealth = 100;
+    	var score = 0;
     }
 
-    textHealth = game.add.text(window.screen.availWidth - 200, 50, "Health: " + playerHealth);
-    textHealth.font = 'Press Start 2P';
-    textHealth.fontSize = 15;
-    textHealth.fill = '#f00';
-    textHealth.align = 'center';
-    textHealth.anchor.setTo(0.5, 0.5);
-    textHealth.fixedToCamera = true;
-
-    textOnlinePlayers = game.add.text(180, 0 + window.screen.availHeight - 200, "Online Players: " + (onlinePlayers.length + 1));    
-    textOnlinePlayers.font = 'Press Start 2P';
-    textOnlinePlayers.fontSize = 15;
-    textOnlinePlayers.fill = '#f00';
-    textOnlinePlayers.align = 'left';
-    textOnlinePlayers.anchor.setTo(0.5, 0.5);
-    textOnlinePlayers.fixedToCamera = true;
+    textScore = game.add.text(window.screen.availWidth - 200, 50, "Score: " + score);
+    textScore.font = 'Press Start 2P';
+    textScore.fontSize = 15;
+    textScore.fill = '#d77e00';
+    textScore.align = 'center';
+    textScore.anchor.setTo(0.5, 0.5);
+    textScore.fixedToCamera = true;
 }
 
 /* ~~~~~~~ CREATE GAME ~~~~~~~ */
 function create() {
+
+
 	if(logging === false) {
 		console.log = function() {};
 	}
 
 	getLocation();
 
-    // Keep game running, even if out of focus
-    this.stage.disableVisibilityChange = true;
+	// Maximaal 1 input (1 cursor, 1 touch event)
+	game.input.maxPointers = 1;
+	game.stage.disableVisibilityChange = true;
+
+	if(game.device.desktop) { 
+		game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+		game.scale.minWidth = w / 2;
+		game.scale.minHeight = h / 2;
+		game.scale.maxWidth = w;
+		game.scale.maxHeight = h;
+		game.scale.pageAlignHorizontally = true;
+		game.scale.pageAlignVertically = true;
+		game.scale.setScreenSize(true);
+	} else {
+		game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+		game.scale.minWidth = w / 2;
+        game.scale.minHeight = h / 2;
+        game.scale.maxWidth = w * 2.5; //You can change this to gameWidth*2.5 if needed
+        game.scale.maxHeight = h * 2.5; //Make sure these values are proportional to the gameWidth and gameHeight
+        game.scale.pageAlignHorizontally = true;
+        game.scale.pageAlignVertically = true;
+        game.scale.forceOrientation(true, false);
+        game.scale.hasResized.add(resizeGame, this);
+        game.scale.forceOrientation(true, false, 'portraitMode');
+        game.scale.leaveIncorrectOrientation.add(resizeGame, this);
+        game.scale.setScreenSize(true);
+	}
+
+    /* Game draait ook in de achtergrond door (als scherm geen focus heeft)
+    game.stage.disableVisibilityChange = true;
+    game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+    game.scale.pageAlignHorizontally = true;
+    game.scale.pageAlignVertically = false;
+
+    if(!game.device.desktop) {
+    	game.scale.setScreenSize(true);
+    	game.scale.forceOrientation(true, false, 'portraitMode');
+    	game.scale.enterIncorrectOrientation.add(portraitMode, this);
+    	game.scale.leaveIncorrectOrientation.add(resizeGame, this);
+    }*/
 
     game.renderer.clearBeforeRender = false;
     game.renderer.roundPixels = true;
     game.physics.startSystem(Phaser.Physics.ARCADE);    
-    game.world.setBounds(0, 0, 2000, 2000);
+    game.world.setBounds(0, 0, 5000, 5000);
 
     // Geanimeerde achtergrond
-    bgtile = game.add.tileSprite(0, 0, 2000, 2000, 'mainBg');
+    bgtile = game.add.tileSprite(0, 0, 5000, 5000, 'mainBg');
 
     // Refreshen van locatie wordt bepaald door browser dus haal op uit local storage
     if(localStorage.getItem('latitude') !== null && localStorage.getItem('longitude') !== null) {
@@ -200,14 +270,6 @@ function create() {
     // Create moon
     createMoon();
 
-    // Scaling of game
-    game.scale.fullScreenScaleMode = Phaser.ScaleManager.NO_SCALE;
-    game.input.onDown.add(goFullscreen, this);
-    window.addEventListener('resize', function(event) {
-        resizeGame();
-        console.log('window has been resized!');
-    });
-
     // Get nickname from player
     playerName = prompt("What's your battle name?");
     if(!playerName) {
@@ -215,8 +277,8 @@ function create() {
     }
     console.log(currentDate() + " | Welcome: " + playerName.charAt(0).toUpperCase() + playerName.substring(1) + ", your session is: " + io.socket.sessionid + ".");
 
-    if(playerName !== '' && typeof textPlayer !== 'undefined') {
-    	textPlayer.setText('Player: ' + playerName);
+    if(playerName !== '' && typeof textPlayers !== 'undefined') {
+    	textPlayers.setText('Player: ' + playerName);
     }
     // playerName = randName();
 
@@ -235,6 +297,8 @@ function create() {
 
         bullet.animations.add('bulletCollide', [1, 2, 3, 4, 5, 6]);
         bullet.anchor.setTo(0.5, 0.5);
+        bullet.frame = 0;
+        console.log('bullet frame', bullet.frame);
         this.game.physics.enable(bullet, Phaser.Physics.ARCADE);
 
         bullet.kill();
@@ -277,15 +341,17 @@ function create() {
 	player.body.collideWorldBounds = true;
 	player.body.immovable = true;
 
+	player.score = 0;
+
 	// Player toevoegen aan Player group
     playerGroup.add(player);
 
     // Player group bovenaan plaatsen
-   	game.world.bringToTop(playerGroup);
+   	// game.world.bringToTop(playerGroup);
     playerGroup.bringToTop(player);
 
    	// Camera volgt player
-    game.camera.follow(player);
+    game.camera.follow(player, Phaser.Camera.FOLLOW_TOPDOWN);
 
     // Request already online players
     socket.emit('requestPlayers', io.socket.sessionid);
@@ -310,8 +376,8 @@ function create() {
         }
         
         //console.log(currentDate() + " | Online players: " + onlinePlayers.toString());
-        if(textOnlinePlayers !== undefined) {
-            textOnlinePlayers.setText("Online Players: " + (onlinePlayers.length + 1));
+        if(typeof textPlayers !== 'undefined') {
+            textPlayers.setText("Players: " + (onlinePlayers.length + 1) + "/40");
         }
     });
 
@@ -355,7 +421,7 @@ function create() {
         newPlayer(data);
         //console.log('new player added', data.lat);
         onlinePlayers.push(data.session);
-        textOnlinePlayers.setText("Online Players: " + (onlinePlayers.length + 1));
+        textPlayers.setText("Players: " + (onlinePlayers.length + 1) + "/40");
     });
 
     // Other player requests to coop
@@ -389,8 +455,6 @@ function create() {
     	if(data === io.socket.sessionid) {
     		player.damage(10);
 
-        	textHealth.setText("Health: " + player.health);
-
         	console.log('ik wordt gehit');
 
         	if(player.health <= 70 && player.health > 30) {
@@ -405,10 +469,10 @@ function create() {
 				
 				//if(boss over speler gaat)
 				//{
-					player.tint = 0xFFFFFF;
-					player.frame = 12;
-					player.health = 100;				
-					playerIsMinion = true;
+					//player.tint = 0xFFFFFF;
+					//player.frame = 12;
+					//player.health = 100;				
+					//playerIsMinion = true;
 				//}
 				
 				// Standaard als via de function: damage() iets gekilled wordt, dan worden de statussen: alive, exist en visible op false gezet 
@@ -461,7 +525,7 @@ function create() {
         if(i != -1) {
             onlinePlayers.splice(i,1);
         }        
-        textOnlinePlayers.setText("Online Players: " + (onlinePlayers.length + 1));
+        textPlayers.setText("Players: " + (onlinePlayers.length + 1) + "/40");
     });
 
     // Boss gekillt in andere client
@@ -517,6 +581,8 @@ function create() {
     // Set controls if player is not on desktop --> mobile
     if(!game.device.desktop) {
 
+    	console.log('niet op desktop');
+
         // Check if mobile browser supports the HTML5 Vibration API
         navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate || null;
         navigator.vibrate ? vibrate = true : vibrate = false;
@@ -527,19 +593,23 @@ function create() {
             if(gyro.getFeatures().length > 0) {
                 gyro.frequency = 10;
 
-                gyro.startTracking(function(o) {      
+                gyro.startTracking(function(o) {   
+                	// TO DO beweging fixen voor landscape mode!!!
+
                     var anglePlayer = Math.atan2(o.y, o.x);
+                    //var anglePlayer = Math.atan(o.x, o.y);
 
                     angleRadians = anglePlayer * Math.PI/180;
                     anglePlayer *= 180/Math.PI;
-                    anglePlayer = 180 - anglePlayer;
+                    anglePlayer = anglePlayer;
 
                     if(fireButton.isDown) {
                         fire();
                     }
 
                     if(o.z < 9.5 || o.z > 10) {
-                        changePosition('-', o.x * 20, '+', o.y * 20, game.math.wrapAngle(anglePlayer, false), 'p');
+                    	changePosition('-', o.y * 20, '-', o.x * 20, game.math.wrapAngle(anglePlayer, false), 'p');
+                        //changePosition('-', o.x * 20, '+', o.y * 20, game.math.wrapAngle(anglePlayer, false), 'p');
                     } else {
                         changePosition('', '', '', '', 0, 'p');
                     } 
@@ -594,8 +664,12 @@ function update() {
 		}
 	}
 	
+<<<<<<< HEAD
 	// Particles achter het schip
 
+=======
+	/* Particles achter het schip
+>>>>>>> 1a339817ae57c6bf010b02a980482a33b226a2d5
     emitter = game.add.emitter(player.x, player.y, 1);
 
     emitter.makeParticles('flyRail');
@@ -607,13 +681,15 @@ function update() {
 
     //	false means don't explode all the sprites at once, but instead release at a rate of one particle per 100ms
     //	The 5000 value is the lifespan of each particle before it's killed
-    emitter.start(true, 150, 100);	
-	game.world.bringToTop(playerGroup);
+    emitter.start(true, 150, 100);	*/
+	//game.world.bringToTop(playerGroup);
 
 
     // Update background
-    bgtile.tilePosition.x -= 1;
-    bgtile.tilePosition.y += .5;
+    if(game.device.desktop && detectIE() === false) {
+    	bgtile.tilePosition.x -= 1;
+    	bgtile.tilePosition.y += .5;
+    }
 
     // create clouds
     if(game.time.now > cloudTimer) {          
@@ -740,11 +816,14 @@ function update() {
         	game.physics.arcade.collide(bullets, coopPlayers[plr], bulletCoop, null, this);
         }
 
-        if(player.coop === true) {
-
-        }
-
         game.physics.arcade.collide(bullets, boss, bulletBoss, null, this);
+
+        // Overlap tussen boss en player
+        game.physics.arcade.overlap(player, boss, overlapPlayer, null, this);
+    } else {
+    	// Doe dingen die alleen op mobiel gebeuren hier..
+		// Ga na waar je op het scherm drukt, links / rechts
+		game.input.onTap.add(tapped, this);
     }
 
     // Screen shake
@@ -752,11 +831,11 @@ function update() {
         var rand1 = game.rnd.integerInRange(-5,5);
         var rand2 = game.rnd.integerInRange(-5,5);
 
-        game.world.setBounds(rand1, rand2, 2000 + rand1, 2000 + rand2);
+        game.world.setBounds(rand1, rand2, 5000 + rand1, 5000 + rand2);
         shakeScreen--;
 
         if(shakeScreen == 0) {
-            game.world.setBounds(0, 0, 2000, 2000);
+            game.world.setBounds(0, 0, 5000, 5000);
         }
     }
 
@@ -947,7 +1026,7 @@ function removePlayer(plr) {
 			       	player.move = true;
 			       	player.shoot = true;
 			       	player.enableBody = true;
-			       	game.camera.follow(player);
+			       	game.camera.follow(player, Phaser.Camera.FOLLOW_TOPDOWN);
 
 			       	coopMovement = false;
 
@@ -1021,9 +1100,11 @@ function newBullet(blt) {
         bullet.reset(blt.resetX, blt.resetY);
         bullet.rotation = blt.rotation;
         bullet.y += blt.bulletY;
+        bullet.session = blt.session;
+
         game.physics.arcade.velocityFromRotation(blt.rotation += blt.randVelocity, 625, bullet.body.velocity);
         //game.physics.arcade.velocityFromRotation(blt.rotation, 450, otherBullet.body.velocity);
-        bullet.animations.add('bulletCollide', [1, 2, 3, 4, 5, 6]);
+        bullet.animations.add('bulletCollide');
 
         shakeScreen = 15;
 
@@ -1128,8 +1209,14 @@ function changePosition(xVal, xSpeed, yVal, ySpeed, angleVal, spriteVal) {
 function bulletBoss(plr, blt)
 {
 	if(!bossIsDying)
-	{
-		console.log(currentDate() + ' | A bullet hit the Boss!');
+	{		
+		if(blt.session === io.socket.sessionid) {
+			player.score += 10;
+			textScore.setText('Score: ' + player.score);
+			console.log(currentDate() + ' | Your bullet hit the Boss!');
+		} else {		
+			console.log(currentDate() + ' | A bullet hit the Boss!');
+		}
 
 		// damage done to boss (boss.health - boss.damage)
 		boss.damage(100);
@@ -1147,12 +1234,13 @@ function bulletBoss(plr, blt)
 		else if(boss.health <= 0) 
 		{
 			bossIsDying = true;
+
 			boss.tint = 0xFFFFFF;		
-			explode(boss.x, boss.y);
+			//explode(boss.x, boss.y);
 			
 			boss.alive = true;
-			boss.exists = true;
-			boss.visible = true;		
+			boss.visible = true;	
+			boss.exists = true;	
 
 			boss.animations.add('boss');
 			boss.animations.play('boss', 8, false, true);	
@@ -1229,6 +1317,15 @@ function bulletPlayer(plr, blt) {
     if(player.health <= 0) {
         explode(player.x, player.y);
     }  
+}
+
+function overlapPlayer(plr, boss) {
+	if(plr.name === io.socket.sessionid) {
+		console.log('playerIsMinion', playerIsMinion);
+		if(!playerIsMinion) {
+			playerIsMinion = true;
+		} 
+	}
 }
 
 function diagonalSpeed(speed) {
@@ -1326,8 +1423,15 @@ function goFullscreen() {
 
 // Function gets called if screen is resized.
 function resizeGame() {
-    var w = window.innerWidth * window.devicePixelRatio,
+    /*var w = window.innerWidth * window.devicePixelRatio,
     h = window.innerHeight * window.devicePixelRatio;
+
+    */
+
+    var w = window.innerWidth;
+    var h = window.innerHeight;
+
+    game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
 
     game.width = w;
     game.height = h;
@@ -1344,6 +1448,7 @@ function resizeGame() {
     }
 
     game.scale.setSize();
+    game.scale.refresh();
 }
 
 /* ~~~~~~~ CO-OP FUNCTIONS ~~~~~~~ */
@@ -1393,7 +1498,6 @@ function newCoop(player1, player2, shoot, move, x, y, angle, type) {
   
 	if(coopPlayers[coopSession].move == io.socket.sessionid) {
 		console.log(currentDate() + " | You may move, good sir.");
-		textPlayer.setText('COOP MODE (move)');
 		coopPlayers[coopSession].frame = 2;
 		coopMovement = true;
 		coopShooting = false;
@@ -1401,7 +1505,6 @@ function newCoop(player1, player2, shoot, move, x, y, angle, type) {
 
 	if(coopPlayers[coopSession].shoot == io.socket.sessionid) {
 		console.log(currentDate() + " | You may shoot, good sir.");
-		textPlayer.setText('COOP MODE (shoot)');
 		coopPlayers[coopSession].frame = 1;
 		coopShooting = true;
 		coopMovement = false;
@@ -1581,6 +1684,32 @@ function distance(lat1, lon1, lat2, lon2, unit) {
 function clickedPlayer(event, sprite) {
 	compareGPS(players[event.name].latitude, players[event.name].longitude, players[event.name].name);
 }
+
+function detectIE() {
+	var ua = window.navigator.userAgent;
+    var msie = ua.indexOf('MSIE ');
+    var trident = ua.indexOf('Trident/');
+
+    if (msie > 0) {
+        // IE 10 or older => return version number
+        return parseInt(ua.substring(msie + 5, ua.indexOf('.', msie)), 10);
+    }
+
+    if (trident > 0) {
+        // IE 11 (or newer) => return version number
+        var rv = ua.indexOf('rv:');
+        return parseInt(ua.substring(rv + 3, ua.indexOf('.', rv)), 10);
+    }
+
+    // other browser
+    return false;
+}
+
+
+
+	function tapped(pointer) {
+ 		console.log('tapped!');
+	}
 
 function render() {
 	/*for(var player in players) {
