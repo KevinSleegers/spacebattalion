@@ -176,10 +176,19 @@ io.sockets.on('connection', function(socket){
     socket.on('locationUpdate', function(data) {
         var obj = JSON.parse(data);
 
-        players[obj.sessionid].lat = obj.lat;
-        players[obj.sessionid].long = obj.long;
+        if(typeof obj !== 'undefined') {
+            if(typeof players[obj.sessionid] !== 'undefined') {
+                if(obj.lat !== '') {
+                    players[obj.sessionid].lat = obj.lat;
+                }
 
-        socket.broadcast.emit('updatedLocation', players[obj.sessionid]);
+                if(obj.long !== '') {
+                    players[obj.sessionid].long = obj.long;
+                }
+
+                socket.broadcast.emit('updatedLocation', players[obj.sessionid]);
+            }
+        }
     });
 
     socket.on('bulletChange', function(data) {
