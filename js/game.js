@@ -595,6 +595,7 @@ function update() {
 	}
 	
 	// Particles achter het schip
+
     emitter = game.add.emitter(player.x, player.y, 1);
 
     emitter.makeParticles('flyRail');
@@ -608,6 +609,7 @@ function update() {
     //	The 5000 value is the lifespan of each particle before it's killed
     emitter.start(true, 150, 100);	
 	game.world.bringToTop(playerGroup);
+
 
     // Update background
     bgtile.tilePosition.x -= 1;
