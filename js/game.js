@@ -1202,16 +1202,16 @@ function changePosition(xVal, xSpeed, yVal, ySpeed, angleVal, spriteVal) {
 
 function bulletBoss(plr, blt)
 {
-	if(blt.session === io.socket.sessionid) {
-		player.score += 10;
-		textScore.setText('Score: ' + player.score);
-		console.log(currentDate() + ' | Your bullet hit the Boss!');
-	} else {		
-		console.log(currentDate() + ' | A bullet hit the Boss!');
-	}
-
 	if(!bossIsDying)
-	{
+	{		
+		if(blt.session === io.socket.sessionid) {
+			player.score += 10;
+			textScore.setText('Score: ' + player.score);
+			console.log(currentDate() + ' | Your bullet hit the Boss!');
+		} else {		
+			console.log(currentDate() + ' | A bullet hit the Boss!');
+		}
+
 		// damage done to boss (boss.health - boss.damage)
 		boss.damage(100);
 
@@ -1228,12 +1228,13 @@ function bulletBoss(plr, blt)
 		else if(boss.health <= 0) 
 		{
 			bossIsDying = true;
+
 			boss.tint = 0xFFFFFF;		
-			explode(boss.x, boss.y);
+			//explode(boss.x, boss.y);
 			
 			boss.alive = true;
-			boss.exists = true;
-			boss.visible = true;		
+			boss.visible = true;	
+			boss.exists = true;	
 
 			boss.animations.add('boss');
 			boss.animations.play('boss', 8, false, true);	
