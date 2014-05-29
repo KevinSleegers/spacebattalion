@@ -695,7 +695,7 @@ function update() {
 	*/
 
     // Update background
-    if(game.device.desktop && detectIE() === false) {
+    if(game.device.desktop) {
     	bgtile.tilePosition.x -= 1;
     	bgtile.tilePosition.y += .5;
     }
@@ -1067,46 +1067,48 @@ function newBullet(blt) {
     if(bullet) {
         bullet.revive();
 		
-        // Muzzleflash
-        muzzleFlash = game.add.sprite(blt.resetX, blt.resetY, 'muzzleFlash');
-		
-		console.log(player.rotation);
-		
-		// Positie van muzzleflash, kon even geen andere manier bedenken dus dan maar zo :D
-		if(currentDirection == 'left')
-		{
-			muzzleFlash.anchor.setTo(1.9, .4);
-		}else if(currentDirection == 'left-up')
-		{
-			muzzleFlash.anchor.setTo(2.2, 2.1);
-		}else if(currentDirection == 'left-down')
-		{
-			muzzleFlash.anchor.setTo(2.2, -1.4);
-		}else if(currentDirection == 'right-up')
-		{
-			muzzleFlash.anchor.setTo(-1.2, 2.1);
-		}else if(currentDirection == 'right-down')
-		{
-			muzzleFlash.anchor.setTo(-1.2, -1.2);
-		}else if(currentDirection == 'right')
-		{
-			muzzleFlash.anchor.setTo(-.9, .6);
-		}else if(currentDirection == 'down')
-		{
-			muzzleFlash.anchor.setTo(.5, -1.0);
-		}else if(currentDirection == 'up')
-		{
-			muzzleFlash.anchor.setTo(.5, 1.9);
-		}else
-		{
-			muzzleFlash.anchor.setTo(.5, .5);		
-		}
+		if(game.device.desktop) {
+	        // Muzzleflash
+	        muzzleFlash = game.add.sprite(blt.resetX, blt.resetY, 'muzzleFlash');
+			
+			console.log(player.rotation);
+			
+			// Positie van muzzleflash, kon even geen andere manier bedenken dus dan maar zo :D
+			if(currentDirection == 'left')
+			{
+				muzzleFlash.anchor.setTo(1.9, .4);
+			}else if(currentDirection == 'left-up')
+			{
+				muzzleFlash.anchor.setTo(2.2, 2.1);
+			}else if(currentDirection == 'left-down')
+			{
+				muzzleFlash.anchor.setTo(2.2, -1.4);
+			}else if(currentDirection == 'right-up')
+			{
+				muzzleFlash.anchor.setTo(-1.2, 2.1);
+			}else if(currentDirection == 'right-down')
+			{
+				muzzleFlash.anchor.setTo(-1.2, -1.2);
+			}else if(currentDirection == 'right')
+			{
+				muzzleFlash.anchor.setTo(-.9, .6);
+			}else if(currentDirection == 'down')
+			{
+				muzzleFlash.anchor.setTo(.5, -1.0);
+			}else if(currentDirection == 'up')
+			{
+				muzzleFlash.anchor.setTo(.5, 1.9);
+			}else
+			{
+				muzzleFlash.anchor.setTo(.5, .5);		
+			}
 
-		muzzleFlash.alpha = 0;
-		game.add.tween(muzzleFlash).to( { alpha: 1 }, 100, Phaser.Easing.Linear.None, true, 0, 100, true);
-		
-		// Muzzleflash wordt automatisch verwijdert na 200ms
-		muzzleFlash.lifespan = 200;					
+			muzzleFlash.alpha = 0;
+			game.add.tween(muzzleFlash).to( { alpha: 1 }, 100, Phaser.Easing.Linear.None, true, 0, 100, true);
+			
+			// Muzzleflash wordt automatisch verwijdert na 200ms
+			muzzleFlash.lifespan = 200;		
+		}			
 
         bullet.checkWorldBounds = true;
         bullet.outOfBoundsKill = true;
@@ -1348,7 +1350,7 @@ function diagonalSpeed(speed) {
 }
 
 function createCloud() {
-    // random getal tussen 0 en 1
+    // random getal tussen 1 en 10
     var randCloud = Math.floor((Math.random() * 10) + 1);
 
     // random x waarde tussen 800 en 400
@@ -1366,25 +1368,14 @@ function createCloud() {
     game.add.tween(cloud).to({ angle: cloud.angle}, 150000, Phaser.Easing.Linear.None, true);
 
     cloudTimer = game.time.now + 5000;
-
     clouds.add(cloud);
 }
 
 
-function createStar() {
-    // random getal tussen 0 en 1
-    var randStar = Math.floor((Math.random() * 10) + 1);
-
-    // random x waarde tussen 800 en 400
-    var random = Math.floor(Math.random() * (800 - 400 + 1)) + 400;
-
-    
-    var star = game.add.sprite(-(Math.random() * random), game.world.randomY, 'star');
-    
-
-
+function createStar() {    
+    var star = game.add.sprite(game.world.randomX, game.world.randomY, 'star');
+    star.angle = game.rnd.angle();
     starTimer = game.time.now + 5000;
-
     stars.add(star);
 }
 
@@ -1699,31 +1690,9 @@ function clickedPlayer(event, sprite) {
 	compareGPS(players[event.name].latitude, players[event.name].longitude, players[event.name].name);
 }
 
-function detectIE() {
-	var ua = window.navigator.userAgent;
-    var msie = ua.indexOf('MSIE ');
-    var trident = ua.indexOf('Trident/');
-
-    if (msie > 0) {
-        // IE 10 or older => return version number
-        return parseInt(ua.substring(msie + 5, ua.indexOf('.', msie)), 10);
-    }
-
-    if (trident > 0) {
-        // IE 11 (or newer) => return version number
-        var rv = ua.indexOf('rv:');
-        return parseInt(ua.substring(rv + 3, ua.indexOf('.', rv)), 10);
-    }
-
-    // other browser
-    return false;
+function tapped(pointer) {
+ 	console.log('tapped!');
 }
-
-
-
-	function tapped(pointer) {
- 		console.log('tapped!');
-	}
 
 function render() {
 	/*for(var player in players) {
