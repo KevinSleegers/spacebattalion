@@ -144,7 +144,7 @@ io.sockets.on('connection', function(socket){
 
     socket.on('damagePlayer', function(data) {
         // Send to all clients (including sender)
-        socket.broadcast.emit('playerShot', data);
+        io.sockets.emit('playerShot', data);
     });
 
     socket.on('bossDied', function(data) {
@@ -211,9 +211,15 @@ io.sockets.on('connection', function(socket){
     });
 
     socket.on('playerDied', function(data) {
-        delete players[data];
+        //delete players[data];
 
         console.log('Removed dead player: ', data);
+    });
+
+    socket.on('playerMinion', function(data) {
+        players[data].minion = true;
+
+        io.sockets.emit('minionPlayer', data);
     });
 
     socket.on('disconnect', function() {
@@ -234,6 +240,7 @@ io.sockets.on('connection', function(socket){
         player.x = obj.x;
         player.y = obj.y;
         player.angle = obj.angle;
+        player.minion = false;
 
         players[player.sessionID] = player;
 

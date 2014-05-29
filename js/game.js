@@ -98,7 +98,6 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     muzzleFlash,
     playerType,
 	bossIsDying = false,
-	playerIsMinion = false,
 
     playerGroup,
 
@@ -319,6 +318,8 @@ function create() {
 	player.body.collideWorldBounds = true;
 	player.body.immovable = true;	
 	player.score = 0;
+	player.frame = 3;
+	player.minion = false;
 	
 	boss = game.add.sprite(100, 100, 'boss');
     boss.anchor.setTo(.5, .5);
@@ -448,43 +449,64 @@ function create() {
 
     // Damage player
     socket.on('playerShot', function(data) {
+    	console.log('new bullet hit someone', data);
+
     	if(data === io.socket.sessionid) {
     		player.damage(10);
 
         	console.log('ik wordt gehit');
 
-        	if(player.health <= 70 && player.health > 30) {
-        		player.frame = 4;
-				player.tint = 0xFF9933;				
-        	} else if(player.health <= 30 && player.health > 0) {
-        		player.frame = 5;
-				player.tint = 0xFF3300;	
-        	} else if(player.health <= 0) {	
-			
-				//player.frame = 9;
-				
-				//if(boss over speler gaat)
-				//{
-					//player.tint = 0xFFFFFF;
-					//player.frame = 12;
-					//player.health = 100;				
-					//playerIsMinion = true;
-				//}
-				
-				// Standaard als via de function: damage() iets gekilled wordt, dan worden de statussen: alive, exist en visible op false gezet 
-				// verder worden ook alle events gebonden aan de speler removed
-				player.alive = true;
-				player.exists = true;
-				player.visible = true;
-				
-        		setTimeout(function() {
-					explode(player.x, player.y);
-        		}, 300);			
+        	if(player.minion === false) {
+	        	if(player.health <= 70 && player.health > 30) {
+	        		player.frame = 10;
 
-    			socket.emit('playerDied', io.socket.sessionid);
-    		} else {
-    			player.frame = 3;
-    		}
+	    			setTimeout(function() {
+	    				player.frame = 4;
+	    			}, 100);
+					//player.tint = 0xFF9933;				
+	        	} else if(player.health <= 30 && player.health > 0) {
+	        		player.frame = 10;
+
+	        		setTimeout(function() {
+	        			player.frame = 5;
+	        		}, 100);
+					//player.tint = 0xFF3300;	
+	        	} else if(player.health <= 0) {	
+	        		player.frame = 10;
+
+	        		setTimeout(function() {
+	        			player.frame = 9;
+	        		}, 100);		
+					
+					// Standaard als via de function: damage() iets gekilled wordt, dan worden de statussen: alive, exist en visible op false gezet 
+					// verder worden ook alle events gebonden aan de speler removed
+					player.alive = true;
+					player.exists = true;
+					player.visible = true;		  
+
+	    			socket.emit('playerDied', io.socket.sessionid);
+
+					setTimeout(function() {
+						explode(player.x, player.y);
+
+						socket.emit('playerMinion', io.socket.sessionid);
+					}, 1000);
+	    		} else {
+	    			var currentFrame = player.frame;
+
+	    			player.frame = 10;
+
+	        		setTimeout(function() {
+	        			player.frame = currentFrame;
+	        		}, 100);	
+	    		}
+	    	} else {
+	    		player.frame = 11;
+
+				setTimeout(function() {
+			    	player.frame = 12;
+				}, 100);
+	    	}
     	}
     	// data.length > 20 dan is het een coop speler
     	else if(data.length > 20) {
@@ -504,11 +526,70 @@ function create() {
     	} else {
     		players[data].damage(10);
 
-    		if(players[data].health <= 0) {		
-    			explode(players[data].x, players[data].y);
+    		if(players[data].minion === false) { 
+
+    			if(players[data].health <= 70 && players[data].health > 30) {
+	        		players[data].frame = 10;
+
+	    			setTimeout(function() {
+	    				players[data].frame = 1;
+	    			}, 100);
+					//player.tint = 0xFF9933;				
+	        	} else if(players[data].health <= 30 && players[data].health > 0) {
+	        		players[data].frame = 10;
+
+	    			setTimeout(function() {
+	    				players[data].frame = 2;
+	    			}, 100);
+					//player.tint = 0xFF3300;
+				} else if(players[data].health <= 0) {		
+	    			players[data].frame = 10;
+
+	    			setTimeout(function() {
+	    				players[data].frame = 9;
+	    			}, 100);
+					
+					// Standaard als via de function: damage() iets gekilled wordt, dan worden de statussen: alive, exist en visible op false gezet 
+					// verder worden ook alle events gebonden aan de speler removed
+					players[data].alive = true;
+					players[data].exists = true;
+					players[data].visible = true;		
+
+					setTimeout(function() {
+						explode(players[data].x, players[data].y);
+					}, 1000);
+	    		} else {
+	    			var currentFrame = players[data].frame;
+
+	    			players[data].frame = 10;
+
+	    			setTimeout(function() {
+	    				players[data].frame = currentFrame;
+	    			}, 100);
+	    		}
+    		} else {
+    			players[data].frame = 11;
+
+    			setTimeout(function() {
+    				players[data].frame = 13;
+    			}, 100);
     		}
     	}
     });
+
+	socket.on('minionPlayer', function(data) {
+		if(data === io.socket.sessionid) {
+			player.revive();
+			player.frame = 12;
+			player.minion = true;
+			player.health = 100;
+		} else {
+			players[data].revive();
+			players[data].frame = 13;
+			players[data].minion = true;
+			players[data].health = 100;
+		}
+	});	
 
     // Remove player
     socket.on('removePlayer', function(data) {
@@ -940,7 +1021,8 @@ function newPlayer(plr) {
     var newPlayerY = plr.y;
     var newPlayerAngle = plr.angle;
 
-    players[plr.session] = game.add.sprite(plr.x, plr.y, 'otherPlayers');
+    //players[plr.session] = game.add.sprite(plr.x, plr.y, 'otherPlayers');
+	players[plr.session] = game.add.sprite(plr.x, plr.y, 'player');
 
     // configurations for new player
     players[plr.session].anchor.setTo(.5,.5);
@@ -951,9 +1033,20 @@ function newPlayer(plr) {
     players[plr.session].body.collideWorldBounds = true;
     players[plr.session].name = plr.session;
     players[plr.session].health = 100;
-    players[plr.session].frame = 1;
+    players[plr.session].minion = false;
+    //players[plr.session].frame = 1;
     players[plr.session].angle = plr.angle;
     players[plr.session].body.immovable = true;
+
+    if(typeof plr.minion !== 'undefined') {
+    	if(plr.minion === true) {
+    		players[plr.session].minion = true;
+    		players[plr.session].frame = 13;
+    	} else {    		
+    		players[plr.session].minion = false;
+    		players[plr.session].frame = 0;
+    	}
+    }
 
     // Sla gps locatie van speler op (om na te gaan of iemand anders in de buurt is)
     players[plr.session].latitude = plr.lat;
@@ -1256,25 +1349,15 @@ function bulletBoss(plr, blt)
 function bulletOtherPlayer(plr, blt) {
 
 	blt.animations.play('bulletCollide');
-	curPlayerFrame = players[plr.name].frame;
-	
-	players[plr.name].frame = 12;
 
 	blt.events.onAnimationComplete.add(function() {
     	blt.kill();
-		players[plr.name].frame = curPlayerFrame;
 	}, this);
 
     var damagedPlayer = players[plr.name].name;
     socket.emit('damagePlayer', damagedPlayer);
 	
 	console.log(currentDate() + ' | A bullet hit another player!');
-
-    players[plr.name].damage(10);
-
-    if(players[plr.name].health <= 0) {
-        explode(players[plr.name].x, players[plr.name].y);
-    }
 }
 
 function bulletCoop(plr, blt) {
@@ -1290,13 +1373,13 @@ function bulletCoop(plr, blt) {
 	
 	console.log('other player got hit!', damagedPlayer);
 
-    coopPlayers[plr.name].damage(10);
+    /*coopPlayers[plr.name].damage(10);
 
     coopPlayers[plr.name].frame = 0;
 
     setTimeout(function() {
     	coopPlayers[plr.name].frame = 3;
-	}, 100);
+	}, 100);*/
 }
 
 function bulletPlayer(plr, blt) {
@@ -1308,16 +1391,18 @@ function bulletPlayer(plr, blt) {
     	blt.kill();
 	}, this);
 
+	/*
     if(player.health <= 0) {
         explode(player.x, player.y);
-    }  
+    }  */
 }
 
 function overlapPlayer(plr, boss) {
 	if(plr.name === io.socket.sessionid) {
-		console.log('playerIsMinion', playerIsMinion);
-		if(!playerIsMinion) {
-			playerIsMinion = true;
+		if(plr.minion === false) {
+			player.minion = true;
+			player.frame = 12;
+			player.health = 100;	
 		} 
 	}
 }
@@ -1353,7 +1438,7 @@ function createCloud() {
 function createStar() {    
     var star = game.add.sprite(game.world.randomX, game.world.randomY, 'star');
     star.angle = game.rnd.angle();
-    starTimer = game.time.now + 5000;
+    starTimer = game.time.now + 3000;
     stars.add(star);
 }
 
