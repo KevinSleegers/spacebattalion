@@ -128,7 +128,7 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     coopShooting = false,
 
     logging = true,
-    bounds = 3000
+    bounds = 2000;
     ;
 
 function createText() {
@@ -201,7 +201,8 @@ function create() {
 
     game.renderer.clearBeforeRender = false;
     game.renderer.roundPixels = true;
-    game.physics.startSystem(Phaser.Physics.ARCADE);    
+    game.physics.startSystem(Phaser.Physics.ARCADE); 
+    game.physics.arcade.TILE_BIAS = 50;   
     game.world.setBounds(0, 0, bounds, bounds);
 
     // Geanimeerde achtergrond
@@ -253,7 +254,7 @@ function create() {
 
     // Geluidseffecten aanmaken
     backgroundMusic = game.add.audio('backgroundMusic');
-    // backgroundMusic.play('', 0, 1, true); // loop background music
+    backgroundMusic.play('', 0, 1, true); // loop background music
     //playerBullet = game.add.audio('playerBullet');
 
     // Bullets aanmaken
@@ -267,7 +268,6 @@ function create() {
         bullet.animations.add('bulletCollide', [1, 2, 3, 4, 5, 6]);
         bullet.anchor.setTo(0.5, 0.5);
         bullet.frame = 0;
-        console.log('bullet frame', bullet.frame);
         this.game.physics.enable(bullet, Phaser.Physics.ARCADE);
 
         bullet.kill();
@@ -760,11 +760,11 @@ function update() {
 
     // Update background
     if(game.device.desktop) {
-    	bgtile.tilePosition.x -= 1;
-    	bgtile.tilePosition.y += .5;
+    	bgtile.tilePosition.x -= 2;
+    	bgtile.tilePosition.y += 1;
 
 	    // create clouds
-	    if(clouds.countLiving() >= 15) {
+	    if(clouds.countLiving() >= 10) {
 	    	clouds.removeAll();
 	    	console.log(currentDate() + ' | Clouds removed..');
 	    } else if(game.time.now > cloudTimer) {          
@@ -1388,11 +1388,10 @@ function diagonalSpeed(speed) {
 }
 
 function createCloud() {
+	console.log(currentDate() + ' | Creating new cloud..');
+
     // random getal tussen 1 en 10
     var randCloud = Math.floor((Math.random() * 10) + 1);
-
-    // random x waarde tussen 800 en 400
-    var random = Math.floor(Math.random() * (800 - 400 + 1)) + 400;
 
     if(randCloud < 5) {
         //var cloud = game.add.sprite(-(Math.random() * random), game.world.randomY, 'cloud1');
@@ -1405,10 +1404,12 @@ function createCloud() {
     cloud.alpha = 0;
     cloud.angle = game.rnd.angle();
 
-    game.add.tween(cloud).to( { alpha: 1 }, 2000, Phaser.Easing.Linear.None)
+    /* game.add.tween(cloud).to( { alpha: 1 }, 2000, Phaser.Easing.Linear.None)
     .to({ x: game.width + (1600 + cloud.x) }, 150000, Phaser.Easing.Linear.None)
     .to({ angle: cloud.angle}, 150000, Phaser.Easing.Linear.None)
-    .start();
+    .start(); */
+
+    game.add.tween(cloud).to( { alpha: 1 }, 2000, Phaser.Easing.Linear.None).start();
 
     // Spawn elke 5 sec een nieuwe wolk random
     cloudTimer = game.time.now + 5000;
@@ -1446,10 +1447,12 @@ function createMoon() {
     moon.alpha = 0;
     moon.angle = game.rnd.angle();
 
-    game.add.tween(moon).to( { alpha: 1 }, 1000, Phaser.Easing.Linear.None)
+    /* game.add.tween(moon).to( { alpha: 1 }, 1000, Phaser.Easing.Linear.None)
     .to({ x: game.width + (1600 + moon.x) }, 300000, Phaser.Easing.Linear.None)
     .to({ angle: moon.angle}, 150000, Phaser.Easing.Linear.None)
-    .start();
+    .start(); */
+
+    game.add.tween(moon).to( { alpha: 1 }, 1000, Phaser.Easing.Linear.None).start();
 }
 
 function randName() {
