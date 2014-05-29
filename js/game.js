@@ -33,7 +33,7 @@ function preload() {
 	game.load.spritesheet('otherPlayers', 'assets/img/spr_plane_strip2.png', 64, 64);
 
 	// boss sprite -> 256x128
-	game.load.spritesheet('boss', 'assets/img/spr_boss_die_strip13.png', 256, 128);
+	game.load.spritesheet('boss', 'assets/img/spr_boss_die_strip13_hor.png', 128, 256);
 	//game.load.spritesheet('boss', 'assets/img/spr_boss_die_strip13_TEST.png', 256, 256);
 
 	// coop sprite -> 96x128
@@ -667,9 +667,14 @@ function update() {
 	        }
 	    });
 	} else {
-		//player.body.velocity.setTo(0,0);
-		if(typeof player !== "undefined") {
-			player.body.velocity.setTo(0,0);		
+		if(playerType === boss) {
+			playerType.body.velocity.setTo(0,0);
+		}
+		else {
+			//player.body.velocity.setTo(0,0);
+			if(typeof player !== "undefined") {
+				player.body.velocity.setTo(0,0);		
+			}
 		}
 	}
 
@@ -1002,7 +1007,12 @@ function updatePlayer(plr) {
     var newPlayerY = plr.y;
 	var newPlayerAngle = plr.angle;
 
-	if(playerNick === 'coop') {
+	if(playerNick === 'boss') {
+		boss.x = plr.x;
+		boss.y = plr.y;
+		boss.angle = plr.angle;
+	}
+	else if(playerNick === 'coop') {
 		console.log('jajajajaja');
 		coopPlayers[plr.session].x = plr.x;
 		coopPlayers[plr.session].y = plr.y;
