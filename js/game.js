@@ -127,7 +127,8 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     coopMovement = false,
     coopShooting = false,
 
-    logging = true;
+    logging = true,
+    bounds = 3000
     ;
 
 function createText() {
@@ -162,6 +163,7 @@ function createText() {
 
 /* ~~~~~~~ CREATE GAME ~~~~~~~ */
 function create() {
+	game.time.advancedTiming = true;
 
 
 	if(logging === false) {
@@ -183,7 +185,7 @@ function create() {
 		game.scale.pageAlignHorizontally = true;
 		game.scale.pageAlignVertically = true;
 		game.scale.setScreenSize(true);
-	} else {
+	}  else {
 		game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
 		game.scale.minWidth = w / 2;
         game.scale.minHeight = h / 2;
@@ -195,29 +197,15 @@ function create() {
         game.scale.hasResized.add(resizeGame, this);
         game.scale.forceOrientation(true, false, 'portraitMode');
         game.scale.leaveIncorrectOrientation.add(resizeGame, this);
-        game.scale.setScreenSize(true);
 	}
-
-    /* Game draait ook in de achtergrond door (als scherm geen focus heeft)
-    game.stage.disableVisibilityChange = true;
-    game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-    game.scale.pageAlignHorizontally = true;
-    game.scale.pageAlignVertically = false;
-
-    if(!game.device.desktop) {
-    	game.scale.setScreenSize(true);
-    	game.scale.forceOrientation(true, false, 'portraitMode');
-    	game.scale.enterIncorrectOrientation.add(portraitMode, this);
-    	game.scale.leaveIncorrectOrientation.add(resizeGame, this);
-    }*/
 
     game.renderer.clearBeforeRender = false;
     game.renderer.roundPixels = true;
     game.physics.startSystem(Phaser.Physics.ARCADE);    
-    game.world.setBounds(0, 0, 5000, 5000);
+    game.world.setBounds(0, 0, bounds, bounds);
 
     // Geanimeerde achtergrond
-    bgtile = game.add.tileSprite(0, 0, 5000, 5000, 'mainBg');
+    bgtile = game.add.tileSprite(0, 0, bounds, bounds, 'mainBg');
 
     // Refreshen van locatie wordt bepaald door browser dus haal op uit local storage
     if(localStorage.getItem('latitude') !== null && localStorage.getItem('longitude') !== null) {
@@ -225,28 +213,31 @@ function create() {
     	longitude = localStorage.getItem('longitude');
     }
 
-    clouds = game.add.group();
-    clouds.enableBody = true;
-    clouds.physicsBodyType = Phaser.Physics.ARCADE;
-    clouds.setAll('anchor.x', 0.5);
-    clouds.setAll('anchor.y', 0.5);
-    clouds.setAll('outOfBoundsKill', true);  
-	
-	
-	stars = game.add.group();
-    stars.enableBody = true;
-    stars.physicsBodyType = Phaser.Physics.ARCADE;
-    stars.setAll('anchor.x', 0.5);
-    stars.setAll('anchor.y', 0.5);
-    stars.setAll('outOfBoundsKill', true);  
-	createStar();
-    // Generate 5 clouds to start with.
-    for(i = 0; i < 5; i++) {
-        createCloud();
-    }
+    if(game.device.desktop) {
+	    clouds = game.add.group();
+	    clouds.enableBody = true;
+	    clouds.physicsBodyType = Phaser.Physics.ARCADE;
+	    clouds.setAll('anchor.x', 0.5);
+	    clouds.setAll('anchor.y', 0.5);
+	    clouds.setAll('outOfBoundsKill', true);  
 
-    // Create moon
-    createMoon();
+	    // Maak 5 wolken aan
+	    for(i = 0; i < 5; i++) {
+	        createCloud();
+	    }
+		
+		stars = game.add.group();
+	    stars.enableBody = true;
+	    stars.physicsBodyType = Phaser.Physics.ARCADE;
+	    stars.setAll('anchor.x', 0.5);
+	    stars.setAll('anchor.y', 0.5);
+	    stars.setAll('outOfBoundsKill', true);  
+		
+		createStar();
+
+	    // Create moon
+	    createMoon();
+	}
 
     // Get nickname from player
     playerName = prompt("What's your battle name?");
@@ -303,6 +294,20 @@ function create() {
 
     // Player aanmaken
 	player = game.add.sprite(game.world.centerX, game.world.centerY, 'player');
+	
+	// Boss aanmaken
+	boss = game.add.sprite(100, 100, 'boss');
+	
+	if(playerName == "boss")
+	{
+		playerType = boss;
+	}
+	else
+	{
+		playerType = player;
+	}		
+
+	// Player instellingen
 	player.anchor.setTo(.5,.5);
 	player.name = io.socket.sessionid;
 	player.allowControls = true;
@@ -314,14 +319,23 @@ function create() {
 	player.health = 100;
 	player.bringToTop();
 	game.physics.enable(player, Phaser.Physics.ARCADE);
+	player.physicsBodyType = Phaser.Physics.ARCADE;
 	player.enableBody = true;
 	player.body.collideWorldBounds = true;
 	player.body.immovable = true;	
 	player.score = 0;
 	player.frame = 3;
 	player.minion = false;
-	
-	boss = game.add.sprite(100, 100, 'boss');
+
+	// Hide player sprite als je de boss bent
+	if(playerType === boss) {
+		if(player.visible === true) {
+			player.renderable = false;
+			player.enableBody = false;
+		}
+	}
+
+	// Boss instellingen
     boss.anchor.setTo(.5, .5);
 	boss.allowControls = true;
 	boss.enableBody = true;
@@ -330,15 +344,7 @@ function create() {
     boss.health = 1000;
     boss.frame = 1;
     boss.body.immovable = true;
-	
-	if(playerName == "boss")
-	{
-		playerType = boss;
-	}
-	else
-	{
-		playerType = player;
-	}		
+    boss.move = true;
 
 	// Player toevoegen aan Player group
     playerGroup.add(player);
@@ -381,14 +387,14 @@ function create() {
     // Get already online coop players
     socket.on('onlineCoop', function(data) {
     	for (var onlineCoop in data) {
-    		var player1 = data[onlineCoop].player1;    		
-    		var player2 = data[onlineCoop].player2;
-    		var shooter = data[onlineCoop].shoot;
-    		var mover = data[onlineCoop].move;
-    		var session = data[onlineCoop].session;
-    		var coopX = data[onlineCoop].x;
-    		var coopY = data[onlineCoop].y;
-    		var coopAngle = data[onlineCoop].angle;
+    		var player1 	= data[onlineCoop].player1;    		
+    		var player2 	= data[onlineCoop].player2;
+    		var shooter 	= data[onlineCoop].shoot;
+    		var mover 		= data[onlineCoop].move;
+    		var session 	= data[onlineCoop].session;
+    		var coopX 		= data[onlineCoop].x;
+    		var coopY 		= data[onlineCoop].y;
+    		var coopAngle 	= data[onlineCoop].angle;
 
     		if(player1 !== io.socket.sessionid && player2 !== io.socket.sessionid) {
 
@@ -424,11 +430,11 @@ function create() {
     // Other player requests to coop
     socket.on('joinCoop', function(data) {
 
-    	var obj = JSON.parse(data);
-    	var player1 = obj.player1;
-    	var player2 = obj.player2;
-    	var mover = obj.move;
-    	var shooter = obj.shoot;
+    	var obj 		= JSON.parse(data);
+    	var player1 	= obj.player1;
+    	var player2 	= obj.player2;
+    	var mover 		= obj.move;
+    	var shooter 	= obj.shoot;
 
     	console.log('Creating new Co-op (joined)');
     	newCoop(player1, player2, mover, shooter, '', '', '', 'join');
@@ -737,7 +743,7 @@ function update() {
 		}
 	}
 
-	/* Particles achter het schip
+	// Particles achter het schip
     emitter = game.add.emitter(player.x, player.y, 1);
 
     emitter.makeParticles('flyRail');
@@ -751,36 +757,35 @@ function update() {
     //	The 5000 value is the lifespan of each particle before it's killed
     emitter.start(true, 150, 100);	
 	game.world.bringToTop(playerGroup);
-	*/
 
     // Update background
     if(game.device.desktop) {
     	bgtile.tilePosition.x -= 1;
     	bgtile.tilePosition.y += .5;
-    }
 
-    // create clouds
-    if(game.time.now > cloudTimer) {          
-        createCloud();
-    }
-	
-	// create stars
-    if(game.time.now > starTimer) {          
-        createStar();
-    }
+	    // create clouds
+	    if(clouds.countLiving() >= 15) {
+	    	clouds.removeAll();
+	    	console.log(currentDate() + ' | Clouds removed..');
+	    } else if(game.time.now > cloudTimer) {          
+	        createCloud();
+	    }
+		
+		// create stars
+		if(stars.countLiving() >= 10) {
+			stars.removeAll();
+			console.log(currentDate() + ' | Stars removed..');
+		} else if(game.time.now > starTimer) {          
+	        createStar();
+	    }
 
-    if(moon.x > (game.world.width + moon.width)) {
-        // Destroy old moon, and create new one..
-        moon.destroy();
+	    if(moon.x > (game.world.width + moon.width)) {
+	        // Destroy old moon, and create new one..
+	        moon.destroy();
 
-        createMoon();
-    }
-
-    // move boss
-    /*boss.y -= 2;
-    if(boss.y < -boss.height) {
-        boss.y = game.world.height;
-    }*/
+	        createMoon();
+	    }
+	}
 
     // Check window state
     // This overrides the default because we only want to pause the audio, and not the gameplay.
@@ -899,17 +904,13 @@ function update() {
         var rand1 = game.rnd.integerInRange(-5,5);
         var rand2 = game.rnd.integerInRange(-5,5);
 
-        game.world.setBounds(rand1, rand2, 5000 + rand1, 5000 + rand2);
+        game.world.setBounds(rand1, rand2, bounds + rand1, bounds + rand2);
         shakeScreen--;
 
         if(shakeScreen == 0) {
-            game.world.setBounds(0, 0, 5000, 5000);
+            game.world.setBounds(0, 0, bounds, bounds);
         }
     }
-
-    // For debugging purposes, show FPS
-    // game.time.advancedTiming = true;
-    // console.log('FPS: ', game.time.fps);
 }
 
 function fire() {
@@ -944,61 +945,6 @@ function fire() {
         socket.emit('bulletChange', bulletPosition);
     }
 
-		/*var bullet = bullets.getFirstDead();
-
-		if(bullet) {
-
-			/*bullet.revive();
-
-			bullet.frame = 0;
-            bullet.checkWorldBounds = true;
-            bullet.outOfBoundsKill = true;
-
-            // Reset bullet at exact center of player
-            bullet.reset(player.body.x + (player.width / 2), player.body.y + (player.height / 2));
-
-			bullet.rotation = player.rotation;
-            
-            game.physics.arcade.velocityFromRotation(bullet.rotation += (Math.random() * (-0.100 - 0.100) + 0.100), 625, bullet.body.velocity);
-
-			bulletTime = game.time.now + 250;
-
-			console.log(currentDate() + ' | Bullet has been fired on sender client');
-
-			bullet.y += Math.floor((Math.random() * 40) + -20);
-
-			muzzleFlash = game.add.sprite(bullet.x, bullet.y, 'muzzleFlash');
-			muzzleFlash.anchor.setTo(0.5, 0.5);
-
-			muzzleFlash.alpha = 0;
-			game.add.tween(muzzleFlash).to( { alpha: 1 }, 100, Phaser.Easing.Linear.None, true, 0, 100, true);
-			
-			setTimeout(function() {
-				muzzleFlash.destroy();
-	        }, 100);
-            // Play shooting sound
-            //playerBullet.play();
-
-            // Vibrate phone
-            if(vibrate == true) {
-                navigator.vibrate(500);
-            }
-
-            // Shake screen for n frames
-            shakeScreen = 15;
-
-            // send position of bullet to server
-            var bulletPosition = JSON.stringify({
-                sessionid: io.socket.sessionid,
-                rotation : bullet.rotation,
-                nickname: playerName,
-                x : bullet.x,
-                y : bullet.y
-            });
-
-            
-		}
-	}*/
 }
 
 function explode(x, y) {
@@ -1210,7 +1156,12 @@ function newBullet(blt) {
 function changePosition(xVal, xSpeed, yVal, ySpeed, angleVal, spriteVal) {
 	// Bug.. op de één of andere manier werkt spriteVal.body.velocity.x enz niet, vandaar de if-else constructie
 
+	if(playerType === boss) {
+		boss.move = true;
+	}
+
 	if(spriteVal === 'p') {
+
 		xSpeed == '' ? xSpeed = 0 : xSpeed;
 	    ySpeed == '' ? ySpeed = 0 : ySpeed;
 
@@ -1298,46 +1249,60 @@ function bulletBoss(plr, blt)
 	if(!bossIsDying)
 	{		
 		if(blt.session === io.socket.sessionid) {
-			player.score += 10;
-			textScore.setText('Score: ' + player.score);
-			console.log(currentDate() + ' | Your bullet hit the Boss!');
+			if(player.minion === false) {
+				player.score += 10;
+				textScore.setText('Score: ' + player.score);
+				console.log(currentDate() + ' | Your bullet hit the Boss!');
+
+				var minion = false;
+			} else {
+				var minion = true;
+			}
 		} else {		
 			console.log(currentDate() + ' | A bullet hit the Boss!');
+
+			if(players[blt.session].minion === false) {
+				var minion = false;
+			} else {
+				var minion = true;
+			}
 		}
 
-		// damage done to boss (boss.health - boss.damage)
-		boss.damage(100);
+		if(minion === false) {
+			// damage done to boss (boss.health - boss.damage)
+			boss.damage(100);
 
-		boss.frame = 0;
-	
-		if(boss.health <= 500 && boss.health > 200) 
-		{
-			boss.tint = 0xFF9933;				
-		} 
-		else if(boss.health <= 200 && boss.health > 0)
-		{
-			boss.tint = 0xFF0000;	
-		} 
-		else if(boss.health <= 0) 
-		{
-			bossIsDying = true;
-
-			boss.tint = 0xFFFFFF;		
-			//explode(boss.x, boss.y);
-			
-			boss.alive = true;
-			boss.visible = true;	
-			boss.exists = true;	
-
-			boss.animations.add('boss');
-			boss.animations.play('boss', 8, false, true);	
-
-			socket.emit('bossDied', io.socket.sessionid);
-		}
+			boss.frame = 0;
 		
-		setTimeout(function() {
-			boss.frame = 1;
-		}, 100);	
+			if(boss.health <= 500 && boss.health > 200) 
+			{
+				boss.tint = 0xFF9933;				
+			} 
+			else if(boss.health <= 200 && boss.health > 0)
+			{
+				boss.tint = 0xFF0000;	
+			} 
+			else if(boss.health <= 0) 
+			{
+				bossIsDying = true;
+
+				boss.tint = 0xFFFFFF;		
+				//explode(boss.x, boss.y);
+				
+				boss.alive = true;
+				boss.visible = true;	
+				boss.exists = true;	
+
+				boss.animations.add('boss');
+				boss.animations.play('boss', 8, false, true);	
+
+				socket.emit('bossDied', io.socket.sessionid);
+			}
+			
+			setTimeout(function() {
+				boss.frame = 1;
+			}, 100);	
+		}
 	}
 	
 	blt.animations.play('bulletCollide');
@@ -1398,13 +1363,23 @@ function bulletPlayer(plr, blt) {
 }
 
 function overlapPlayer(plr, boss) {
-	if(plr.name === io.socket.sessionid) {
-		if(plr.minion === false) {
+	console.log('overlap');
+	console.log('boss.move = ', boss.move);
+	console.log('plr.minion = ', plr.minion);
+
+	if(plr.minion === false && boss.move === true && playerType !== boss) {
+		if(plr.name === io.socket.sessionid) {
 			player.minion = true;
 			player.frame = 12;
-			player.health = 100;	
-		} 
-	}
+			player.health = 100;
+			socket.emit('playerMinion', io.socket.sessionid);
+		} else {
+			players[plr.name].minion = true;
+			players[plr.name].frame = 12;
+			players[plr.name].health = 100;
+			socket.emit('playerMinion', plr.name);
+		}	
+	} 
 }
 
 function diagonalSpeed(speed) {
@@ -1420,16 +1395,22 @@ function createCloud() {
     var random = Math.floor(Math.random() * (800 - 400 + 1)) + 400;
 
     if(randCloud < 5) {
-        var cloud = game.add.sprite(-(Math.random() * random), game.world.randomY, 'cloud1');
+        //var cloud = game.add.sprite(-(Math.random() * random), game.world.randomY, 'cloud1');
+        var cloud = game.add.sprite(game.world.randomX, game.world.randomY, 'cloud1');
     } else {
-        var cloud = game.add.sprite(-(Math.random() * random), game.world.randomY, 'cloud2');
+        //var cloud = game.add.sprite(-(Math.random() * random), game.world.randomY, 'cloud2');
+        var cloud = game.add.sprite(game.world.randomX, game.world.randomY, 'cloud2');
     }
-
+    
+    cloud.alpha = 0;
     cloud.angle = game.rnd.angle();
 
-    game.add.tween(cloud).to({ x: game.width + (1600 + cloud.x) }, 150000, Phaser.Easing.Linear.None, true);
-    game.add.tween(cloud).to({ angle: cloud.angle}, 150000, Phaser.Easing.Linear.None, true);
+    game.add.tween(cloud).to( { alpha: 1 }, 2000, Phaser.Easing.Linear.None)
+    .to({ x: game.width + (1600 + cloud.x) }, 150000, Phaser.Easing.Linear.None)
+    .to({ angle: cloud.angle}, 150000, Phaser.Easing.Linear.None)
+    .start();
 
+    // Spawn elke 5 sec een nieuwe wolk random
     cloudTimer = game.time.now + 5000;
     clouds.add(cloud);
 }
@@ -1437,7 +1418,12 @@ function createCloud() {
 
 function createStar() {    
     var star = game.add.sprite(game.world.randomX, game.world.randomY, 'star');
+
+    star.alpha = 0;
     star.angle = game.rnd.angle();
+
+    game.add.tween(star).to( { alpha: 1 }, 1000, Phaser.Easing.Linear.None).start();
+
     starTimer = game.time.now + 3000;
     stars.add(star);
 }
@@ -1455,12 +1441,15 @@ function createMoon() {
         randY = randY;
     }
 
-    moon = game.add.sprite(-(Math.random() * 400), randY, 'moon');
+    moon = game.add.sprite(game.world.randomX, randY, 'moon');
+
+    moon.alpha = 0;
     moon.angle = game.rnd.angle();
 
-    // Tween angle werkt niet op de 1 of andere manier :o
-    //game.add.tween(moon).to({ angle: 180 }, 5000, Phaser.Easing.Linear.None, true);
-    game.add.tween(moon).to({ x: game.width + (1600 + moon.x) }, 300000, Phaser.Easing.Linear.None, true);
+    game.add.tween(moon).to( { alpha: 1 }, 1000, Phaser.Easing.Linear.None)
+    .to({ x: game.width + (1600 + moon.x) }, 300000, Phaser.Easing.Linear.None)
+    .to({ angle: moon.angle}, 150000, Phaser.Easing.Linear.None)
+    .start();
 }
 
 function randName() {
@@ -1761,4 +1750,5 @@ function render() {
 	/*for(var player in players) {
 		game.debug.spriteInfo(players[player], 32, 32);
 	}*/
+	game.debug.text('FPS: ' + game.time.fps, 80, 150, 'rgb(255,255,255)', '24px Courier');
 }
