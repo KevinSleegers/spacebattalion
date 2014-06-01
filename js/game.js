@@ -1,77 +1,3 @@
-/* ~~~~~~~ WIDTH AND HEIGHT ~~~~~~~ */
-//var w = window.innerWidth * window.devicePixelRatio,
-  //  h = window.innerHeight * window.devicePixelRatio;
-
-  var w = window.innerWidth,
-  h = window.innerHeight;
-
-/* ~~~~~~~ NEW GAME ~~~~~~~ */
-var game = new Phaser.Game(w, h, Phaser.AUTO, '', {
-	preload: preload,
-	create: create,
-	update: update,
-    render: render
-});
-
-// Google WebFont Loader
-WebFontConfig = {
-    active: function() { game.time.events.add(Phaser.Timer.SECOND, createText, this); },
-    google: {
-        families: ['Press Start 2P']
-    }
-};
-
-/* ~~~~~~~ PRELOAD FUNCTION ~~~~~~~ */
-function preload() {
-    // Load font
-    game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
-
-    // player sprite -> 64x64
-	game.load.spritesheet('player', 'assets/img/spr_plane_strip11.png', 64, 64);
-
-	// other players sprite -> 64x64
-	game.load.spritesheet('otherPlayers', 'assets/img/spr_plane_strip2.png', 64, 64);
-
-	// boss sprite -> 256x128
-	game.load.spritesheet('boss', 'assets/img/spr_boss_die_strip13.png', 128, 256);
-
-	// coop sprite -> 96x128
-	game.load.spritesheet('coop', 'assets/img/spr_double_final_strip4.png', 96, 128);
-
-	// minion sprite -> 64x64
-	game.load.spritesheet('minion', 'assets/img/spr_minion_strip3.png', 64, 64);
-
-	// explosion sprite -> 64x64
-	game.load.spritesheet('explosion', 'assets/img/fx_explosion_strip10.png', 64, 64);
-
-	// bullet sprite -> 32x32
-	game.load.spritesheet('bullet', 'assets/img/fx_bullet_impact_strip7.png', 32, 32);
-
-	// star sprite -> 64x64
-	game.load.image('star', 'assets/img/spr_star.png');
-
-	// muzzleflash sprite -> 32x32
-    game.load.image('muzzleFlash', 'assets/img/spr_muzzleFlash.png');
-
-    // flyRail sprite -> 12x12
-    game.load.image('flyRail', 'assets/img/fly_rail.png');
-
-    // Animated background
-    game.load.spritesheet('mainBg', 'assets/img/spr_backgroundOverlay.png', 160, 160);
-
-    // Cloud sprites
-    game.load.image('cloud1', 'assets/img/spr_cloud1.png');
-    game.load.image('cloud2', 'assets/img/spr_cloud2.png');
-
-    // Moon sprite -> 192x192
-    game.load.image('moon', 'assets/img/spr_moon.png');
-
-    game.load.image('portraitMode', 'assets/img/portrait_mode.png');
-
-    game.load.audio('backgroundMusic', ['assets/audio/TakingFlight.mp3', 'assets/audio/TakingFlight.ogg']);
-}
-
-/* ~~~~~~~ VARIABLE DECLERATION ~~~~~~~ */
 var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'Flash Socket', 'AJAX long-polling']}), 
     player, 
     boss, 
@@ -98,13 +24,8 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     muzzleFlash,
     playerType,
 	bossIsDying = false,
-
     playerGroup,
-
-    // Background image variable
     bgtile,
-
-    // Cloud image
     clouds,
     cloudTimer = 0,
 	
@@ -118,6 +39,7 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     // audio
     playerBullet,
     backgroundMusic,
+    shipHitSound,
 
     latitude,
     longitude,
@@ -131,92 +53,392 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     bounds = 2000;
     ;
 
-function createText() {
-	// Check om na te gaan of playerName bestaat
-	if(typeof playerName === 'undefined') {
-		playerName = 'Onbekend';
-	}
+SpaceBattalion.Game = function(game) {
+	this.game;		//	a reference to the currently running game
+    this.add;		//	used to add sprites, text, groups, etc
+    this.camera;	//	a reference to the game camera
+    this.cache;		//	the game cache
+    this.input;		//	the global input manager (you can access this.input.keyboard, this.input.mouse, as well from it)
+    this.load;		//	for preloading assets
+    this.math;		//	lots of useful common math operations
+    this.sound;		//	the sound manager - add a sound, play one, set-up markers, etc
+    this.stage;		//	the game stage
+    this.time;		//	the clock
+    this.tweens;    //  the tween manager
+    this.state;	    //	the state manager
+    this.world;		//	the game world
+    this.particles;	//	the particle manager
+    this.physics;	//	the physics manager
+    this.renderer;
+    this.rnd;		//	the repeatable random number generator
+};
 
-    textPlayers = game.add.text(180, 50, "Players: " + (onlinePlayers.length + 1) + "/40");
-    textPlayers.font = 'Press Start 2P';
-    textPlayers.fontSize = 15;
-    textPlayers.fill = '#d77e00';
-    textPlayers.align = 'center';
-    textPlayers.anchor.setTo(0.5, 0.5);
-    textPlayers.fixedToCamera = true;
+SpaceBattalion.Game.prototype = {
 
-    // Check om na te gaan of 'player' al bestaat
-    if(typeof player !== 'undefined') {
-    	var score = player.score;
-    } else {
-    	var score = 0;
-    }
+	create: function() {
+		// Phaser advanced timing aan -> FPS
+		this.time.advancedTiming = true;
+		this.input.maxPointers = 1;
 
-    textScore = game.add.text(window.screen.availWidth - 200, 50, "Score: " + score);
-    textScore.font = 'Press Start 2P';
-    textScore.fontSize = 15;
-    textScore.fill = '#d77e00';
-    textScore.align = 'center';
-    textScore.anchor.setTo(0.5, 0.5);
-    textScore.fixedToCamera = true;
-}
+		// Console.log aan / uit zetten
+		if(!logging) {
+			console.log = function() {};
+		}
 
-/* ~~~~~~~ CREATE GAME ~~~~~~~ */
-function create() {
-	game.time.advancedTiming = true;
+		/*this.renderer.clearBeforeRender = true;
+		this.renderer.roundPixels = true;*/
+		this.physics.startSystem(Phaser.Physics.ARCADE);
+		this.world.setBounds(0, 0, bounds, bounds);
 
+		// Achtergrond muziek en andere geluiden
+		this.backgroundMusic = this.add.audio('backgroundMusic');
+		if(SpaceBattalion.music) {
+			this.backgroundMusic.play('', 0, 1, true);
+		}
 
-	if(logging === false) {
-		console.log = function() {};
-	}
+		this.shipHitSound 	= this.add.audio('shipHitSound');
+		this.laserShotSound = this.add.audio('laserShotSound');
+		this.explosionSound	= this.add.audio('explosionSound');
 
-	getLocation();
+		playerName = prompt("What's your battle name?");
+		if(!playerName) {
+			playerName = this.randName();
+		}
 
-	// Maximaal 1 input (1 cursor, 1 touch event)
-	game.input.maxPointers = 1;
-	game.stage.disableVisibilityChange = true;
+		bgtile = this.add.tileSprite(0, 0, bounds, bounds, 'mainBg');
 
-	if(game.device.desktop) { 
-		game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-		game.scale.minWidth = w / 2;
-		game.scale.minHeight = h / 2;
-		game.scale.maxWidth = w;
-		game.scale.maxHeight = h;
-		game.scale.pageAlignHorizontally = true;
-		game.scale.pageAlignVertically = true;
-		game.scale.setScreenSize(true);
-	}  else {
-		game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-		game.scale.minWidth = w / 2;
-        game.scale.minHeight = h / 2;
-        game.scale.maxWidth = w * 2.5; //You can change this to gameWidth*2.5 if needed
-        game.scale.maxHeight = h * 2.5; //Make sure these values are proportional to the gameWidth and gameHeight
-        game.scale.pageAlignHorizontally = true;
-        game.scale.pageAlignVertically = true;
-        game.scale.forceOrientation(true, false);
-        game.scale.hasResized.add(resizeGame, this);
-        game.scale.forceOrientation(true, false, 'portraitMode');
-        game.scale.leaveIncorrectOrientation.add(resizeGame, this);
-	}
+		if(localStorage.getItem('latitude') !== null && localStorage.getItem('longitude') !== null) {
+    		latitude = localStorage.getItem('latitude');
+    		longitude = localStorage.getItem('longitude');
+    	}
 
-    game.renderer.clearBeforeRender = false;
-    game.renderer.roundPixels = true;
-    game.physics.startSystem(Phaser.Physics.ARCADE); 
-    game.physics.arcade.TILE_BIAS = 50;   
-    game.world.setBounds(0, 0, bounds, bounds);
+		player 	= this.add.sprite(this.world.centerX, this.world.centerY, 'player');
+		boss 	= this.add.sprite(100, 200, 'boss'); 
 
-    // Geanimeerde achtergrond
-    bgtile = game.add.tileSprite(0, 0, bounds, bounds, 'mainBg');
+		if(playerName === 'boss') {
+			playerType = boss;
+		} else {
+			playerType = player;
+		}
 
-    // Refreshen van locatie wordt bepaald door browser dus haal op uit local storage
-    if(localStorage.getItem('latitude') !== null && localStorage.getItem('longitude') !== null) {
-    	latitude = localStorage.getItem('latitude');
-    	longitude = localStorage.getItem('longitude');
-    }
+		// Player instellingen
+		player.anchor.setTo(.5,.5);
+		player.name = io.socket.sessionid;
+		player.allowControls = true;
+		player.latitude = latitude;
+		player.longitude = longitude;
+		player.coop = false;
+		player.move = true;
+		player.shoot = true;
+		player.health = 100;
+		player.bringToTop();
+		this.physics.enable(player, Phaser.Physics.ARCADE);
+		player.physicsBodyType = Phaser.Physics.ARCADE;
+		player.enableBody = true;
+		player.body.collideWorldBounds = true;
+		player.body.immovable = true;	
+		player.score = 0;
+		player.frame = 3;
+		player.minion = false;
 
-    if(game.device.desktop) {
-	    clouds = game.add.group();
-	    clouds.enableBody = true;
+		// Player group instellingen
+		playerGroup = this.add.group();
+		playerGroup.add(player);
+		playerGroup.bringToTop(player);
+
+		// Boss instellingen
+		boss.anchor.setTo(.5, .5);
+		boss.allowControls = true;
+		boss.enableBody = true;
+	    this.physics.enable(boss, Phaser.Physics.ARCADE);
+	    boss.physicsBodyType = Phaser.Physics.ARCADE;
+	    boss.health = 1000;
+	    boss.frame = 1;
+	    boss.body.immovable = true;
+	    boss.move = true;
+
+		this.camera.follow(playerType);
+
+		// Bullets aanmaken
+		bullets = this.add.group();
+		for(var i = 0; i < bulletsCount; i++) {
+	        var bullet = this.add.sprite(0, 0, 'bullet');
+	        bullets.add(bullet);
+
+	        bullet.animations.add('bulletCollide', [1, 2, 3, 4, 5, 6]);
+	        bullet.anchor.setTo(0.5, 0.5);
+	        bullet.frame = 0;
+	        this.physics.enable(bullet, Phaser.Physics.ARCADE);
+
+	        bullet.kill();
+	    };	
+
+		// Verzoek om spelers op te halen van server
+		socket.emit('requestPlayers', io.socket.sessionid);
+
+		// Haal spelers van server die al online zijn
+	    var self = this;
+    	socket.on('onlinePlayer', function(data) {
+	        if(Object.getOwnPropertyNames(data).length === 0) {
+	        	console.log('There are no other players online.');
+	        } else {
+	        	console.log('There are other players online.');
+	        	// Check which players are in co-op mode
+	        	socket.emit('getCoopPlayers', io.socket.sessionid);
+	        }
+
+	        for(var onlinePlayer in data) {
+	        	if(data[onlinePlayer].session.length <= 20) {
+	        		console.log('Creating player', data[onlinePlayer].session);
+	            	self.createPlayer(data[onlinePlayer]);
+	            	//onlinePlayers.push(data[onlinePlayer].nickname);
+	            }
+	            onlinePlayers.push(data[onlinePlayer].session);
+	        }
+	    });
+
+	    // Haal co-op spelers van server die al online zijn
+	    var self = this;
+	    socket.on('onlineCoop', function(data) {
+	    	for (var onlineCoop in data) {
+	    		var player1 	= data[onlineCoop].player1;    		
+	    		var player2 	= data[onlineCoop].player2;
+	    		var shooter 	= data[onlineCoop].shoot;
+	    		var mover 		= data[onlineCoop].move;
+	    		var session 	= data[onlineCoop].session;
+	    		var coopX 		= data[onlineCoop].x;
+	    		var coopY 		= data[onlineCoop].y;
+	    		var coopAngle 	= data[onlineCoop].angle;
+
+	    		if(player1 !== io.socket.sessionid && player2 !== io.socket.sessionid) {
+	    			console.log('Creating new Co-op (other players)');
+	    			self.createCoop(player2, player1, shooter, mover, session, coopX, coopY, coopAngle, 'other');
+	    		}
+	    	}
+	    });
+
+	    // Stuur nieuwe speler door naar server
+	    var playerData = JSON.stringify({
+	        sessionid : io.socket.sessionid,
+	        nickname : playerName,
+	        x : this.world.centerX,
+	        y : this.world.centerY,
+	        lat : latitude,
+	        long : longitude,
+	        angle : 0
+	    });
+	    socket.emit('newPlayer', playerData);
+
+	    // Haal nieuwe speler op van server
+	    var self = this;
+	    socket.on('sendNewPlayer', function(data) {
+	        self.createPlayer(data);
+	        //console.log('new player added', data.lat);
+	        onlinePlayers.push(data.session);
+	    });
+
+	    // Andere spelers in co-op
+	    var self = this;
+	    socket.on('joinCoop', function(data) {
+	    	var obj = JSON.parse(data);
+	    	var player1 	= obj.player1;
+	    	var player2 	= obj.player2;
+	    	var mover 		= obj.move;
+	    	var shooter 	= obj.shoot;
+
+	    	self.createCoop(player1, player2, mover, shooter, '', '', '', 'join');
+	    });
+
+	    // Update positie van speler
+	    var self = this;
+	    socket.on('updatePlayer', function(data) {
+	    	self.updatePlayer(data);
+	    });	
+
+	    var self = this;
+	    socket.on('removePlayer', function(data) {
+	    	self.removePlayer(data);
+
+	    	var i = onlinePlayers.indexOf(players[data].name);
+	        if(i != -1) {
+	            onlinePlayers.splice(i,1);
+	        }    
+	    });
+
+	    // Nieuwe bullet spawnen
+	    var self = this;
+	    socket.on('newBullet', function(data) {
+	    	self.createBullet(data);
+	    });
+
+	    // Een player is geraakt door een bullet
+	    var self = this;
+	    socket.on('playerShot', function(data) {
+	    	if(SpaceBattalion.music) {
+	    		self.shipHitSound.play();
+	    	}
+
+	    	if(data === io.socket.sessionid) {
+
+	    		player.damage(10);
+
+	        	console.log('ik wordt gehit');
+
+	        	if(player.minion === false) {
+		        	if(player.health <= 70 && player.health > 30) {
+		        		player.frame = 10;
+
+		    			setTimeout(function() {
+		    				player.frame = 4;
+		    			}, 100);
+						//player.tint = 0xFF9933;				
+		        	} else if(player.health <= 30 && player.health > 0) {
+		        		player.frame = 10;
+
+		        		setTimeout(function() {
+		        			player.frame = 5;
+		        		}, 100);
+						//player.tint = 0xFF3300;	
+		        	} else if(player.health <= 0) {	
+		        		player.frame = 10;
+
+		        		setTimeout(function() {
+		        			player.frame = 9;
+		        		}, 100);		
+						
+						// Standaard als via de function: damage() iets gekilled wordt, dan worden de statussen: alive, exist en visible op false gezet 
+						// verder worden ook alle events gebonden aan de speler removed
+						player.alive = true;
+						player.exists = true;
+						player.visible = true;		  
+
+		    			socket.emit('playerDied', io.socket.sessionid);
+
+						setTimeout(function() {
+							self.explode(player.x, player.y);
+
+							socket.emit('playerMinion', io.socket.sessionid);
+						}, 1000);
+		    		} else {
+		    			var currentFrame = player.frame;
+
+		    			player.frame = 10;
+
+		        		setTimeout(function() {
+		        			player.frame = currentFrame;
+		        		}, 100);	
+		    		}
+		    	} else {
+		    		player.frame = 11;
+
+					setTimeout(function() {
+				    	player.frame = 12;
+					}, 100);
+		    	}
+	    	}
+	    	// data.length > 20 dan is het een coop speler
+	    	else if(data.length > 20) {
+	    		coopPlayers[data].damage(10);
+
+	    		var currFrame = coopPlayers[data].frame;
+
+			    coopPlayers[data].frame = 0;
+
+				setTimeout(function() {
+			    	coopPlayers[data].frame = currFrame;
+				}, 100);
+
+				if(coopPlayers[data].health === 0) {			
+	    			//alert('YOU AND YOUR PAL DIED, GAME OVER');
+				}
+	    	} else {
+	    		players[data].damage(10);
+
+	    		if(players[data].minion === false) { 
+
+	    			if(players[data].health <= 70 && players[data].health > 30) {
+		        		players[data].frame = 10;
+
+		    			setTimeout(function() {
+		    				players[data].frame = 1;
+		    			}, 100);
+						//player.tint = 0xFF9933;				
+		        	} else if(players[data].health <= 30 && players[data].health > 0) {
+		        		players[data].frame = 10;
+
+		    			setTimeout(function() {
+		    				players[data].frame = 2;
+		    			}, 100);
+						//player.tint = 0xFF3300;
+					} else if(players[data].health <= 0) {		
+		    			players[data].frame = 10;
+
+		    			setTimeout(function() {
+		    				players[data].frame = 9;
+		    			}, 100);
+						
+						// Standaard als via de function: damage() iets gekilled wordt, dan worden de statussen: alive, exist en visible op false gezet 
+						// verder worden ook alle events gebonden aan de speler removed
+						players[data].alive = true;
+						players[data].exists = true;
+						players[data].visible = true;		
+
+						setTimeout(function() {
+							self.explode(players[data].x, players[data].y);
+						}, 1000);
+		    		} else {
+		    			var currentFrame = players[data].frame;
+
+		    			players[data].frame = 10;
+
+		    			setTimeout(function() {
+		    				players[data].frame = currentFrame;
+		    			}, 100);
+		    		}
+	    		} else {
+	    			players[data].frame = 11;
+
+	    			setTimeout(function() {
+	    				players[data].frame = 13;
+	    			}, 100);
+	    		}
+	    	}
+	    });
+
+		// Speler is minion geworden
+		socket.on('minionPlayer', function(data) {
+			if(data === io.socket.sessionid) {
+
+				player.revive();
+				player.frame = 12;
+				player.minion = true;
+				player.health = 100;
+
+			} else {
+
+				players[data].revive();
+				players[data].frame = 13;
+				players[data].minion = true;
+				players[data].health = 100;
+
+			}
+		});
+
+		// Boss is gekillt door andere speler
+		var self = this;
+		socket.on('bossDead', function(data) {
+			self.explode(boss.x, boss.y);
+		});
+
+		// Locatie (GPS) van andere speler is geupdatet
+		socket.on('updatedLocation', function(data) {
+			players[data.session].lat = data.lat;
+			players[data.session].long = data.long;
+		});
+
+		// Maak wolken group aan
+		clouds = this.add.group();
+		clouds.enableBody = true;
 	    clouds.physicsBodyType = Phaser.Physics.ARCADE;
 	    clouds.setAll('anchor.x', 0.5);
 	    clouds.setAll('anchor.y', 0.5);
@@ -224,1534 +446,991 @@ function create() {
 
 	    // Maak 5 wolken aan
 	    for(i = 0; i < 5; i++) {
-	        createCloud();
+	        this.createCloud();
 	    }
 		
-		stars = game.add.group();
+		// Maak sterren group aan
+		stars = this.add.group();
 	    stars.enableBody = true;
 	    stars.physicsBodyType = Phaser.Physics.ARCADE;
 	    stars.setAll('anchor.x', 0.5);
 	    stars.setAll('anchor.y', 0.5);
 	    stars.setAll('outOfBoundsKill', true);  
-		
-		createStar();
-
-	    // Create moon
-	    createMoon();
-	}
-
-    // Get nickname from player
-    playerName = prompt("What's your battle name?");
-    if(!playerName) {
-    	playerName = randName();
-    }
-    console.log(currentDate() + " | Welcome: " + playerName.charAt(0).toUpperCase() + playerName.substring(1) + ", your session is: " + io.socket.sessionid + ".");
-
-    if(playerName !== '' && typeof textPlayers !== 'undefined') {
-    	textPlayers.setText('Player: ' + playerName);
-    }
-    // playerName = randName();
-
-    // Geluidseffecten aanmaken
-    backgroundMusic = game.add.audio('backgroundMusic');
-    backgroundMusic.play('', 0, 1, true); // loop background music
-    //playerBullet = game.add.audio('playerBullet');
-
-    // Bullets aanmaken
-    // -> Bullets aanmaken voordat players er zijn zodat de bullets achter de player spawnen
-	bullets = game.add.group();
-
-    for(var i = 0; i < bulletsCount; i++) {
-        var bullet = this.game.add.sprite(0, 0, 'bullet');
-        bullets.add(bullet);
-
-        bullet.animations.add('bulletCollide', [1, 2, 3, 4, 5, 6]);
-        bullet.anchor.setTo(0.5, 0.5);
-        bullet.frame = 0;
-        this.game.physics.enable(bullet, Phaser.Physics.ARCADE);
-
-        bullet.kill();
-    }
-
-    /*muzzleFlash = game.add.group();
-
-    for(var i = 0; i < 30; i++) {
-    	var muzzle = this.game.add.sprite(0, 0, 'muzzleFlash');
-
-    	muzzleFlash.add(muzzle);
-
-    	muzzle.anchor.setTo(0.5, 0.5);
-    	this.game.physics.enable(muzzle, Phaser.Physics.ARCADE);
-
-    	muzzle.kill();
-    }
-
-
-    //muzzleFlash.createMultiple(30, 'muzzleFlash');*/
-
-    // Player group aanmaken
-    playerGroup = game.add.group();
-
-    // Player aanmaken
-	player = game.add.sprite(game.world.centerX, game.world.centerY, 'player');
-	
-	// Boss aanmaken
-	boss = game.add.sprite(100, 100, 'boss');
-	
-	if(playerName == "boss")
-	{
-		playerType = boss;
-	}
-	else
-	{
-		playerType = player;
-	}		
-
-	// Player instellingen
-	player.anchor.setTo(.5,.5);
-	player.name = io.socket.sessionid;
-	player.allowControls = true;
-	player.latitude = latitude;
-	player.longitude = longitude;
-	player.coop = false;
-	player.move = true;
-	player.shoot = true;
-	player.health = 100;
-	player.bringToTop();
-	game.physics.enable(player, Phaser.Physics.ARCADE);
-	player.physicsBodyType = Phaser.Physics.ARCADE;
-	player.enableBody = true;
-	player.body.collideWorldBounds = true;
-	player.body.immovable = true;	
-	player.score = 0;
-	player.frame = 3;
-	player.minion = false;
-
-	// Hide player sprite als je de boss bent
-	if(playerType === boss) {
-		if(player.visible === true) {
-			player.renderable = false;
-			player.enableBody = false;
-		}
-	}
-
-	// Boss instellingen
-    boss.anchor.setTo(.5, .5);
-	boss.allowControls = true;
-	boss.enableBody = true;
-    game.physics.enable(boss, Phaser.Physics.ARCADE);
-    boss.physicsBodyType = Phaser.Physics.ARCADE;
-    boss.health = 1000;
-    boss.frame = 1;
-    boss.body.immovable = true;
-    boss.move = true;
-
-	// Player toevoegen aan Player group
-    playerGroup.add(player);
-
-    // Player group bovenaan plaatsen
-   	// game.world.bringToTop(playerGroup);
-    playerGroup.bringToTop(player);
-
-   	// Camera volgt player
-    game.camera.follow(playerType, Phaser.Camera.FOLLOW_TOPDOWN);
-
-    // Request already online players
-    socket.emit('requestPlayers', io.socket.sessionid);
-
-    // Get already online players from server
-    socket.on('onlinePlayer', function(data) {
-        if(Object.getOwnPropertyNames(data).length === 0) {
-        	console.log(currentDate() + ' | There are no other players online.');
-        } else {
-        	console.log(currentDate() + ' | There are other players online.');
-        	// Check which players are in co-op mode
-        	socket.emit('getCoopPlayers', io.socket.sessionid);
-        }
-
-        for(var onlinePlayer in data) {
-        	if(data[onlinePlayer].session.length <= 20) {
-        		console.log('Creating player', data[onlinePlayer].session);
-            	newPlayer(data[onlinePlayer]);
-            	//onlinePlayers.push(data[onlinePlayer].nickname);
-            }
-            onlinePlayers.push(data[onlinePlayer].session);
-        }
-        
-        //console.log(currentDate() + " | Online players: " + onlinePlayers.toString());
-        if(typeof textPlayers !== 'undefined') {
-            textPlayers.setText("Players: " + (onlinePlayers.length + 1) + "/40");
-        }
-    });
-
-    // Get already online coop players
-    socket.on('onlineCoop', function(data) {
-    	for (var onlineCoop in data) {
-    		var player1 	= data[onlineCoop].player1;    		
-    		var player2 	= data[onlineCoop].player2;
-    		var shooter 	= data[onlineCoop].shoot;
-    		var mover 		= data[onlineCoop].move;
-    		var session 	= data[onlineCoop].session;
-    		var coopX 		= data[onlineCoop].x;
-    		var coopY 		= data[onlineCoop].y;
-    		var coopAngle 	= data[onlineCoop].angle;
-
-    		if(player1 !== io.socket.sessionid && player2 !== io.socket.sessionid) {
-
-    			console.log('Creating new Co-op (other players)');
-    			newCoop(player2, player1, shooter, mover, session, coopX, coopY, coopAngle, 'other');
-    		}
-    	}
-    	console.log('Online coop-players', data);
-    });
-
-    // Send new player data to server
-    var playerData = JSON.stringify({
-        sessionid : io.socket.sessionid,
-        nickname : playerName,
-        x : game.world.centerX,
-        y : game.world.centerY,
-        lat : latitude,
-        long : longitude,
-        angle : 0
-    });
-    socket.emit('newPlayer', playerData);
-
-    // Get new player
-    socket.on('sendNewPlayer', function(data) {
-        console.log('Getting a new player', data);
-        console.log(currentDate() + " | Player: " + data.nickname.charAt(0).toUpperCase() + data.nickname.substring(1) + " has joined the game!");
-        newPlayer(data);
-        //console.log('new player added', data.lat);
-        onlinePlayers.push(data.session);
-        textPlayers.setText("Players: " + (onlinePlayers.length + 1) + "/40");
-    });
-
-    // Other player requests to coop
-    socket.on('joinCoop', function(data) {
-
-    	var obj 		= JSON.parse(data);
-    	var player1 	= obj.player1;
-    	var player2 	= obj.player2;
-    	var mover 		= obj.move;
-    	var shooter 	= obj.shoot;
-
-    	console.log('Creating new Co-op (joined)');
-    	newCoop(player1, player2, mover, shooter, '', '', '', 'join');
-    });
-
-    // Ga na welke spelers niet in co-op modus zitten (en al online waren)
-    socket.on('notCoop', function(data) {
-    	for(var notCoopPlayer in data) {
-    		//console.log('CompareGPS notCoop speler');
-    		//compareGPS(data[notCoopPlayer].lat, data[notCoopPlayer].long, data[notCoopPlayer].session);
-    	}
-    });
-
-    // Update player
-    socket.on('updatePlayer', function(data) {
-        updatePlayer(data);
-    });
-
-    // Damage player
-    socket.on('playerShot', function(data) {
-    	console.log('new bullet hit someone', data);
-
-    	if(data === io.socket.sessionid) {
-    		player.damage(10);
-
-        	console.log('ik wordt gehit');
-
-        	if(player.minion === false) {
-	        	if(player.health <= 70 && player.health > 30) {
-	        		player.frame = 10;
-
-	    			setTimeout(function() {
-	    				player.frame = 4;
-	    			}, 100);
-					//player.tint = 0xFF9933;				
-	        	} else if(player.health <= 30 && player.health > 0) {
-	        		player.frame = 10;
-
-	        		setTimeout(function() {
-	        			player.frame = 5;
-	        		}, 100);
-					//player.tint = 0xFF3300;	
-	        	} else if(player.health <= 0) {	
-	        		player.frame = 10;
-
-	        		setTimeout(function() {
-	        			player.frame = 9;
-	        		}, 100);		
-					
-					// Standaard als via de function: damage() iets gekilled wordt, dan worden de statussen: alive, exist en visible op false gezet 
-					// verder worden ook alle events gebonden aan de speler removed
-					player.alive = true;
-					player.exists = true;
-					player.visible = true;		  
-
-	    			socket.emit('playerDied', io.socket.sessionid);
-
-					setTimeout(function() {
-						explode(player.x, player.y);
-
-						socket.emit('playerMinion', io.socket.sessionid);
-					}, 1000);
-	    		} else {
-	    			var currentFrame = player.frame;
-
-	    			player.frame = 10;
-
-	        		setTimeout(function() {
-	        			player.frame = currentFrame;
-	        		}, 100);	
-	    		}
-	    	} else {
-	    		player.frame = 11;
-
-				setTimeout(function() {
-			    	player.frame = 12;
-				}, 100);
-	    	}
-    	}
-    	// data.length > 20 dan is het een coop speler
-    	else if(data.length > 20) {
-    		coopPlayers[data].damage(10);
-
-    		var currFrame = coopPlayers[data].frame;
-
-		    coopPlayers[data].frame = 0;
-
-			setTimeout(function() {
-		    	coopPlayers[data].frame = currFrame;
-			}, 100);
-
-			if(coopPlayers[data].health === 0) {			
-    			//alert('YOU AND YOUR PAL DIED, GAME OVER');
-			}
-    	} else {
-    		players[data].damage(10);
-
-    		if(players[data].minion === false) { 
-
-    			if(players[data].health <= 70 && players[data].health > 30) {
-	        		players[data].frame = 10;
-
-	    			setTimeout(function() {
-	    				players[data].frame = 1;
-	    			}, 100);
-					//player.tint = 0xFF9933;				
-	        	} else if(players[data].health <= 30 && players[data].health > 0) {
-	        		players[data].frame = 10;
-
-	    			setTimeout(function() {
-	    				players[data].frame = 2;
-	    			}, 100);
-					//player.tint = 0xFF3300;
-				} else if(players[data].health <= 0) {		
-	    			players[data].frame = 10;
-
-	    			setTimeout(function() {
-	    				players[data].frame = 9;
-	    			}, 100);
-					
-					// Standaard als via de function: damage() iets gekilled wordt, dan worden de statussen: alive, exist en visible op false gezet 
-					// verder worden ook alle events gebonden aan de speler removed
-					players[data].alive = true;
-					players[data].exists = true;
-					players[data].visible = true;		
-
-					setTimeout(function() {
-						explode(players[data].x, players[data].y);
-					}, 1000);
-	    		} else {
-	    			var currentFrame = players[data].frame;
-
-	    			players[data].frame = 10;
-
-	    			setTimeout(function() {
-	    				players[data].frame = currentFrame;
-	    			}, 100);
-	    		}
-    		} else {
-    			players[data].frame = 11;
-
-    			setTimeout(function() {
-    				players[data].frame = 13;
-    			}, 100);
-    		}
-    	}
-    });
-
-	socket.on('minionPlayer', function(data) {
-		if(data === io.socket.sessionid) {
-			player.revive();
-			player.frame = 12;
-			player.minion = true;
-			player.health = 100;
-		} else {
-			players[data].revive();
-			players[data].frame = 13;
-			players[data].minion = true;
-			players[data].health = 100;
-		}
-	});	
-
-    // Remove player
-    socket.on('removePlayer', function(data) {
-        console.log('remove', data);
-
-        //console.log(currentDate() + " | Player: " + players[data].name.charAt(0).toUpperCase() + players[data].name.substring(1) + " has left the game!");        
-        removePlayer(data);
-
-        var i = onlinePlayers.indexOf(players[data].name);
-        if(i != -1) {
-            onlinePlayers.splice(i,1);
-        }        
-        textPlayers.setText("Players: " + (onlinePlayers.length + 1) + "/40");
-    });
-
-    // Boss gekillt in andere client
-    socket.on('bossDead', function(data) {    	
-        explode(boss.x, boss.y);
-    });
-
-    // Nieuwe locatie van (bestaande) speler ophalen
-    socket.on('updatedLocation', function(data) {
-    	players[data.session].lat = data.lat;
-    	players[data.session].long = data.long;
-
-   		//console.log('CompareGPS nieuwe locatie');
-    	//compareGPS(players[data.session].lat, players[data.session].long, players[data.session].name);
-    });
-
-    // Spawn bullet
-    socket.on('newBullet', function(data) {
-        newBullet(data);
-    }); 
-
-	/*bullets.enableBody = true;
-    bullets.physicsBodyType = Phaser.Physics.ARCADE;
-    bullets.createMultiple(bulletsCount, 'bullet');
-    bullets.setAll('static', true);
-    bullets.setAll('anchor.x', 0.5);
-    bullets.setAll('anchor.y', 1);
-    bullets.setAll('outOfBoundsKill', true);	*/
-
-    
-    
-    /*bullets.enableBody = true;
-    bullets.physicsBodyType = Phaser.Physics.ARCADE;
-    bullets.setAll('static', true);
-    bullets.setAll('anchor.x', 0.5);
-    bullets.setAll('anchor.y', 0.5);
-    bullets.setAll('outOfBoundsKill', true); */ 
-
-    //game.stage.backgroundColor = '#FFF';
-
-    game.input.addPointer();
-    fireButton = game.input.pointer1;
-
-    // Set controls if player is not on desktop --> mobile
-    if(!game.device.desktop) {
-
-    	console.log('niet op desktop');
-
-        // Check if mobile browser supports the HTML5 Vibration API
-        navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate || null;
-        navigator.vibrate ? vibrate = true : vibrate = false;
-
-        if(gyro.hasFeature('devicemotion')) {
-            console.log(currentDate() + ' | Gyro.js loaded!');
-
-            if(gyro.getFeatures().length > 0) {
-                gyro.frequency = 10;
-
-                gyro.startTracking(function(o) {   
-                	// TO DO beweging fixen voor landscape mode!!!
-
-                    var anglePlayer = Math.atan2(o.y, o.x);
-                    //var anglePlayer = Math.atan(o.x, o.y);
-
-                    angleRadians = anglePlayer * Math.PI/180;
-                    anglePlayer *= 180/Math.PI;
-                    anglePlayer = anglePlayer;
-
-                    if(fireButton.isDown) {
-                        fire();
-                    }
-
-                    if(o.z < 9.5 || o.z > 10) {
-                    	changePosition('-', o.y * 20, '-', o.x * 20, game.math.wrapAngle(anglePlayer, false), 'p');
-                        //changePosition('-', o.x * 20, '+', o.y * 20, game.math.wrapAngle(anglePlayer, false), 'p');
-                    } else {
-                        changePosition('', '', '', '', 0, 'p');
-                    } 
-                });
-            }
-        }
-        else {
-            // fallback if gyro.js is not working
-            console.log(currentDate() + ' | Gyro.js not loaded!');
-
-            window.addEventListener('devicemotion', function(event) {
-                var x = event.accelerationIncludingGravity.x;
-                var y = event.accelerationIncludingGravity.y;
-                var z = event.accelerationIncludingGravity.z;
-
-                var anglePlayer = Math.atan2(y, x);
-                anglePlayer *= 180/Math.PI;
-                anglePlayer = 180 - anglePlayer;
-
-                if(fireButton.isDown) {
-                    fire();
-                }
-
-                if(z < 9.5 || z > 10) {
-                    changePosition('-', x * 40, '+', y * 40, game.math.wrapAngle(anglePlayer, false), 'p');
-                } else {
-                    changePosition('', '', '', '', 0, 'p');
-                }
-
-                var interval = 10;
-            });
-        }
-    }
-    else {
-		// Player is on desktop, enable cursors for arrow keys..
-        cursors = game.input.keyboard.createCursorKeys();
-    }
-}
-
-function update() {
-	// Ga na welke coopspeler je bent, andere waardes kan ik hier niet aan.. dus dan maar zo
-    if(Object.getOwnPropertyNames(coopPlayers).length !== 0) {
-	    Object.keys(coopPlayers).forEach(function(key) {
-	        if(key.indexOf(io.socket.sessionid) > -1) {
-	        	coopPlayers[key].body.velocity.setTo(0,0);
-	        }
-	    });
-	} else {
-		if(playerType === boss) {
-			playerType.body.velocity.setTo(0,0);
-		}
+	    
+	    // Maak maan aan
+	    this.createMoon();
+
+	    if(this.game.device.desktop) {
+	    	cursors = this.input.keyboard.createCursorKeys();
+		} 
 		else {
-			//player.body.velocity.setTo(0,0);
-			if(typeof player !== "undefined") {
-				player.body.velocity.setTo(0,0);		
-			}
+			// Niet op desktop
+			navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate || null;
+	        navigator.vibrate ? vibrate = true : vibrate = false;
+
+	        var self = this;
+	        if(gyro.hasFeature('devicemotion')) {
+	            console.log('Gyro.js loaded!');
+
+	            if(gyro.getFeatures().length > 0) {
+	                gyro.frequency = 10;
+
+	                gyro.startTracking(function(o) {   
+	                	// TO DO beweging fixen voor landscape mode!!!
+
+	                    var anglePlayer = Math.atan2(o.y, o.x);
+
+	                    angleRadians = anglePlayer * Math.PI/180;
+	                    anglePlayer *= 180/Math.PI;
+	                    anglePlayer -= 90;
+	                    anglePlayer = self.math.wrapAngle(anglePlayer);
+
+	                    //if(self.input.activePointer.isDown) {
+	                    	//self.fire();
+	                    //}
+	                    
+	                    //if(this.game.input.pointer.isDown) {
+	                        //self.fire();
+	                    //}
+
+	                    if(o.z < 9.5 || o.z > 10) {
+	                    	self.changePosition('-', o.y * 20, '-', o.x * 20, anglePlayer, 'p');
+	                    } else {
+	                        self.changePosition('', '', '', '', 0, 'p');
+	                    } 
+	                });
+	            }
+	        }
+
 		}
-	}
+	},
 
-	// Particles achter het schip
-    emitter = game.add.emitter(player.x, player.y, 1);
+	update: function() {
+		// Als window niet in focus is
+		var self = this;
+		window.onblur = function() {
+			self.backgroundMusic.pause();
+		}
 
-    emitter.makeParticles('flyRail');
+		// Als window wel in focus is
+		var self = this;
+		window.onfocus = function() {
+			self.backgroundMusic.resume();
+		}
 
-    emitter.setRotation(0, 0);
-    emitter.setAlpha(0.3, 0.8);
-    emitter.setScale(0.8, 3);
-    emitter.gravity = 400;
+		// Zet velocity weer op 0 van jezelf
+		if(Object.getOwnPropertyNames(coopPlayers).length !== 0) {
+			Object.keys(coopPlayers).forEach(function(key) {
+				if(key.indexOf(io.socket.sessionid) > -1) {
+					coopPlayers[key].body.velocity.setTo(0, 0);
+				} else {
+					playerType.body.velocity.setTo(0, 0);
+				}
+			});
+		} else {
+			if(playerType === boss) {
+				playerType.body.velocity.setTo(0, 0);
+			} else {
+				if(typeof player !== 'undefined') {
+					player.body.velocity.setTo(0, 0);
+				}
+			}
+		}	
 
-    //	false means don't explode all the sprites at once, but instead release at a rate of one particle per 100ms
-    //	The 5000 value is the lifespan of each particle before it's killed
-    emitter.start(true, 150, 100);	
-	game.world.bringToTop(playerGroup);
+		// Maak wolk aan
+		if(moon.x > (this.world.width + moon.width)) {
+		    moon.destroy();
 
-    // Update background
-    if(game.device.desktop) {
-    	bgtile.tilePosition.x -= 2;
-    	bgtile.tilePosition.y += 1;
+		    this.createMoon();
+		}		
 
-	    // create clouds
-	    if(clouds.countLiving() >= 10) {
-	    	clouds.removeAll();
-	    	console.log(currentDate() + ' | Clouds removed..');
-	    } else if(game.time.now > cloudTimer) {          
-	        createCloud();
-	    }
-		
-		// create stars
-		if(stars.countLiving() >= 10) {
-			stars.removeAll();
-			console.log(currentDate() + ' | Stars removed..');
-		} else if(game.time.now > starTimer) {          
-	        createStar();
-	    }
+	    // Alleen uitvoeren als gebruiker op desktop is
+		if(this.game.device.desktop) {    	
 
-	    if(moon.x > (game.world.width + moon.width)) {
-	        // Destroy old moon, and create new one..
-	        moon.destroy();
+			// Laat achtergrond bewegen
+			bgtile.tilePosition.x -= 2;
+	    	bgtile.tilePosition.y += 1;
 
-	        createMoon();
-	    }
-	}
+		    // Maak wolken aan
+		    if(this.time.now > cloudTimer) {          
+		        this.createCloud();
+		    }
+			
+			// Maak sterren aan
+			if(this.time.now > starTimer) {          
+		        this.createStar();
+		    }
 
-    // Check window state
-    // This overrides the default because we only want to pause the audio, and not the gameplay.
-    if(document.hasFocus()) {
-        // play music
-        if(game.sound.mute == true) {            
-            game.sound.mute = false;
-        }
-    }
-    else {
-        // mute music
-        if(game.sound.mute == false) {
-            game.sound.mute = true;
-        }
-    }
+		    if(typeof player !== "undefined" && player.visible === true && player.coop === false) {
+	    		var currentSprite = 'p';
+	    		movementSpeed = 350;
+	    	} else {
+	    		var currentSprite = 'c';
+	    		movementSpeed = 175;
+	    	}
 
-    if(game.device.desktop) {
+	    	if(typeof player !== "undefined" && player.move === true || coopMovement === true) {
 
-    	if(typeof player !== "undefined" && player.visible === true && player.coop === false) {
-    		var currentSprite = 'p';
-    		movementSpeed = 350;
-    	} else {
-    		var currentSprite = 'c';
-    		movementSpeed = 175;
-    	}
+	    		// Ga na welke coopspeler je bent, andere waardes kan ik hier niet aan.. dus dan maar zo
+	        	Object.keys(coopPlayers).forEach(function(key) {
+	        		if(key.indexOf(io.socket.sessionid) > -1) {
+	        			currentSprite = key;
+	        		}
+	        	});
 
-    	if(typeof player !== "undefined" && player.move === true || coopMovement === true) {
+		        if(cursors.left.isDown) {   
 
-    		// Ga na welke coopspeler je bent, andere waardes kan ik hier niet aan.. dus dan maar zo
-        	Object.keys(coopPlayers).forEach(function(key) {
-        		if(key.indexOf(io.socket.sessionid) > -1) {
-        			currentSprite = key;
-        		}
-        	});
+		            if(cursors.left.isDown && cursors.down.isDown) {
+		                this.changePosition('-', this.diagonalSpeed(movementSpeed), '+', this.diagonalSpeed(movementSpeed), 135, currentSprite);
+						currentDirection = 'left-down';
+		            }
+		            else if(cursors.left.isDown && cursors.up.isDown) {  
+		                this.changePosition('-', this.diagonalSpeed(movementSpeed), '-', this.diagonalSpeed(movementSpeed), -135, currentSprite);
+						currentDirection = 'left-up';
+		            }
+		            else {
+		                this.changePosition('-', movementSpeed, '', '', 180, currentSprite);
+						currentDirection = 'left';
+		            }
+		        }
+		        else if(cursors.right.isDown) {
+		            if(cursors.right.isDown && cursors.down.isDown) {
+		                this.changePosition('+', this.diagonalSpeed(movementSpeed), '+', this.diagonalSpeed(movementSpeed), 45, currentSprite);
+						currentDirection = 'right-down';
+		            }   
+		            else if(cursors.right.isDown && cursors.up.isDown) {  
+		                this.changePosition('+', this.diagonalSpeed(movementSpeed), '-', this.diagonalSpeed(movementSpeed), -45, currentSprite);    
+						currentDirection = 'right-up';					
+		            }   
+		            else {  
+		                this.changePosition('+', movementSpeed, '', '', 0, currentSprite);
+						currentDirection = 'right';
+		            }
+		        }
+		        else if(cursors.up.isDown) {
+		            this.changePosition('', '', '-', movementSpeed, -90, currentSprite);
+					currentDirection = 'up';
+		        }
+		        else if(cursors.down.isDown) {
+		            this.changePosition('', '', '+', movementSpeed, 90, currentSprite);
+					currentDirection = 'down';
+		        }
+	    	}
 
-	        if(cursors.left.isDown) {   
-
-	            if(cursors.left.isDown && cursors.down.isDown) {
-	                changePosition('-', diagonalSpeed(movementSpeed), '+', diagonalSpeed(movementSpeed), 135, currentSprite);
-					currentDirection = 'left-down';
-	            }
-	            else if(cursors.left.isDown && cursors.up.isDown) {  
-	                changePosition('-', diagonalSpeed(movementSpeed), '-', diagonalSpeed(movementSpeed), -135, currentSprite);
-					currentDirection = 'left-up';
-	            }
-	            else {
-	                changePosition('-', movementSpeed, '', '', 180, currentSprite);
-					currentDirection = 'left';
-	            }
+	    	if(typeof player !== "undefined" && player.shoot === true || coopShooting === true) {
+	        // Check if coop exists, and if coop is allowed to move (if yes then disallow shooting)
+	        	if(this.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR).isDown) {
+		            this.fire(null);
+		            console.log('aaa');
+		        }
 	        }
-	        else if(cursors.right.isDown) {
-	            if(cursors.right.isDown && cursors.down.isDown) {
-	                changePosition('+', diagonalSpeed(movementSpeed), '+', diagonalSpeed(movementSpeed), 45, currentSprite);
-					currentDirection = 'right-down';
-	            }   
-	            else if(cursors.right.isDown && cursors.up.isDown) {  
-	                changePosition('+', diagonalSpeed(movementSpeed), '-', diagonalSpeed(movementSpeed), -45, currentSprite);    
-					currentDirection = 'right-up';					
-	            }   
-	            else {  
-	                changePosition('+', movementSpeed, '', '', 0, currentSprite);
-					currentDirection = 'right';
-	            }
-	        }
-	        else if(cursors.up.isDown) {
-	            changePosition('', '', '-', movementSpeed, -90, currentSprite);
-				currentDirection = 'up';
-	        }
-	        else if(cursors.down.isDown) {
-	            changePosition('', '', '+', movementSpeed, 90, currentSprite);
-				currentDirection = 'down';
-	        }
-    	}
+	    } else {
+	    	// Maak wolken aan
+	    	if(clouds.length >= 10) {
+	    		console.log('meer dan 10 wolken.. ');
+	    		clouds.removeAll();
+	    	} else {
+			    if(this.time.now > cloudTimer) {          
+			        this.createCloud();
+			    }
+			}
+			
+			// Maak sterren aan
+			if(stars.length >= 15) {
+	    		console.log('meer dan 15 sterren.. ');
+				stars.removeAll();
+			} else {
+				if(this.time.now > starTimer) {          
+			        this.createStar();
+			    }
+			}
 
-    	if(typeof player !== "undefined" && player.shoot === true || coopShooting === true) {
-        // Check if coop exists, and if coop is allowed to move (if yes then disallow shooting)
-        	if(game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR).isDown) {
-	            fire();
-	        }
-        }    
+			this.input.onTap.add(this.tapScreen, this);
+	    }    
 
-        // Collisions
-        //game.physics.arcade.collide(bullets, boss, bulletCollisionWithBoss, null, this);
-
-        // Create collision detection for all players
+        // Collision detection voor alle players
         for(var plr in players) {
-        	// your bullets hit other players
+        	// Bullets raken andere players
         	if(players[plr].visible !== false) {
-            	game.physics.arcade.collide(bullets, players[plr], bulletOtherPlayer, null, this);
+            	this.physics.arcade.collide(bullets, players[plr], this.bulletOtherPlayer, null, this);
             }
 
             if(player.visible !== false) {
-            	// other bullets hit you
-            	game.physics.arcade.collide(bullets, player, bulletPlayer, null, this);
+            	// Bullets raken jou
+            	this.physics.arcade.collide(bullets, player, this.bulletPlayer, null, this);
             }
         }
 
-        // Create collision detection for all co-op players
+        // Collision detection voor co-op players
         for(var plr in coopPlayers) {
-        	// your bullets hit co-op player
-        	game.physics.arcade.collide(bullets, coopPlayers[plr], bulletCoop, null, this);
+        	// Bullets raken co-op players
+        	this.physics.arcade.collide(bullets, coopPlayers[plr], this.bulletCoop, null, this);
         }
 
-        game.physics.arcade.collide(bullets, boss, bulletBoss, null, this);
+        // Bullets raken boss
+        this.physics.arcade.collide(bullets, boss, this.bulletBoss, null, this);
 
         // Overlap tussen boss en player
-        game.physics.arcade.overlap(player, boss, overlapPlayer, null, this);
-    } else {
-    	// Doe dingen die alleen op mobiel gebeuren hier..
-		// Ga na waar je op het scherm drukt, links / rechts
-		game.input.onTap.add(tapped, this);
-    }
+        this.physics.arcade.overlap(player, boss, this.overlapPlayer, null, this);			
+	},
 
-    // Screen shake
-    if(shakeScreen > 0) {
-        var rand1 = game.rnd.integerInRange(-5,5);
-        var rand2 = game.rnd.integerInRange(-5,5);
+	createPlayer: function(plr) {
+		// new player variables
+	    var newSession = plr.session;
+	    var newPlayerNick = plr.nickname;
+	    var newPlayerX = plr.x;
+	    var newPlayerY = plr.y;
+	    var newPlayerAngle = plr.angle;
 
-        game.world.setBounds(rand1, rand2, bounds + rand1, bounds + rand2);
-        shakeScreen--;
+	    //players[plr.session] = game.add.sprite(plr.x, plr.y, 'otherPlayers');
+		players[plr.session] = this.add.sprite(plr.x, plr.y, 'player');
 
-        if(shakeScreen == 0) {
-            game.world.setBounds(0, 0, bounds, bounds);
-        }
-    }
-}
+	    // configurations for new player
+	    players[plr.session].anchor.setTo(.5,.5);
+	    //players[plr.session].animations.add('fly'); 
+	    //players[plr.session].animations.play('fly', 10, true);
+	    this.physics.enable(players[plr.session], Phaser.Physics.ARCADE);
+	    players[plr.session].enableBody = true;
+	    players[plr.session].body.collideWorldBounds = true;
+	    players[plr.session].name = plr.session;
+	    players[plr.session].health = 100;
+	    players[plr.session].minion = false;
+	    //players[plr.session].frame = 1;
+	    players[plr.session].angle = plr.angle;
+	    players[plr.session].body.immovable = true;
 
-function fire() {
+	    if(typeof plr.minion !== 'undefined') {
+	    	if(plr.minion === true) {
+	    		players[plr.session].minion = true;
+	    		players[plr.session].frame = 13;
+	    	} else {    		
+	    		players[plr.session].minion = false;
+	    		players[plr.session].frame = 0;
+	    	}
+	    }
 
-	if(game.time.now > bulletTime) {
-		//bullet = bullets.getFirstExists(false);
-        bulletTime = game.time.now + 250;
+	    // Sla gps locatie van speler op (om na te gaan of iemand anders in de buurt is)
+	    players[plr.session].latitude = plr.lat;
+	    players[plr.session].longitude = plr.long;
+	    players[plr.session].coop = false;
+	    players[plr.session].coopPlayer = '';
 
-        if(player.coop === true) {
-        	var resetX = coopPlayers[coopSession].body.x + (coopPlayers[coopSession].width / 2);
-        	var resetY = coopPlayers[coopSession].body.y + (coopPlayers[coopSession].height / 2);
-        	var rotation = coopPlayers[coopSession].rotation;
-        } else {            
-        	var resetX = playerType.body.x + (playerType.width / 2);
-        	var resetY = playerType.body.y + (playerType.height / 2);
-        	var rotation = playerType.rotation;
-        }
+	    players[plr.session].inputEnabled = true;
+	    players[plr.session].events.onInputDown.add(this.clickedPlayer, this);
 
-        var bulletY = Math.floor((Math.random() * 40) + -20);
-        var randomVelocity = (Math.random() * (-0.100 - 0.100) + 0.100);
-        
-        var bulletPosition = JSON.stringify({
-            sessionid: io.socket.sessionid,
-            rotation: rotation,
-            nickname: playerName,
-            resetX: resetX,
-            resetY: resetY,
-            bulletY: bulletY,
-            randVelocity: randomVelocity
-        });
-        
-        socket.emit('bulletChange', bulletPosition);
-    }
+	    // Ga na of speler in co-op mode is, zo ja 'hide' deze speler dan
+	    if(typeof plr.coop !== "undefined" && plr.coop === true) {
+	    	players[plr.session].visible = false;
+	    }
 
-}
+	    // Vergelijk locatie van nieuwe speler met jouw locatie
+	    //console.log('CompareGPS nieuwe speler');
+	    //compareGPS(players[plr.session].latitude, players[plr.session].longitude, players[plr.session].name);
 
-function explode(x, y) {
-	explosion = game.add.sprite(x, y, 'explosion');
-	explosion.anchor.setTo(0.5, 0.5);
-	explosion.alpha = 0;
-	game.add.tween(explosion).to( { alpha: 1 }, 100, Phaser.Easing.Linear.None, true, 0, 100, true);
+	    playerGroup.add(players[plr.session]);    
+	    playerGroup.bringToTop(player);
+	},
 
-	explosion.animations.add('explosion');
-	explosion.play('explosion', '', false, true);
-}
+	createCoop: function(player1, player2, shoot, move, x, y, angle, type) {
+		if(type == 'new') {
+			coopSession = player1 + player2;
+		}
+		else {
+			coopSession = player2 + player1;
+		}
 
-function newPlayer(plr) {
-    console.log('New player data', plr.lat);
+		if(player1 === io.socket.sessionid || player2 === io.socket.sessionid) {
+			player.coop = true;
+		}
 
-    // new player variables
-    var newSession = plr.session;
-    var newPlayerNick = plr.nickname;
-    var newPlayerX = plr.x;
-    var newPlayerY = plr.y;
-    var newPlayerAngle = plr.angle;
+		coopPlayers[coopSession] = this.add.sprite(this.world.centerX, this.world.centerY, 'coop');
+		coopPlayers[coopSession].name = coopSession;
+		coopPlayers[coopSession].player1 = player1;
+		coopPlayers[coopSession].player2 = player2;
+		coopPlayers[coopSession].coopSession = coopSession;
+		coopPlayers[coopSession].move = move;
+		coopPlayers[coopSession].shoot = shoot;
+		coopPlayers[coopSession].anchor.setTo(.5, .5);
+		coopPlayers[coopSession].enableBody = true;
+		this.physics.enable(coopPlayers[coopSession], Phaser.Physics.ARCADE);
+		coopPlayers[coopSession].physicsBodyType = Phaser.Physics.ARCADE;
+		coopPlayers[coopSession].health = 250;
+		coopPlayers[coopSession].frame = 3;
+		coopPlayers[coopSession].body.collideWorldBounds = true;
+		coopPlayers[coopSession].body.immovable = true;
 
-    //players[plr.session] = game.add.sprite(plr.x, plr.y, 'otherPlayers');
-	players[plr.session] = game.add.sprite(plr.x, plr.y, 'player');
+		if(x !== '' && y !== '' && angle !== '') {
+			coopPlayers[coopSession].x = x;
+			coopPlayers[coopSession].y = y;
+			coopPlayers[coopSession].angle = angle;
+		}
+	  
+		if(coopPlayers[coopSession].move == io.socket.sessionid) {
+			coopPlayers[coopSession].frame = 2;
+			coopMovement = true;
+			coopShooting = false;
+		} 
 
-    // configurations for new player
-    players[plr.session].anchor.setTo(.5,.5);
-    //players[plr.session].animations.add('fly'); 
-    //players[plr.session].animations.play('fly', 10, true);
-    game.physics.enable(players[plr.session], Phaser.Physics.ARCADE);
-    players[plr.session].enableBody = true;
-    players[plr.session].body.collideWorldBounds = true;
-    players[plr.session].name = plr.session;
-    players[plr.session].health = 100;
-    players[plr.session].minion = false;
-    //players[plr.session].frame = 1;
-    players[plr.session].angle = plr.angle;
-    players[plr.session].body.immovable = true;
+		if(coopPlayers[coopSession].shoot == io.socket.sessionid) {
+			coopPlayers[coopSession].frame = 1;
+			coopShooting = true;
+			coopMovement = false;
+			player.move = false;
+		}
 
-    if(typeof plr.minion !== 'undefined') {
-    	if(plr.minion === true) {
-    		players[plr.session].minion = true;
-    		players[plr.session].frame = 13;
-    	} else {    		
-    		players[plr.session].minion = false;
-    		players[plr.session].frame = 0;
-    	}
-    }
+		if(player1 === io.socket.sessionid) {
 
-    // Sla gps locatie van speler op (om na te gaan of iemand anders in de buurt is)
-    players[plr.session].latitude = plr.lat;
-    players[plr.session].longitude = plr.long;
-    players[plr.session].coop = false;
-    players[plr.session].coopPlayer = '';
-
-    players[plr.session].inputEnabled = true;
-    players[plr.session].events.onInputDown.add(clickedPlayer, this);
-
-    // Ga na of speler in co-op mode is, zo ja 'hide' deze speler dan
-    if(typeof plr.coop !== "undefined" && plr.coop === true) {
-    	players[plr.session].visible = false;
-    }
-
-    // Vergelijk locatie van nieuwe speler met jouw locatie
-    //console.log('CompareGPS nieuwe speler');
-    //compareGPS(players[plr.session].latitude, players[plr.session].longitude, players[plr.session].name);
-
-    playerGroup.add(players[plr.session]);    
-    playerGroup.bringToTop(player);
-}
-
-function updatePlayer(plr) {
-    // updated player variables
-    var playerSession = plr.session;
-    var playerNick = plr.nickname;
-    var newPlayerX = plr.x;
-    var newPlayerY = plr.y;
-	var newPlayerAngle = plr.angle;
-
-	if(playerNick === 'boss') {
-		boss.x = plr.x;
-		boss.y = plr.y;
-		boss.angle = plr.angle;
-	}
-	else if(playerNick === 'coop') {
-		console.log('jajajajaja');
-		coopPlayers[plr.session].x = plr.x;
-		coopPlayers[plr.session].y = plr.y;
-		coopPlayers[plr.session].angle = plr.angle;
-	} else {
-    	// change position of player
-    	players[plr.session].x = plr.x;
-    	players[plr.session].y = plr.y;	
-		players[plr.session].angle = plr.angle;
-	}
-}
-
-function removePlayer(plr) {
-    var playerSession = plr;
-	
-	if (playerSession !== io.socket.sessionid) {
-	   	// Check if player who disconnected was in coop mode
-	    if(Object.getOwnPropertyNames(coopPlayers).length !== 0) {
-		    Object.keys(coopPlayers).forEach(function(key) {
-			    if(key.indexOf(io.socket.sessionid) > -1) {
-
-			       	coopPlayers[key].kill();
-			       	player.visible = true;
-			       	player.allowControls = true;
-			       	player.move = true;
-			       	player.shoot = true;
-			       	player.enableBody = true;
-			       	game.camera.follow(playerType, Phaser.Camera.FOLLOW_TOPDOWN);
-
-			       	coopMovement = false;
-
-			       	player.coop = false;
-
-			       	Object.keys(coopPlayers).forEach(function(key2) {
-	        			if(key2.indexOf(key) > -1) {
-	        				delete coopPlayers[key];
-	        			}
-	        		});
-			   	}
-			});
-		} else {
-	   		players[playerSession].kill();
-	   	}
-	}
-
-	
-}
-
-function newBullet(blt) {
-    var bullet = bullets.getFirstDead();
-
-    if(bullet) {
-        bullet.revive();
-		
-		if(game.device.desktop) {
-	        // Muzzleflash
-	        muzzleFlash = game.add.sprite(blt.resetX, blt.resetY, 'muzzleFlash');
-			
-			console.log(player.rotation);
-			
-			// Positie van muzzleflash, kon even geen andere manier bedenken dus dan maar zo :D
-			if(currentDirection == 'left')
-			{
-				muzzleFlash.anchor.setTo(1.9, .4);
-			}else if(currentDirection == 'left-up')
-			{
-				muzzleFlash.anchor.setTo(2.2, 2.1);
-			}else if(currentDirection == 'left-down')
-			{
-				muzzleFlash.anchor.setTo(2.2, -1.4);
-			}else if(currentDirection == 'right-up')
-			{
-				muzzleFlash.anchor.setTo(-1.2, 2.1);
-			}else if(currentDirection == 'right-down')
-			{
-				muzzleFlash.anchor.setTo(-1.2, -1.2);
-			}else if(currentDirection == 'right')
-			{
-				muzzleFlash.anchor.setTo(-.9, .6);
-			}else if(currentDirection == 'down')
-			{
-				muzzleFlash.anchor.setTo(.5, -1.0);
-			}else if(currentDirection == 'up')
-			{
-				muzzleFlash.anchor.setTo(.5, 1.9);
-			}else
-			{
-				muzzleFlash.anchor.setTo(.5, .5);		
+			if(typeof player !== 'undefined') {
+				player.coop = true;
+				player.visible = false;
+				player.renderable = false;
+				player.allowControls = false;
+				player.move = false;
+				player.shoot = false;
+				player.enableBody = false;
 			}
 
-			muzzleFlash.alpha = 0;
-			game.add.tween(muzzleFlash).to( { alpha: 1 }, 100, Phaser.Easing.Linear.None, true, 0, 100, true);
-			
-			// Muzzleflash wordt automatisch verwijdert na 200ms
-			muzzleFlash.lifespan = 200;		
-		}			
+			if(typeof players[player2] !== 'undefined') {
+				players[player2].visible = false;
+				players[player2].coop = true;
+				players[player2].renderable = false;
+				players[player2].enableBody = false;
+			}
 
-        bullet.checkWorldBounds = true;
-        bullet.outOfBoundsKill = true;
+			this.camera.follow(coopPlayers[coopSession]);
 
-        bullet.reset(blt.resetX, blt.resetY);
-        bullet.rotation = blt.rotation;
-        bullet.y += blt.bulletY;
-        bullet.session = blt.session;
+		} else if (player2 === io.socket.sessionid) {
 
-        game.physics.arcade.velocityFromRotation(blt.rotation += blt.randVelocity, 625, bullet.body.velocity);
-        //game.physics.arcade.velocityFromRotation(blt.rotation, 450, otherBullet.body.velocity);
-        bullet.animations.add('bulletCollide');
+			if(typeof player !== 'undefined') {
+				player.coop = true;
+				player.visible = false;
+				player.renderable = false;
+				player.allowControls = false;
+				player.move = false;
+				player.shoot = false;
+				player.enableBody = false;
+			}
 
-        shakeScreen = 15;
+			if(typeof players[player1] !== 'undefined') {
+				players[player1].visible = false;
+				players[player1].coop = true;
+				players[player1].renderable = false;
+				players[player1].enableBody = false;
+			}
 
-        // Play bullet sound with lowered volume    
-        //playerBullet.play();
-        //playerBullet.volume = 0.5;
-    }
+			this.camera.follow(coopPlayers[coopSession]);
 
-}
+		} else {
 
-// xVal is positief of negatief
-// xSpeed is snelheid van x
-// yVal is positief of negatief
-// ySpeed is snelheid van y
-// angleVal is hoek van player
-function changePosition(xVal, xSpeed, yVal, ySpeed, angleVal, spriteVal) {
-	// Bug.. op de één of andere manier werkt spriteVal.body.velocity.x enz niet, vandaar de if-else constructie
+			if(typeof players[player1] !== 'undefined') {
+				players[player1].visible = false;
+				players[player1].coop = true;
+				players[player1].renderable = false;
+				players[player1].enableBody = false;
+			}
 
-	if(playerType === boss) {
-		boss.move = true;
-	}
+			if(typeof players[player2] !== 'undefined') {
+				players[player2].visible = false;
+				players[player2].coop = true;
+				players[player2].renderable = false;
+				players[player2].enableBody = false;
+			}
 
-	if(spriteVal === 'p') {
+		}
 
-		xSpeed == '' ? xSpeed = 0 : xSpeed;
-	    ySpeed == '' ? ySpeed = 0 : ySpeed;
+		if(type === 'new') {
+			// Draai alles om, omdat player 1 dan de andere speler is..
+			var coopData = JSON.stringify({
+		        player1 : 	player2,
+		        player2 : 	player1,
+		        move 	: 	player2,
+		        shoot 	: 	player1,
+		        x 		: 	coopPlayers[coopSession].x,
+		        y 		: 	coopPlayers[coopSession].y,
+		        angle 	: 	coopPlayers[coopSession].angle
+		    });
+			socket.emit('newCoop', coopData);
+		}
+	},
 
-	    if(xVal == '+') { playerType.body.velocity.x += xSpeed; } 
-	    else if(xVal == '-') { playerType.body.velocity.x -= xSpeed; } 
-	    else { playerType.body.velocity.x += 0; }
+	updatePlayer: function(plr) {
+		if(plr.nickname === 'boss') {
+			boss.x = plr.x;
+			boss.y = plr.y;
+			boss.angle = plr.angle;
+		}
+		else if(plr.nickname === 'coop') {
+			coopPlayers[plr.session].x = plr.x;
+			coopPlayers[plr.session].y = plr.y;
+			coopPlayers[plr.session].angle = plr.angle;
+		} else {
+	    	players[plr.session].x = plr.x;
+	    	players[plr.session].y = plr.y;	
+			players[plr.session].angle = plr.angle;
+		}
+	},
 
-	    if(yVal == '+') { playerType.body.velocity.y += ySpeed; } 
-	    else if(yVal == '-') { playerType.body.velocity.y -= ySpeed; } 
-	    else { playerType.body.velocity.y += 0; }
+	fire: function(dir) {
+		if(this.time.now > bulletTime) {
+			bulletTime = this.time.now + 250;
 
-	    playerType.angle = angleVal;
+	        if(player.coop === true) {
+	        	var resetX = coopPlayers[coopSession].body.x + (coopPlayers[coopSession].width / 2);
+	        	var resetY = coopPlayers[coopSession].body.y + (coopPlayers[coopSession].height / 2);
+	        	var rotation = coopPlayers[coopSession].rotation;
+	        	var randomVelocity = (Math.random() * (-0.100 - 0.100) + 0.100);
+	        	var bulletY = Math.floor((Math.random() * 40) + -20);
+	        } else {          
+	        	if(dir === 'left') {
+	        		// Spawn bullet aan linker kant van schip
+	        		var resetX = playerType.body.x + (playerType.width * .25);
+	        		var resetY = playerType.body.y + (playerType.height * .25);
+	        		var randomVelocity = 0;
+	        		var bulletY = 0;
+	        	} else if (dir === 'right') {	  
+	        		// Spawn bullet aan rechter kant van schip      		
+	        		var resetX = playerType.body.x + (playerType.width * .75);
+	        		var resetY = playerType.body.y + (playerType.height * .75);
+	        		var randomVelocity = 0;
+	        		var bulletY = 0;
+	        	}
+	        	else {
+	        		// Spawn bullet in het midden van schip
+	        		var resetX = playerType.body.x + (playerType.width / 2);
+	        		var resetY = playerType.body.y + (playerType.height / 2);
+	        		var randomVelocity = (Math.random() * (-0.100 - 0.100) + 0.100);
+	        		var bulletY = Math.floor((Math.random() * 40) + -20);
+	        	}
 
-	    if(oldX !== playerType.x || oldY !== playerType.y) {
-	                    
-	        var playerPosition = JSON.stringify({
+	        	var rotation = playerType.rotation;
+	        }
+	        
+	        var bulletPosition = JSON.stringify({
 	            sessionid: io.socket.sessionid,
+	            rotation: rotation,
 	            nickname: playerName,
-	            x : playerType.x,
-	            y : playerType.y,
-	            angle : playerType.angle
-	        });   
+	            resetX: resetX,
+	            resetY: resetY,
+	            bulletY: bulletY,
+	            randVelocity: randomVelocity
+	        });
+	        
+	        socket.emit('bulletChange', bulletPosition);
 
-	        // Check if difference between x or y values is larger than 1
-	        if(diffNumbers(playerType.x, oldX) >= 1 || diffNumbers(playerType.y, oldY) >= 1 ) {
-	            
-	            // Send positions to server every 200 ms (0.2 seconds)
-	            /*setTimeout(function() {
-	                socket.emit('positionChange', playerPosition);
-	            }, 200);*/
-	            
-	            // Emit new position immediately, without delay
-	            socket.emit('positionChange', playerPosition);
-
-	            // store the old positions in oldX and oldY
-	            oldX = playerType.x;
-	            oldY = playerType.y;
-	        }
-	    }
-	} else {		
-		xSpeed == '' ? xSpeed = 0 : xSpeed;
-	    ySpeed == '' ? ySpeed = 0 : ySpeed;
-
-	    if(xVal == '+') { coopPlayers[spriteVal].body.velocity.x += xSpeed; } 
-	    else if(xVal == '-') { coopPlayers[spriteVal].body.velocity.x -= xSpeed; } 
-	    else { coopPlayers[spriteVal].body.velocity.x += 0; }
-
-	    if(yVal == '+') { coopPlayers[spriteVal].body.velocity.y += ySpeed; } 
-	    else if(yVal == '-') { coopPlayers[spriteVal].body.velocity.y -= ySpeed; } 
-	    else { coopPlayers[spriteVal].body.velocity.y += 0; }
-
-	    coopPlayers[spriteVal].angle = angleVal;
-
-	    if(oldX !== coopPlayers[spriteVal].x || oldY !== coopPlayers[spriteVal].y) {
-	                    
-	        var playerPosition = JSON.stringify({
-	            sessionid: coopSession,
-	            nickname: 'coop',
-	            x : coopPlayers[spriteVal].x,
-	            y : coopPlayers[spriteVal].y,
-	            angle : coopPlayers[spriteVal].angle
-	        });   
-
-	        // Check if difference between x or y values is larger than 1
-	        if(diffNumbers(coopPlayers[spriteVal].x, oldX) >= 1 || diffNumbers(coopPlayers[spriteVal].y, oldY) >= 1 ) {
-	            
-	            // Send positions to server every 200 ms (0.2 seconds)
-	            /*setTimeout(function() {
-	                socket.emit('positionChange', playerPosition);
-	            }, 200);*/
-	            
-	            // Emit new position immediately, without delay
-	            socket.emit('positionChange', playerPosition);
-
-	            // store the old positions in oldX and oldY
-	            oldX = coopPlayers[spriteVal].x;
-	            oldY = coopPlayers[spriteVal].y;
-	        }
-	    }
-	}    
-}
-
-function bulletBoss(plr, blt)
-{
-	if(!bossIsDying)
-	{		
-		if(blt.session === io.socket.sessionid) {
-			if(player.minion === false) {
-				player.score += 10;
-				textScore.setText('Score: ' + player.score);
-				console.log(currentDate() + ' | Your bullet hit the Boss!');
-
-				var minion = false;
-			} else {
-				var minion = true;
-			}
-		} else {		
-			console.log(currentDate() + ' | A bullet hit the Boss!');
-
-			if(players[blt.session].minion === false) {
-				var minion = false;
-			} else {
-				var minion = true;
+	        if(SpaceBattalion.music) {
+				this.laserShotSound.play();
 			}
 		}
+	},
 
-		if(minion === false) {
-			// damage done to boss (boss.health - boss.damage)
-			boss.damage(100);
+	explode: function(x, y) {
+		explosion = this.add.sprite(x, y, 'explosion');
+		explosion.anchor.setTo(0.5, 0.5);
+		explosion.alpha = 0;
 
-			boss.frame = 0;
-		
-			if(boss.health <= 500 && boss.health > 200) 
-			{
-				boss.tint = 0xFF9933;				
-			} 
-			else if(boss.health <= 200 && boss.health > 0)
-			{
-				boss.tint = 0xFF0000;	
-			} 
-			else if(boss.health <= 0) 
-			{
-				bossIsDying = true;
+		this.add.tween(explosion).to( { alpha: 1 }, 100, Phaser.Easing.Linear.None, true, 0, 100, true);
 
-				boss.tint = 0xFFFFFF;		
-				//explode(boss.x, boss.y);
-				
-				boss.alive = true;
-				boss.visible = true;	
-				boss.exists = true;	
+		explosion.animations.add('explosion');
+		explosion.play('explosion', '', false, true);
 
-				boss.animations.add('boss');
-				boss.animations.play('boss', 8, false, true);	
-
-				socket.emit('bossDied', io.socket.sessionid);
-			}
-			
-			setTimeout(function() {
-				boss.frame = 1;
-			}, 100);	
+		if(SpaceBattalion.music) {
+			this.explosionSound.play();
 		}
-	}
-	
-	blt.animations.play('bulletCollide');
-	blt.events.onAnimationComplete.add(function() {
-		blt.kill();
-	}, this); 
-}
-
-function bulletOtherPlayer(plr, blt) {
-
-	blt.animations.play('bulletCollide');
-
-	blt.events.onAnimationComplete.add(function() {
-    	blt.kill();
-	}, this);
-
-    var damagedPlayer = players[plr.name].name;
-    socket.emit('damagePlayer', damagedPlayer);
-	
-	console.log(currentDate() + ' | A bullet hit another player!');
-}
-
-function bulletCoop(plr, blt) {
-
-	blt.animations.play('bulletCollide');
-
-	blt.events.onAnimationComplete.add(function() {
-    	blt.kill();
-	}, this);
-
-    var damagedPlayer = coopPlayers[plr.name].name;
-    socket.emit('damagePlayer', damagedPlayer);
-	
-	console.log('other player got hit!', damagedPlayer);
-
-    /*coopPlayers[plr.name].damage(10);
-
-    coopPlayers[plr.name].frame = 0;
-
-    setTimeout(function() {
-    	coopPlayers[plr.name].frame = 3;
-	}, 100);*/
-}
-
-function bulletPlayer(plr, blt) {
-	console.log(currentDate() + ' | A bullet hit you!');
-
-	blt.animations.play('bulletCollide');
-
-	blt.events.onAnimationComplete.add(function() {
-    	blt.kill();
-	}, this);
-
-	/*
-    if(player.health <= 0) {
-        explode(player.x, player.y);
-    }  */
-}
-
-function overlapPlayer(plr, boss) {
-	console.log('overlap');
-	console.log('boss.move = ', boss.move);
-	console.log('plr.minion = ', plr.minion);
-
-	if(plr.minion === false && boss.move === true && playerType !== boss) {
-		if(plr.name === io.socket.sessionid) {
-			player.minion = true;
-			player.frame = 12;
-			player.health = 100;
-			socket.emit('playerMinion', io.socket.sessionid);
-		} else {
-			players[plr.name].minion = true;
-			players[plr.name].frame = 12;
-			players[plr.name].health = 100;
-			socket.emit('playerMinion', plr.name);
-		}	
-	} 
-}
-
-function diagonalSpeed(speed) {
-    var diagonalSpeed = Math.sqrt(Math.pow(speed, 2) * 2) / 2;
-    return diagonalSpeed;
-}
-
-function createCloud() {
-	console.log(currentDate() + ' | Creating new cloud..');
-
-    // random getal tussen 1 en 10
-    var randCloud = Math.floor((Math.random() * 10) + 1);
-
-    if(randCloud < 5) {
-        //var cloud = game.add.sprite(-(Math.random() * random), game.world.randomY, 'cloud1');
-        var cloud = game.add.sprite(game.world.randomX, game.world.randomY, 'cloud1');
-    } else {
-        //var cloud = game.add.sprite(-(Math.random() * random), game.world.randomY, 'cloud2');
-        var cloud = game.add.sprite(game.world.randomX, game.world.randomY, 'cloud2');
-    }
-    
-    cloud.alpha = 0;
-    cloud.angle = game.rnd.angle();
-
-    /* game.add.tween(cloud).to( { alpha: 1 }, 2000, Phaser.Easing.Linear.None)
-    .to({ x: game.width + (1600 + cloud.x) }, 150000, Phaser.Easing.Linear.None)
-    .to({ angle: cloud.angle}, 150000, Phaser.Easing.Linear.None)
-    .start(); */
-
-    game.add.tween(cloud).to( { alpha: 1 }, 2000, Phaser.Easing.Linear.None).start();
-
-    // Spawn elke 5 sec een nieuwe wolk random
-    cloudTimer = game.time.now + 5000;
-    clouds.add(cloud);
-}
-
-
-function createStar() {    
-    var star = game.add.sprite(game.world.randomX, game.world.randomY, 'star');
-
-    star.alpha = 0;
-    star.angle = game.rnd.angle();
-
-    game.add.tween(star).to( { alpha: 1 }, 1000, Phaser.Easing.Linear.None).start();
-
-    starTimer = game.time.now + 3000;
-    stars.add(star);
-}
-
-function createMoon() {
-    var randY = game.world.randomY;
-
-    // Make sure the moon is always fully within screen (height = 164, round to 300)
-    if(randY < 300) {
-        // Define new randomY with added height of moon
-        randY = randY + 164;
-    } else if(randY > 1700) {
-        randY = randY - 164;
-    } else {
-        randY = randY;
-    }
-
-    moon = game.add.sprite(game.world.randomX, randY, 'moon');
-
-    moon.alpha = 0;
-    moon.angle = game.rnd.angle();
-
-    /* game.add.tween(moon).to( { alpha: 1 }, 1000, Phaser.Easing.Linear.None)
-    .to({ x: game.width + (1600 + moon.x) }, 300000, Phaser.Easing.Linear.None)
-    .to({ angle: moon.angle}, 150000, Phaser.Easing.Linear.None)
-    .start(); */
-
-    game.add.tween(moon).to( { alpha: 1 }, 1000, Phaser.Easing.Linear.None).start();
-}
-
-function randName() {
-    var text = "";
-    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
-    for( var i=0; i < 10; i++ )
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-
-    return text;
-}
-
-function diffNumbers(a, b) {
-    return Math.abs(a - b);
-}
-
-function currentDate() {
-    var d = new Date(),
-    minutes = d.getMinutes().toString().length == 1 ? '0'+d.getMinutes() : d.getMinutes(),
-    seconds = d.getSeconds().toString().length == 1 ? '0'+d.getSeconds() : d.getSeconds(),
-    hours = d.getHours().toString().length == 1 ? '0'+d.getHours() : d.getHours();
-    return d.getDate() + '-' + (d.getMonth()+1) + '-' + d.getFullYear() +' ' + hours + ':' + minutes + ':' + seconds;
-}
-
-function goFullscreen() {
-    //game.scale.startFullScreen();
-}
-
-// Function gets called if screen is resized.
-function resizeGame() {
-    /*var w = window.innerWidth * window.devicePixelRatio,
-    h = window.innerHeight * window.devicePixelRatio;
-
-    */
-
-    var w = window.innerWidth;
-    var h = window.innerHeight;
-
-    game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-
-    game.width = w;
-    game.height = h;
-    game.stage.width = w;
-    game.stage.height = h;
-    game.scale.width = w;
-    game.scale.height = h;
-
-    if(game.renderType === Phaser.WEBGL) {
-        game.renderer.resize(w, h);
-    } else if (game.renderType === Phaser.CANVAS) {        
-        game.renderer.resize(w, h);
-        Phaser.Canvas.setSmoothingEnabled(game.context, false);
-    }
-
-    game.scale.setSize();
-    game.scale.refresh();
-}
-
-/* ~~~~~~~ CO-OP FUNCTIONS ~~~~~~~ */
-
-// Create new Co-op	
-function newCoop(player1, player2, shoot, move, x, y, angle, type) {
-	if(type == 'join') {
-		console.log(currentDate() + ' | I am now in co-op mode with ' + player2 + '.');
-	}
-
-	if(type == 'new') {
-		coopSession = player1 + player2;
-	}
-	else {
-		coopSession = player2 + player1;
-	}
-
-	console.log('player 1', player1);
-	console.log('player 2', player2);
-	console.log('coop session', coopSession);
-
-	if(player1 === io.socket.sessionid || player2 === io.socket.sessionid) {
-		player.coop = true;
-	}
-
-	coopPlayers[coopSession] = game.add.sprite(game.world.centerX, game.world.centerY, 'coop');
-	coopPlayers[coopSession].name = coopSession;
-	coopPlayers[coopSession].player1 = player1;
-	coopPlayers[coopSession].player2 = player2;
-	coopPlayers[coopSession].coopSession = coopSession;
-	coopPlayers[coopSession].move = move;
-	coopPlayers[coopSession].shoot = shoot;
-	coopPlayers[coopSession].anchor.setTo(.5, .5);
-	coopPlayers[coopSession].enableBody = true;
-	game.physics.enable(coopPlayers[coopSession], Phaser.Physics.ARCADE);
-	coopPlayers[coopSession].physicsBodyType = Phaser.Physics.ARCADE;
-	coopPlayers[coopSession].health = 250;
-	coopPlayers[coopSession].frame = 3;
-	coopPlayers[coopSession].body.collideWorldBounds = true;
-	coopPlayers[coopSession].body.immovable = true;
-
-	if(x !== '' && y !== '' && angle !== '') {
-		coopPlayers[coopSession].x = x;
-		coopPlayers[coopSession].y = y;
-		coopPlayers[coopSession].angle = angle;
-	}
-  
-	if(coopPlayers[coopSession].move == io.socket.sessionid) {
-		console.log(currentDate() + " | You may move, good sir.");
-		coopPlayers[coopSession].frame = 2;
-		coopMovement = true;
-		coopShooting = false;
-	} 
-
-	if(coopPlayers[coopSession].shoot == io.socket.sessionid) {
-		console.log(currentDate() + " | You may shoot, good sir.");
-		coopPlayers[coopSession].frame = 1;
-		coopShooting = true;
-		coopMovement = false;
-		player.move = false;
-	}
-
-	if(player1 == io.socket.sessionid) {
-		console.log('jij bent player 1');
-
-		player.coop = true;
-		player.visible = false;
-		player.renderable = false;
-		player.allowControls = false;
-		player.move = false;
-		player.shoot = false;
-		player.enableBody = false;
-
-		players[player2].visible = false;
-		players[player2].coop = true;
-		players[player2].renderable = false;
-		players[player2].enableBody = false;
-
-		game.camera.follow(coopPlayers[coopSession]);
-	}
-
-	else if (player2 == io.socket.sessionid) {
-		console.log('jij bent player 2');
-
-		player.coop = true;
-		player.visible = false;
-		player.renderable = false;
-		player.allowControls = false;
-		player.move = false;
-		player.shoot = false;
-		player.enableBody = false;
-
-		players[player1].visible = false;
-		players[player1].coop = true;
-		players[player1].renderable = false;
-		players[player1].enableBody = false;
-
-		game.camera.follow(coopPlayers[coopSession]);
-	} 
-
-	else {
-		console.log('jij bent geen van beide');
-
-		if(typeof players[player1] !== 'undefined') {
-			players[player1].visible = false;
-			players[player1].coop = true;
-			players[player1].renderable = false;
-			players[player1].enableBody = false;
-		}
-		else {
-			console.log('player 1 bestaat niet');
-		}
-
-		if(typeof players[player2] !== 'undefined') {
-			players[player2].visible = false;
-			players[player2].coop = true;
-			players[player2].renderable = false;
-			players[player2].enableBody = false;
-		}
-		else {
-			console.log('player 2 bestaat niet');
-		}
-	}
-
-	if(type === 'new') {
-		// Draai alles om, omdat player 1 dan de andere speler is..
-		var coopData = JSON.stringify({
-	        player1 : player2,
-	        player2 : player1,
-	        move : player2,
-	        shoot : player1,
-	        x : coopPlayers[coopSession].x,
-	        y : coopPlayers[coopSession].y,
-	        angle : coopPlayers[coopSession].angle
-	    });
-		socket.emit('newCoop', coopData);
-	}
-}
-
-// Function to compare location of yourself to other Player
-// Decides to create newCoop if distance within range
-function compareGPS(playerLat, playerLong, playerSession) {	
-	if(playerLat !== '' && playerLong !== '') {
-		// distance between you and other player in kilometers
-		var dist = distance(latitude, longitude, playerLat, playerLong, "k");
-
-		// distance in meters
-		dist = dist * 1000;
-
-		// check if distance is within given range
-		//if(dist <= range && !isNaN(dist)) {
-			// Ga na of te vergelijken speler niet jijzelf is (je kunt niet co-oppen met jezelf :p)
-			if(playerSession != io.socket.sessionid) {
-				console.log(currentDate() + ' | Distance between YOU and ' + playerSession + ' is: ' + dist.toString() + ' meters.');
-				// Ga na of jijzelf nog niet in co-op bent
-
-				if(player.coop === false) {
-					console.log(currentDate() + ' | Ik ben nog niet in co-op modus');
-					if(players[playerSession].coop === false) {
-						console.log(currentDate() + ' | ' + playerSession + ' is ook nog niet in co-op modus');
-
-						newCoop(player.name, players[playerSession].name, players[playerSession].name, player.name, '', '', '', 'new');
-					}
+	},
+
+	bulletOtherPlayer: function(plr, blt) {
+		blt.animations.play('bulletCollide');
+
+		blt.events.onAnimationComplete.add(function() {
+			blt.kill();
+		}, this);
+
+		socket.emit('damagePlayer', players[plr.name].name);
+	},
+
+	bulletPlayer: function(plr, blt) {
+		blt.animations.play('bulletCollide');
+
+		blt.events.onAnimationComplete.add(function() {
+			blt.kill();
+		}, this);
+	},
+
+	bulletCoop: function(blt, plr) {
+		blt.animations.play('bulletCollide');
+
+		blt.events.onAnimationComplete.add(function() {
+			blt.kill();
+		}, this);
+
+		socket.emit('damagePlayer', coopPlayers[plr.name].name);
+	},
+
+	bulletBoss: function(plr, blt) {
+		if(!bossIsDying) {
+			if(blt.session === io.socket.sessionid) {
+				if(player.minion === false) {
+					player.score += 10;
+					//textScore.setText('Score: ' + player.score);
+					var minion = false;
 				} else {
-					console.log('NEEEEEEEEEEEEEEEEEEEEEEE');
+					var minion = true;
+				}
+			} else {		
+				if(players[blt.session].minion === false) {
+					var minion = false;
+				} else {
+					var minion = true;
+				}
+			}
+
+			if(minion === false) {
+				boss.damage(100);
+
+				boss.frame = 0;
+			
+				if(boss.health <= 500 && boss.health > 200) 
+				{
+					boss.tint = 0xFF9933;				
+				} 
+				else if(boss.health <= 200 && boss.health > 0)
+				{
+					boss.tint = 0xFF0000;	
+				} 
+				else if(boss.health <= 0) 
+				{
+					bossIsDying = true;
+
+					boss.tint = 0xFFFFFF;		
+					
+					boss.alive = true;
+					boss.visible = true;	
+					boss.exists = true;	
+
+					boss.animations.add('boss');
+					boss.animations.play('boss', 8, false, true);
+
+					var self = this;
+					boss.events.onAnimationComplete.add(function() {
+						socket.emit('bossDied', io.socket.sessionid);
+
+						setTimeout(function() {
+							self.state.start('GameEnd');
+						}, 500);
+					});	
+				}
+				
+				setTimeout(function() {
+					boss.frame = 1;
+				}, 100);	
+			}
+		}
+
+		blt.animations.play('bulletCollide');
+
+		blt.events.onAnimationComplete.add(function() {
+			blt.kill();
+		}, this); 
+
+		if(SpaceBattalion.music) {
+			this.shipHitSound.play();
+		}
+	},
+
+	overlapPlayer: function(plr, boss) {
+		if(plr.minion === false && boss.move === true && playerType !== boss) {
+			if(plr.name === io.socket.sessionid) {
+				player.minion = true;
+				player.frame = 12;
+				player.health = 100;
+				socket.emit('playerMinion', io.socket.sessionid);
+			} else {
+				players[plr.name].minion = true;
+				players[plr.name].frame = 12;
+				players[plr.name].health = 100;
+				// Dit hoeft niet? Wordt gedaan in andere client waar players[plr.name] player is toch?
+				// socket.emit('playerMinion', plr.name);
+			}
+		}
+	},
+
+	clickedPlayer: function(event, sprite) {
+		this.compareGPS(players[event.name].latitude, players[event.name].longitude, players[event.name].name);
+	},
+
+	tapScreen: function(pointer) {
+		if(pointer.pageX >= 0 && pointer.pageX <= (SpaceBattalion.windowWidth / 2)) {
+			this.fire('left');
+		} else {
+			this.fire('right');
+		}
+	},
+
+	changePosition: function(xVal, xSpeed, yVal, ySpeed, angleVal, spriteVal) {
+		if(spriteVal === 'p') {
+
+			xSpeed == '' ? xSpeed = 0 : xSpeed;
+		    ySpeed == '' ? ySpeed = 0 : ySpeed;
+
+		    if(xVal == '+') { playerType.body.velocity.x += xSpeed; } 
+		    else if(xVal == '-') { playerType.body.velocity.x -= xSpeed; } 
+		    else { playerType.body.velocity.x += 0; }
+
+		    if(yVal == '+') { playerType.body.velocity.y += ySpeed; } 
+		    else if(yVal == '-') { playerType.body.velocity.y -= ySpeed; } 
+		    else { playerType.body.velocity.y += 0; }
+
+		    playerType.angle = angleVal;
+
+		    if(oldX !== playerType.x || oldY !== playerType.y) {
+
+		    	if(this.game.device.desktop) {
+			    	// Particles achter schip
+					emitter = this.add.emitter(playerType.x, playerType.y, 1);
+				    emitter.makeParticles('flyRail');
+
+				    emitter.setRotation(0, 0);
+				    emitter.setAlpha(0.3, 0.8);
+				    emitter.setScale(0.8, 3);
+				    emitter.gravity = 400;
+
+				    emitter.start(true, 150, 100);
+				}	
+				this.world.bringToTop(playerGroup); 
+		                    
+		        var playerPosition = JSON.stringify({
+		            sessionid: io.socket.sessionid,
+		            nickname: playerName,
+		            x : playerType.x,
+		            y : playerType.y,
+		            angle : playerType.angle
+		        });   
+
+		        // Check if difference between x or y values is larger than 1
+		        if(this.diffNumbers(playerType.x, oldX) >= 1 || this.diffNumbers(playerType.y, oldY) >= 1 ) {
+		            
+		            // Send positions to server every 200 ms (0.2 seconds)
+		            /*setTimeout(function() {
+		                socket.emit('positionChange', playerPosition);
+		            }, 200);*/
+		            
+		            // Emit new position immediately, without delay
+		            socket.emit('positionChange', playerPosition);
+
+		            // store the old positions in oldX and oldY
+		            oldX = playerType.x;
+		            oldY = playerType.y;
+		        }
+		    }
+		} else {		
+			xSpeed == '' ? xSpeed = 0 : xSpeed;
+		    ySpeed == '' ? ySpeed = 0 : ySpeed;
+
+		    if(xVal == '+') { coopPlayers[spriteVal].body.velocity.x += xSpeed; } 
+		    else if(xVal == '-') { coopPlayers[spriteVal].body.velocity.x -= xSpeed; } 
+		    else { coopPlayers[spriteVal].body.velocity.x += 0; }
+
+		    if(yVal == '+') { coopPlayers[spriteVal].body.velocity.y += ySpeed; } 
+		    else if(yVal == '-') { coopPlayers[spriteVal].body.velocity.y -= ySpeed; } 
+		    else { coopPlayers[spriteVal].body.velocity.y += 0; }
+
+		    coopPlayers[spriteVal].angle = angleVal;
+
+		    if(oldX !== coopPlayers[spriteVal].x || oldY !== coopPlayers[spriteVal].y) {
+		                    
+		        var playerPosition = JSON.stringify({
+		            sessionid: coopSession,
+		            nickname: 'coop',
+		            x : coopPlayers[spriteVal].x,
+		            y : coopPlayers[spriteVal].y,
+		            angle : coopPlayers[spriteVal].angle
+		        });   
+
+		        // Check if difference between x or y values is larger than 1
+		        if(this.diffNumbers(coopPlayers[spriteVal].x, oldX) >= 1 || this.diffNumbers(coopPlayers[spriteVal].y, oldY) >= 1 ) {
+		            
+		            // Send positions to server every 200 ms (0.2 seconds)
+		            /*setTimeout(function() {
+		                socket.emit('positionChange', playerPosition);
+		            }, 200);*/
+		            
+		            // Emit new position immediately, without delay
+		            socket.emit('positionChange', playerPosition);
+
+		            // store the old positions in oldX and oldY
+		            oldX = coopPlayers[spriteVal].x;
+		            oldY = coopPlayers[spriteVal].y;
+		        }
+		    }
+		}    
+	},
+
+	createCloud: function() {
+	    // random getal tussen 1 en 10
+	    var randCloud = Math.floor((Math.random() * 10) + 1);
+
+	    if(randCloud < 5) {
+	        //var cloud = game.add.sprite(-(Math.random() * random), game.world.randomY, 'cloud1');
+	        var cloud = this.add.sprite(this.world.randomX, this.world.randomY, 'cloud1');
+	    } else {
+	        //var cloud = game.add.sprite(-(Math.random() * random), game.world.randomY, 'cloud2');
+	        var cloud = this.add.sprite(this.world.randomX, this.world.randomY, 'cloud2');
+	    }
+	    
+	    cloud.alpha = 0;
+	    cloud.angle = this.rnd.angle();
+
+	    this.add.tween(cloud).to( { alpha: 1 }, 2000, Phaser.Easing.Linear.None)
+	    .to({ x: this.game.width + (1600 + cloud.x) }, 150000, Phaser.Easing.Linear.None)
+	    .to({ angle: cloud.angle}, 150000, Phaser.Easing.Linear.None)
+	    .start();
+
+	    //this.add.tween(cloud).to( { alpha: 1 }, 2000, Phaser.Easing.Linear.None).start();
+
+	    // Spawn elke 5 sec een nieuwe wolk random
+	    cloudTimer = this.time.now + 5000;
+	    clouds.add(cloud);
+	},
+
+	createStar: function() {
+		var star = this.add.sprite(this.world.randomX, this.world.randomY, 'star');
+
+	    star.alpha = 0;
+	    star.angle = this.rnd.angle();
+
+	    this.add.tween(star).to( { alpha: 1 }, 1000, Phaser.Easing.Linear.None).start();
+
+	    starTimer = this.time.now + 3000;
+	    stars.add(star);
+	},
+
+	createMoon: function() {
+		var randY = this.world.randomY;
+
+	    // Make sure the moon is always fully within screen (height = 164, round to 300)
+	    if(randY < 300) {
+	        // Define new randomY with added height of moon
+	        randY = randY + 164;
+	    } else if(randY > 1700) {
+	        randY = randY - 164;
+	    } else {
+	        randY = randY;
+	    }
+
+	    moon = this.add.sprite(this.world.randomX, randY, 'moon');
+
+	    moon.alpha = 0;
+	    moon.angle = this.rnd.angle();
+
+	    this.add.tween(moon).to( { alpha: 1 }, 1000, Phaser.Easing.Linear.None)
+	    .to({ x: this.game.width + (1600 + moon.x) }, 300000, Phaser.Easing.Linear.None)
+	    .to({ angle: moon.angle}, 150000, Phaser.Easing.Linear.None)
+	    .start();
+
+	    //game.add.tween(moon).to( { alpha: 1 }, 1000, Phaser.Easing.Linear.None).start();
+	},
+
+	removePlayer: function(plr) {
+		if (plr !== io.socket.sessionid) {
+		   	// Check if player who disconnected was in coop mode
+		    if(Object.getOwnPropertyNames(coopPlayers).length !== 0) {
+			    Object.keys(coopPlayers).forEach(function(key) {
+				    if(key.indexOf(io.socket.sessionid) > -1) {
+
+				       	coopPlayers[key].kill();
+				       	player.visible = true;
+				       	player.allowControls = true;
+				       	player.move = true;
+				       	player.shoot = true;
+				       	player.enableBody = true;
+				       	this.camera.follow(playerType, Phaser.Camera.FOLLOW_TOPDOWN);
+
+				       	coopMovement = false;
+
+				       	player.coop = false;
+
+				       	Object.keys(coopPlayers).forEach(function(key2) {
+		        			if(key2.indexOf(key) > -1) {
+		        				delete coopPlayers[key];
+		        			}
+		        		});
+				   	}
+				});
+			} else {
+		   		players[plr].kill();
+		   	}
+		}
+	},
+
+	createBullet: function(blt) {
+		var bullet = bullets.getFirstDead();
+
+	   	if(bullet) {
+	        bullet.revive();
+			
+			if(this.game.device.desktop) {
+		        // Muzzleflash
+		        muzzleFlash = this.add.sprite(blt.resetX, blt.resetY, 'muzzleFlash');
+				
+				// Positie van muzzleflash, kon even geen andere manier bedenken dus dan maar zo :D
+				if(currentDirection == 'left')
+				{
+					muzzleFlash.anchor.setTo(1.9, .4);
+				}else if(currentDirection == 'left-up')
+				{
+					muzzleFlash.anchor.setTo(2.2, 2.1);
+				}else if(currentDirection == 'left-down')
+				{
+					muzzleFlash.anchor.setTo(2.2, -1.4);
+				}else if(currentDirection == 'right-up')
+				{
+					muzzleFlash.anchor.setTo(-1.2, 2.1);
+				}else if(currentDirection == 'right-down')
+				{
+					muzzleFlash.anchor.setTo(-1.2, -1.2);
+				}else if(currentDirection == 'right')
+				{
+					muzzleFlash.anchor.setTo(-.9, .6);
+				}else if(currentDirection == 'down')
+				{
+					muzzleFlash.anchor.setTo(.5, -1.0);
+				}else if(currentDirection == 'up')
+				{
+					muzzleFlash.anchor.setTo(.5, 1.9);
+				}else
+				{
+					muzzleFlash.anchor.setTo(.5, .5);		
 				}
 
-				/*if(player.coop === false && players[playerSession].coop === false) {
-					console.log('oke, maak maar coop van');
-					newCoop(player.name, players[playerSession].name, players[playerSession].name, player.name, 'new');
-				}*/
-		} else {
-			console.log(currentDate() + ' | Distance between YOU and ' + players[playerSession].name + ' (' + dist + ') is greater than the given range (' + range + ').');
+				muzzleFlash.alpha = 0;
+				this.add.tween(muzzleFlash).to( { alpha: 1 }, 100, Phaser.Easing.Linear.None, true, 0, 100, true);
+				
+				// Muzzleflash wordt automatisch verwijdert na 200ms
+				muzzleFlash.lifespan = 200;		
+			}			
+
+	        bullet.checkWorldBounds = true;
+	        bullet.outOfBoundsKill = true;
+
+	        bullet.reset(blt.resetX, blt.resetY);
+	        bullet.rotation = blt.rotation;
+	        bullet.y += blt.bulletY;
+	        bullet.session = blt.session;
+
+	        this.physics.arcade.velocityFromRotation(blt.rotation += blt.randVelocity, 625, bullet.body.velocity);
+	        //game.physics.arcade.velocityFromRotation(blt.rotation, 450, otherBullet.body.velocity);
+	        bullet.animations.add('bulletCollide');
+
+	        shakeScreen = 15;
+	    }
+	},
+
+	diagonalSpeed: function(speed) {
+    	var diagonalSpeed = Math.sqrt(Math.pow(speed, 2) * 2) / 2;
+    	return diagonalSpeed;
+	},
+
+	compareGPS: function(playerLat, playerLong, playerSession) {
+		if(playerLat !== '' && playerLong !== '') {
+			// Afstand tussen player 1 en player 2 in km
+			var dist = this.distance(latitude, longitude, playerLat, playerLong, "k");
+
+			// Afstand omrekenen naar m
+			dist = dist * 1000;
+
+			// Ga na of afstand binnen 'range' iss
+			//if(dist <= range && !isNaN(dist)) {
+				// Ga na of te vergelijken speler niet jijzelf is (je kunt niet co-oppen met jezelf :p)
+				if(playerSession != io.socket.sessionid) {
+					console.log('Distance between YOU and ' + playerSession + ' is: ' + dist.toString() + ' meters.');
+
+					// Ga na of jijzelf nog niet in co-op bent
+					if(player.coop === false) {
+						console.log('Ik ben nog niet in co-op modus');
+						if(players[playerSession].coop === false) {
+							console.log(playerSession + ' is ook nog niet in co-op modus');
+
+							this.createCoop(player.name, players[playerSession].name, players[playerSession].name, player.name, '', '', '', 'new');
+						}
+					}
+					/*if(player.coop === false && players[playerSession].coop === false) {
+						console.log('oke, maak maar coop van');
+						newCoop(player.name, players[playerSession].name, players[playerSession].name, player.name, 'new');
+					}*/
+			} else {
+				console.log('Distance between YOU and ' + players[playerSession].name + ' (' + dist + ') is greater than the given range (' + range + ').');
+			}
 		}
+	},
+
+	getLocation: function() {
+		if(navigator.geolocation) {
+			navigator.geolocation.watchPosition(this.foundPosition, function(error) {
+	            if(error.code == error.PERMISSION_DENIED) {
+	                latitude = 0;
+	                longitude = 0;
+	            }
+	        }, {enableHighAccuracy: false});
+	        // HighAccuracy staat uit i.v.m. accu duur
+		} else {
+			console.log('Het ophalen van uw locatie is mislukt\nGPS wordt niet ondersteund op uw smart device.');
+		}
+	},
+
+	foundPosition: function(pos) {
+		if(pos.coords.latitude !== latitude || pos.coords.longitude !== longitude) {
+			latitude = position.coords.latitude;
+			longitude = position.coords.longitude;
+
+			var updatedLocation = JSON.stringify({
+				sessionid : io.socket.sessionid,
+				lat : latitude,
+				long : longitude
+			});
+			socket.emit('locationUpdate', updatedLocation);
+		}
+	},
+
+	// Bron : http://www.geodatasource.com/developers/javascript
+	distance: function(lat1, lon1, lat2, lon2, unit) {
+		var radlat1 = Math.PI * lat1/180;
+	    var radlat2 = Math.PI * lat2/180;
+	    var radlon1 = Math.PI * lon1/180;
+	    var radlon2 = Math.PI * lon2/180;
+
+	    var theta = lon1-lon2;
+
+	    var radtheta = Math.PI * theta/180;
+
+	    var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+	    dist = Math.acos(dist);
+	    dist = dist * 180/Math.PI;
+	    dist = dist * 60 * 1.1515;
+
+	    if (unit=="K") { dist = dist * 1.609344 };
+	    if (unit=="N") { dist = dist * 0.8684 };
+	    return dist;
+	}, 
+
+	randName: function() {
+		var text = "";
+	    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+	    for( var i=0; i < 10; i++ )
+	        text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+	    return text;
+	},
+
+	diffNumbers: function(a, b) {
+		return Math.abs(a - b);
+	},
+
+	render: function() {
+		
+	},
+
+	shutdown: function() {
+		this.world.removeAll();
 	}
-}
-
-/* ~~~~~~~ GEOLOCATION FUNCTIONS ~~~~~~~ */
-// Check if user's browser supports geolocation
-function getLocation() {
-	if(navigator.geolocation) {
-		navigator.geolocation.watchPosition(foundPosition, function(error) {
-			console.log('Error', error);
-            if(error.code == error.PERMISSION_DENIED) {
-                latitude = 0;
-                longitude = 0;
-            }
-        }, {enableHighAccuracy: false});
-        // HighAccuracy staat uit i.v.m. accu duur
-	} else {
-		console.log('Het ophalen van uw locatie is mislukt\nGPS wordt niet ondersteund op uw smart device.');
-	}
-}
-
-// Get exact location of user if geolocation is supported
-// Just used to store the latitude and longitude of player at the moment
-function foundPosition(position) {
-    if(position.coords.latitude !== latitude || position.coords.longitude !== longitude) {
-    	latitude = position.coords.latitude;
-		longitude = position.coords.longitude;
-
-		var updatedLocation = JSON.stringify({
-			sessionid : io.socket.sessionid,
-			lat : latitude,
-			long : longitude
-		});
-		socket.emit('locationUpdate', updatedLocation);
-    }
-}
-
-// Function to calculate distance between two players.
-// source : http://www.geodatasource.com/developers/javascript
-function distance(lat1, lon1, lat2, lon2, unit) {
-    var radlat1 = Math.PI * lat1/180;
-    var radlat2 = Math.PI * lat2/180;
-    var radlon1 = Math.PI * lon1/180;
-    var radlon2 = Math.PI * lon2/180;
-
-    var theta = lon1-lon2;
-
-    var radtheta = Math.PI * theta/180;
-
-    var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
-    dist = Math.acos(dist);
-    dist = dist * 180/Math.PI;
-    dist = dist * 60 * 1.1515;
-
-    if (unit=="K") { dist = dist * 1.609344 };
-    if (unit=="N") { dist = dist * 0.8684 };
-    return dist;
-}
-
-function clickedPlayer(event, sprite) {
-	compareGPS(players[event.name].latitude, players[event.name].longitude, players[event.name].name);
-}
-
-function tapped(pointer) {
- 	console.log('tapped!');
-}
-
-function render() {
-	/*for(var player in players) {
-		game.debug.spriteInfo(players[player], 32, 32);
-	}*/
-	game.debug.text('FPS: ' + game.time.fps, 80, 150, 'rgb(255,255,255)', '24px Courier');
-}
+};
