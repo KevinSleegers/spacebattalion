@@ -37,7 +37,7 @@ SpaceBattalion.Preloader.prototype = {
 	    this.load.audio('loadingMusic', ['assets/audio/Baseview.mp3', 'assets/audio/Baseview.ogg']);
 	    this.load.audio('backgroundMusic', ['assets/audio/TakingFlight.mp3', 'assets/audio/TakingFlight.ogg']);
 		this.load.audio('explosionSound', ['assets/audio/SFX/explosion.mp3', 'assets/audio/SFX/explosion.ogg']);
-		this.load.audio('laserShotSound', ['assets/audio/SFX/laserShot.mp3', 'assets/audio/SFX/laserShot.ogg']);
+		this.load.audio('laserShotSound', ['assets/audio/SFX/LaserShot.mp3', 'assets/audio/SFX/LaserShot.ogg']);
 		this.load.audio('menuClickSound', ['assets/audio/SFX/menuClick.mp3', 'assets/audio/SFX/menuClick.ogg']);
 		this.load.audio('portalSound', 'assets/audio/SFX/portalSound.ogg');
 		this.load.audio('shipHitSound', ['assets/audio/SFX/shipHit.mp3', 'assets/audio/SFX/shipHit.ogg']);
