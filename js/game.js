@@ -618,7 +618,7 @@ SpaceBattalion.Game.prototype = {
 	    	}
 
 	    	if(typeof player !== "undefined" && player.shoot === true || coopShooting === true) {
-	        // Ga na of speler in co-op is, en of hij mag schieten
+	        // Check if coop exists, and if coop is allowed to move (if yes then disallow shooting)
 	        	if(this.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR).isDown) {
 		            this.fire(null);
 		            console.log('aaa');
