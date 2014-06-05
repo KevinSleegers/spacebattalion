@@ -53,6 +53,17 @@
 			margin:0px;
 			padding:0px;
 		}
+
+		@media all and (orientation:portrait) {
+			/* Style adjustments for portrait mode goes here */
+			body {
+				-webkit-transform: rotate(90deg);
+    			-moz-transform: rotate(90deg);
+    			-o-transform: rotate(90deg);
+    			-ms-transform: rotate(90deg);
+   				transform: rotate(90deg);
+			}
+		}
 	</style>
 
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
