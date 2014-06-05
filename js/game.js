@@ -442,32 +442,32 @@ SpaceBattalion.Game.prototype = {
 			players[data.session].long = data.long;
 		});
 
-		// Maak wolken group aan
-		clouds = this.add.group();
-		clouds.enableBody = true;
-	    clouds.physicsBodyType = Phaser.Physics.ARCADE;
-	    clouds.setAll('anchor.x', 0.5);
-	    clouds.setAll('anchor.y', 0.5);
-	    clouds.setAll('outOfBoundsKill', true);  
-
-	    // Maak 5 wolken aan
-	    for(i = 0; i < 5; i++) {
-	        this.createCloud();
-	    }
-		
-		// Maak sterren group aan
-		stars = this.add.group();
-	    stars.enableBody = true;
-	    stars.physicsBodyType = Phaser.Physics.ARCADE;
-	    stars.setAll('anchor.x', 0.5);
-	    stars.setAll('anchor.y', 0.5);
-	    stars.setAll('outOfBoundsKill', true);  
-	    
-	    // Maak maan aan
-	    this.createMoon();
-
 	    if(this.game.device.desktop) {
 	    	cursors = this.input.keyboard.createCursorKeys();
+
+	    	// Maak wolken group aan
+			clouds = this.add.group();
+			clouds.enableBody = true;
+		    clouds.physicsBodyType = Phaser.Physics.ARCADE;
+		    clouds.setAll('anchor.x', 0.5);
+		    clouds.setAll('anchor.y', 0.5);
+		    clouds.setAll('outOfBoundsKill', true);  
+
+		    // Maak 5 wolken aan
+		    for(i = 0; i < 5; i++) {
+		     	this.createCloud();
+		    }
+			
+			// Maak sterren group aan
+			stars = this.add.group();
+		    stars.enableBody = true;
+		    stars.physicsBodyType = Phaser.Physics.ARCADE;
+		    stars.setAll('anchor.x', 0.5);
+		    stars.setAll('anchor.y', 0.5);
+		    stars.setAll('outOfBoundsKill', true);  
+		    
+		    // Maak maan aan
+		    this.createMoon();
 		} 
 		else {
 			// Niet op desktop
