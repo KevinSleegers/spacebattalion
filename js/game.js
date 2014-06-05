@@ -57,6 +57,7 @@ SpaceBattalion.Game = function(game) {
 	this.game;		//	a reference to the currently running game
     this.add;		//	used to add sprites, text, groups, etc
     this.camera;	//	a reference to the game camera
+    this.debug;
     this.cache;		//	the game cache
     this.input;		//	the global input manager (you can access this.input.keyboard, this.input.mouse, as well from it)
     this.load;		//	for preloading assets
@@ -493,7 +494,8 @@ SpaceBattalion.Game.prototype = {
 	                        //self.fire();
 	                    //}
 
-	                    if(o.z < 9.5 || o.z > 10) {
+	                    //if(o.z < 9.5 || o.z > 10) {
+	                    if(o.z < 9 || o.z > 10.5) {	
 	                    	self.changePosition('-', o.y * 20, '-', o.x * 20, anglePlayer, 'p');
 	                    } else {
 	                        self.changePosition('', '', '', '', 0, 'p');
@@ -1427,7 +1429,8 @@ SpaceBattalion.Game.prototype = {
 	},
 
 	render: function() {
-		
+		// FPS DEBUGGEN
+		this.game.debug.text('FPS: ' + this.time.fps, 80, 150, 'rgb(255,255,255)', '24px Courier');
 	},
 
 	shutdown: function() {

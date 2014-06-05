@@ -52,8 +52,10 @@ SpaceBattalion.MainMenu.prototype = {
 	},
 
 	update: function() {
-		this.backgroundImage.tilePosition.x -= 2;
-	    this.backgroundImage.tilePosition.y += 1;
+		if(this.game.device.desktop) {
+			this.backgroundImage.tilePosition.x -= 2;
+	   	 	this.backgroundImage.tilePosition.y += 1;
+		}
 
 		// Als window niet in focus is
 		var self = this;
