@@ -86,6 +86,11 @@ SpaceBattalion.Game.prototype = {
 			console.log = function() {};
 		}
 
+		// Ga na of device kan loggen, zo niet log dan niet! (performance)
+		if(typeof console === "undefined"){
+      		console = {};
+		}
+
 		/*this.renderer.clearBeforeRender = true;
 		this.renderer.roundPixels = true;*/
 		this.physics.startSystem(Phaser.Physics.ARCADE);
