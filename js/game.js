@@ -550,7 +550,6 @@ SpaceBattalion.Game.prototype = {
 			// Laat achtergrond bewegen
 			bgtile.tilePosition.x -= 2;
 	    	bgtile.tilePosition.y += 1;
-
 		
 			// Maak wolk aan
 			if(moon.x > (this.world.width + moon.width)) {

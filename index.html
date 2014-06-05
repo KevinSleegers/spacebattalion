@@ -89,7 +89,7 @@
 	  			h = window.innerHeight;
 
 			/* ~~~~~~~ NEW GAME ~~~~~~~ */
-			var game = new Phaser.Game(w, h, Phaser.WEBGL, '');
+			var game = new Phaser.Game(w, h, Phaser.AUTO, '');
 
 			game.state.add('Boot', SpaceBattalion.Boot);
 			game.state.add('Preloader', SpaceBattalion.Preloader);
