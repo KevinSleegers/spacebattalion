@@ -542,14 +542,7 @@ SpaceBattalion.Game.prototype = {
 					player.body.velocity.setTo(0, 0);
 				}
 			}
-		}	
-
-		// Maak wolk aan
-		if(moon.x > (this.world.width + moon.width)) {
-		    moon.destroy();
-
-		    this.createMoon();
-		}		
+		}			
 
 	    // Alleen uitvoeren als gebruiker op desktop is
 		if(this.game.device.desktop) {    	
@@ -557,6 +550,14 @@ SpaceBattalion.Game.prototype = {
 			// Laat achtergrond bewegen
 			bgtile.tilePosition.x -= 2;
 	    	bgtile.tilePosition.y += 1;
+
+		
+			// Maak wolk aan
+			if(moon.x > (this.world.width + moon.width)) {
+			    moon.destroy();
+
+			    this.createMoon();
+			}
 
 		    // Maak wolken aan
 		    if(this.time.now > cloudTimer) {          
