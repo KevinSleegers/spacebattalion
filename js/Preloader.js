@@ -33,6 +33,8 @@ SpaceBattalion.Preloader.prototype = {
 	    this.load.image('cloud1', 'assets/img/spr_cloud1.png');
 	    this.load.image('cloud2', 'assets/img/spr_cloud2.png');
 	    this.load.image('moon', 'assets/img/spr_moon.png');
+	    this.load.image('radarCursor', 'assets/img/radar_cursor.png');
+	    this.load.image('mergeButton', 'assets/img/mergeButton.png');
 	    
 	    this.load.audio('loadingMusic', ['assets/audio/Baseview.mp3', 'assets/audio/Baseview.ogg']);
 	    this.load.audio('backgroundMusic', ['assets/audio/TakingFlight.mp3', 'assets/audio/TakingFlight.ogg']);
