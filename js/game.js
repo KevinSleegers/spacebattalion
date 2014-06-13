@@ -28,7 +28,7 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     bgtile,
     clouds,
     cloudTimer = 0,
-	
+
 	// Star image
 	stars,
 	starTimer = 0,
@@ -100,10 +100,9 @@ SpaceBattalion.Game.prototype = {
 		this.laserShotSound = this.add.audio('laserShotSound');
 		this.explosionSound	= this.add.audio('explosionSound');
 
-		playerName = prompt("What's your battle name?");
-		if(!playerName) {
-			playerName = this.randName();
-		}
+		
+		playerName = window.inlognaam;
+
 
 		bgtile = this.add.tileSprite(0, 0, bounds, bounds, 'mainBg');
 
@@ -428,6 +427,20 @@ SpaceBattalion.Game.prototype = {
 		var self = this;
 		socket.on('bossDead', function(data) {
 			self.explode(boss.x, boss.y);
+			player.score += 1000;
+			
+			alert('Total score: '+player.score);
+			$.ajax({
+				type:"post",
+				url:"http://buitmediasolutions.nl/spacebattalion/score.php",
+				data:{id: window.playerObject.id, score: player.score},
+				success:function(data){
+					console.log(data);
+					
+				}
+			});
+			
+			
 		});
 
 		// Locatie (GPS) van andere speler is geupdatet
@@ -939,9 +952,16 @@ SpaceBattalion.Game.prototype = {
 	},
 
 	bulletOtherPlayer: function(plr, blt) {
+		
 		blt.animations.play('bulletCollide');
 
 		blt.events.onAnimationComplete.add(function() {
+
+			//Jou kogel heeft iemand geraakt
+			if (player.name == blt.session)
+			{
+				player.score += 10;
+			}
 			blt.kill();
 		}, this);
 
@@ -1018,6 +1038,18 @@ SpaceBattalion.Game.prototype = {
 							self.state.start('GameEnd');
 						}, 500);
 					});	
+					player.score += 2000;
+			
+					alert('Total score: '+player.score);
+					$.ajax({
+						type:"post",
+						url:"http://buitmediasolutions.nl/spacebattalion/score.php",
+						data:{id: window.playerObject.id, score: player.score},
+						success:function(data){
+							console.log(data);
+							
+						}
+					});
 				}
 				
 				setTimeout(function() {

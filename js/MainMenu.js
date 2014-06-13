@@ -1,8 +1,8 @@
-SpaceBattalion.MainMenu = function (game) {	
+window.SpaceBattalion.MainMenu = function (game) {	
 
 };
 
-SpaceBattalion.MainMenu.prototype = {
+window.SpaceBattalion.MainMenu.prototype = {
 
 	create: function() {
 		this.backgroundImage = this.add.tileSprite(0, 0, SpaceBattalion.windowWidth, SpaceBattalion.windowHeight, 'mainBg');
@@ -10,27 +10,9 @@ SpaceBattalion.MainMenu.prototype = {
 		this.music = this.add.audio('loadingMusic');
 		this.music.play('', 0, 1, true);
 
-		/*this.startButton = this.add.button(this.world.centerX, this.world.centerY, 'button', this.startGame, this, 1, 0, 2);
-		this.startButton.x = this.world.centerX - this.startButton.width/2;
-		this.startButton.y = (this.world.centerY - this.startButton.height/2) - 225;
-		this.makeText(this.startButton, 'Start game');
+		console.dir(this);
 
-		this.controlsButton = this.add.button(this.world.centerX, this.world.centerY, 'button', '', this, 1, 0, 2);
-		this.controlsButton.x = this.world.centerX - this.controlsButton.width/2;
-		this.controlsButton.y = (this.world.centerY - this.controlsButton.height/2) - 75;
-		this.makeText(this.controlsButton, 'Controls');
-
-		this.statisticsButton = this.add.button(this.world.centerX, this.world.centerY, 'button', '', this, 1, 0, 2);
-		this.statisticsButton.x = this.world.centerX - this.statisticsButton.width/2;
-		this.statisticsButton.y = (this.world.centerY - this.statisticsButton.height/2) + 75;
-		this.makeText(this.statisticsButton, 'Statistics');
-
-		this.toggleSoundButton = this.add.button(this.world.centerX, this.world.centerY, 'button', this.toggleSound, this, 1, 0, 2);
-		this.toggleSoundButton.x = this.world.centerX - this.toggleSoundButton.width/2;
-		this.toggleSoundButton.y = (this.world.centerY - this.toggleSoundButton.height/2) + 225;
-		this.makeText(this.toggleSoundButton, 'Sound off');*/
-
-		this.startButton = this.add.button(this.world.centerX, this.world.centerY, '', this.startGame, this, 1, 0, 2);
+		/*this.startButton = this.add.button(this.world.centerX, this.world.centerY, '', this.startGame, this, 1, 0, 2);
 		this.startButton.x = this.world.centerX - this.startButton.width/2;
 		this.startButton.y = (this.world.centerY - this.startButton.height/2) - 105;
 		this.makeText(this.startButton, 'Start game');
@@ -40,7 +22,7 @@ SpaceBattalion.MainMenu.prototype = {
 		this.controlsButton.y = (this.world.centerY - this.controlsButton.height/2) - 35;
 		this.makeText(this.controlsButton, 'Controls');
 
-		this.statisticsButton = this.add.button(this.world.centerX, this.world.centerY, '', '', this, 1, 0, 2);
+		this.statisticsButton = this.add.button(this.world.centerX, this.world.centerY, '', this.statics, this, 1, 0, 2);
 		this.statisticsButton.x = this.world.centerX - this.statisticsButton.width/2;
 		this.statisticsButton.y = (this.world.centerY - this.statisticsButton.height/2) + 35;
 		this.makeText(this.statisticsButton, 'Statistics');
@@ -48,7 +30,7 @@ SpaceBattalion.MainMenu.prototype = {
 		this.toggleSoundButton = this.add.button(this.world.centerX, this.world.centerY, '', this.toggleSound, this, 1, 0, 2);
 		this.toggleSoundButton.x = this.world.centerX - this.toggleSoundButton.width/2;
 		this.toggleSoundButton.y = (this.world.centerY - this.toggleSoundButton.height/2) + 105;
-		this.makeText(this.toggleSoundButton, 'Sound off');
+		this.makeText(this.toggleSoundButton, 'Sound off');*/
 	},
 
 	update: function() {
@@ -74,6 +56,10 @@ SpaceBattalion.MainMenu.prototype = {
 		this.music.stop();
 
 		this.state.start('Game');
+	},
+	
+	statics:function(pointer) {
+		this.state.start('Stats');
 	},
 
 	makeText: function(button, text) {

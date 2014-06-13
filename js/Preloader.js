@@ -64,6 +64,8 @@ SpaceBattalion.Preloader.prototype = {
 			this.ready = true;
 			// this.state.start('Game');
 			this.state.start('MainMenu');
+			$('.menulist').fadeIn(200);
+			
 		}
 	}
 };

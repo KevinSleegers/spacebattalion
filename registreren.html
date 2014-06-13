@@ -1,0 +1,39 @@
+<div id="ack"></div>
+<input id="naam" type="text" name="name" placeholder="Name"/>
+<input id="email" type="text" name="email" placeholder="Email"/>
+<input id="inlognaam" type="text" name="inlog" placeholder="Nickname"/>
+<input id="password" type="password" name="password" placeholder="Password"/>
+<input id="passworddos" type="password" name="password" placeholder="Password repeat"/>
+<button id="submit" class="btn">Inloggen</button>
+<script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function (){
+	$("#submit").click(function (){
+	alert("hi");
+	n =  $("#naam").val();
+	e = $("#email").val();
+	i = $("#inlognaam").val();
+	p = $("#password").val();
+	pp = $("#passworddos").val();
+	if($("#inlognaam").val() == ""||$("#password").val()==""||$("#passworddos").val()=="")
+		$("div#ack").html("please fill in all fields");
+	else if($("#password").val() != $("#passworddos").val())
+			$("div#ack").html("Passwords are not the same");
+	else
+		$.ajax({
+			type:"post",
+			url:"http://buitmediasolutions.nl/spacebattalion/register.php",
+			data:{inlognaam: i,password: p,naam: n,email: e},
+				success:function(data){
+					console.log(data);
+				if(data=='yes'){
+					window.location.href = "index.html";
+				}
+				else{
+					$("div#ack").html("cant register!");
+				}
+			}
+		 });
+	});
+});
+</script>
