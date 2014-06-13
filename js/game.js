@@ -27,6 +27,9 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     playerGroup,
     bgtile,
     clouds,
+	radarCursor,
+	mergeIcon,
+	radarMeters,
     cloudTimer = 0,
 
 	// Star image
@@ -51,12 +54,12 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
 
     logging = true,
     bounds = 2000;
-    ;
 
 SpaceBattalion.Game = function(game) {
 	this.game;		//	a reference to the currently running game
     this.add;		//	used to add sprites, text, groups, etc
     this.camera;	//	a reference to the game camera
+    this.debug;
     this.cache;		//	the game cache
     this.input;		//	the global input manager (you can access this.input.keyboard, this.input.mouse, as well from it)
     this.load;		//	for preloading assets
@@ -85,6 +88,11 @@ SpaceBattalion.Game.prototype = {
 			console.log = function() {};
 		}
 
+		// Ga na of device kan loggen, zo niet log dan niet! (performance)
+		if(typeof console === "undefined"){
+      		console = {};
+		}
+
 		/*this.renderer.clearBeforeRender = true;
 		this.renderer.roundPixels = true;*/
 		this.physics.startSystem(Phaser.Physics.ARCADE);
@@ -93,7 +101,7 @@ SpaceBattalion.Game.prototype = {
 		// Achtergrond muziek en andere geluiden
 		this.backgroundMusic = this.add.audio('backgroundMusic');
 		if(SpaceBattalion.music) {
-			this.backgroundMusic.play('', 0, 1, true);
+			//this.backgroundMusic.play('', 0, 1, true);
 		}
 
 		this.shipHitSound 	= this.add.audio('shipHitSound');
@@ -144,6 +152,12 @@ SpaceBattalion.Game.prototype = {
 		playerGroup = this.add.group();
 		playerGroup.add(player);
 		playerGroup.bringToTop(player);
+		
+		// Merge icoon
+		mergeIcon = this.add.sprite(this.world.centerX, this.world.centerY, 'mergeButton');
+		mergeIcon.fixedToCamera = true;
+		mergeIcon.cameraOffset.setTo(200, 200);	
+		mergeIcon.visible = false;
 
 		// Boss instellingen
 		boss.anchor.setTo(.5, .5);
@@ -156,7 +170,7 @@ SpaceBattalion.Game.prototype = {
 	    boss.body.immovable = true;
 	    boss.move = true;
 
-		this.camera.follow(playerType);
+		this.camera.follow(playerType);	
 
 		// Bullets aanmaken
 		bullets = this.add.group();
@@ -449,32 +463,32 @@ SpaceBattalion.Game.prototype = {
 			players[data.session].long = data.long;
 		});
 
-		// Maak wolken group aan
-		clouds = this.add.group();
-		clouds.enableBody = true;
-	    clouds.physicsBodyType = Phaser.Physics.ARCADE;
-	    clouds.setAll('anchor.x', 0.5);
-	    clouds.setAll('anchor.y', 0.5);
-	    clouds.setAll('outOfBoundsKill', true);  
-
-	    // Maak 5 wolken aan
-	    for(i = 0; i < 5; i++) {
-	        this.createCloud();
-	    }
-		
-		// Maak sterren group aan
-		stars = this.add.group();
-	    stars.enableBody = true;
-	    stars.physicsBodyType = Phaser.Physics.ARCADE;
-	    stars.setAll('anchor.x', 0.5);
-	    stars.setAll('anchor.y', 0.5);
-	    stars.setAll('outOfBoundsKill', true);  
-	    
-	    // Maak maan aan
-	    this.createMoon();
-
 	    if(this.game.device.desktop) {
 	    	cursors = this.input.keyboard.createCursorKeys();
+
+	    	// Maak wolken group aan
+			clouds = this.add.group();
+			clouds.enableBody = true;
+		    clouds.physicsBodyType = Phaser.Physics.ARCADE;
+		    clouds.setAll('anchor.x', 0.5);
+		    clouds.setAll('anchor.y', 0.5);
+		    clouds.setAll('outOfBoundsKill', true);  
+
+		    // Maak 5 wolken aan
+		    for(i = 0; i < 5; i++) {
+		     	this.createCloud();
+		    }
+			
+			// Maak sterren group aan
+			stars = this.add.group();
+		    stars.enableBody = true;
+		    stars.physicsBodyType = Phaser.Physics.ARCADE;
+		    stars.setAll('anchor.x', 0.5);
+		    stars.setAll('anchor.y', 0.5);
+		    stars.setAll('outOfBoundsKill', true);  
+		    
+		    // Maak maan aan
+		    this.createMoon();
 		} 
 		else {
 			// Niet op desktop
@@ -506,7 +520,8 @@ SpaceBattalion.Game.prototype = {
 	                        //self.fire();
 	                    //}
 
-	                    if(o.z < 9.5 || o.z > 10) {
+	                    //if(o.z < 9.5 || o.z > 10) {
+	                    if(o.z < 9 || o.z > 10.5) {	
 	                    	self.changePosition('-', o.y * 20, '-', o.x * 20, anglePlayer, 'p');
 	                    } else {
 	                        self.changePosition('', '', '', '', 0, 'p');
@@ -527,7 +542,7 @@ SpaceBattalion.Game.prototype = {
 
 		// Als window wel in focus is
 		var self = this;
-		window.onfocus = function() {
+		window.onfocus = function() {	
 			self.backgroundMusic.resume();
 		}
 
@@ -548,14 +563,7 @@ SpaceBattalion.Game.prototype = {
 					player.body.velocity.setTo(0, 0);
 				}
 			}
-		}	
-
-		// Maak wolk aan
-		if(moon.x > (this.world.width + moon.width)) {
-		    moon.destroy();
-
-		    this.createMoon();
-		}		
+		}			
 
 	    // Alleen uitvoeren als gebruiker op desktop is
 		if(this.game.device.desktop) {    	
@@ -563,6 +571,13 @@ SpaceBattalion.Game.prototype = {
 			// Laat achtergrond bewegen
 			bgtile.tilePosition.x -= 2;
 	    	bgtile.tilePosition.y += 1;
+		
+			// Maak wolk aan
+			if(moon.x > (this.world.width + moon.width)) {
+			    moon.destroy();
+
+			    this.createMoon();
+			}
 
 		    // Maak wolken aan
 		    if(this.time.now > cloudTimer) {          
@@ -638,7 +653,7 @@ SpaceBattalion.Game.prototype = {
 		        }
 	        }
 	    } else {
-	    	// Maak wolken aan
+	    	/* Maak wolken aan
 	    	if(clouds.length >= 10) {
 	    		console.log('meer dan 10 wolken.. ');
 	    		clouds.removeAll();
@@ -656,12 +671,12 @@ SpaceBattalion.Game.prototype = {
 				if(this.time.now > starTimer) {          
 			        this.createStar();
 			    }
-			}
+			}*/
 
 			this.input.onTap.add(this.tapScreen, this);
 	    }    
 
-        // Collision detection voor alle players
+        // Collision detection voor alle players && Icoon om samen te voegen
         for(var plr in players) {
         	// Bullets raken andere players
         	if(players[plr].visible !== false) {
@@ -672,7 +687,21 @@ SpaceBattalion.Game.prototype = {
             	// Bullets raken jou
             	this.physics.arcade.collide(bullets, player, this.bulletPlayer, null, this);
             }
-        }
+
+		
+			var dist = this.distance(latitude, longitude, players[plr].latitude, players[plr].longitude, "k");
+
+			//	Als afstand kleiner dan 100 meter is
+			if(dist < 100 && this.physics.arcade.distanceBetween(players[plr], player) < 100) 
+			{				
+				mergeIcon.visible = true;
+			}
+			else
+			{
+				mergeIcon.visible = false;
+			}
+			//console.log(players[plr].nickname + players[plr].latitude + " ");
+		}
 
         // Collision detection voor co-op players
         for(var plr in coopPlayers) {
@@ -742,6 +771,37 @@ SpaceBattalion.Game.prototype = {
 
 	    playerGroup.add(players[plr.session]);    
 	    playerGroup.bringToTop(player);
+		
+		var cursorOffsetX = 400;
+		
+		for(var plr in players) 
+		{
+			console.log(newPlayerNick + " : " + players[plr].latitude);
+			
+			var dist = this.distance(latitude, longitude, players[plr].latitude, players[plr].longitude, "k");
+
+			//	Als afstand kleiner dan 100 meter is
+			if(dist < 100)
+			{
+				// Afstand omrekenen naar m
+				dist = dist * 1000;				
+				
+				// Radar cursor aanmaken
+				radarCursor = this.add.sprite(0, 0, 'radarCursor');
+				radarCursor.anchor.setTo(.5, .5);
+				radarCursor.fixedToCamera = true;
+				radarCursor.cameraOffset.setTo(cursorOffsetX, 100);	
+					
+				radarMeters = this.add.text(0, 0, dist + " M", { font: "14px Arial", fill: "#ffffff", align: "center" });
+				radarMeters.fixedToCamera = true;
+				radarMeters.cameraOffset.setTo(cursorOffsetX - 15, 140);	
+				
+				cursorOffsetX += 60;
+			}
+			//console.log(players[plr].nickname + players[plr].latitude + " ");
+		}
+		
+		//compareGPS(players[plr.session].latitude, players[plr.session].longitude, players[plr.session].name);		
 	},
 
 	createCoop: function(player1, player2, shoot, move, x, y, angle, type) {
@@ -1115,19 +1175,18 @@ SpaceBattalion.Game.prototype = {
 		    playerType.angle = angleVal;
 
 		    if(oldX !== playerType.x || oldY !== playerType.y) {
+			    	
+			    // Particles achter schip
+				emitter = this.add.emitter(playerType.x, playerType.y, 1);
+			    emitter.makeParticles('flyRail');
 
-		    	if(this.game.device.desktop) {
-			    	// Particles achter schip
-					emitter = this.add.emitter(playerType.x, playerType.y, 1);
-				    emitter.makeParticles('flyRail');
+			    emitter.setRotation(0, 0);
+			    emitter.setAlpha(0.3, 0.8);
+			    emitter.setScale(0.8, 3);
+			    emitter.gravity = 400;
 
-				    emitter.setRotation(0, 0);
-				    emitter.setAlpha(0.3, 0.8);
-				    emitter.setScale(0.8, 3);
-				    emitter.gravity = 400;
-
-				    emitter.start(true, 150, 100);
-				}	
+			    emitter.start(true, 150, 100);
+			    
 				this.world.bringToTop(playerGroup); 
 		                    
 		        var playerPosition = JSON.stringify({
@@ -1459,7 +1518,8 @@ SpaceBattalion.Game.prototype = {
 	},
 
 	render: function() {
-		
+		// FPS DEBUGGEN
+		this.game.debug.text('FPS: ' + this.time.fps, 80, 150, 'rgb(255,255,255)', '24px Courier');
 	},
 
 	shutdown: function() {
