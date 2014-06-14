@@ -522,7 +522,7 @@ SpaceBattalion.Game.prototype = {
 
 	                    //if(o.z < 9.5 || o.z > 10) {
 	                    if(o.z < 9 || o.z > 10.5) {	
-	                    	self.changePosition('-', o.y * 20, '-', o.x * 20, anglePlayer, 'p');
+	                    	self.changePosition('+', o.y * 20, '+', o.x * 20, anglePlayer, 'p');
 	                    } else {
 	                        self.changePosition('', '', '', '', 0, 'p');
 	                    } 
