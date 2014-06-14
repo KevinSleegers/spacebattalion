@@ -170,7 +170,7 @@ SpaceBattalion.Game.prototype = {
 	    boss.body.immovable = true;
 	    boss.move = true;
 
-		this.camera.follow(playerType);	
+		this.camera.follow(playerType, Phaser.Camera.FOLLOW_TOPDOWN);	
 
 		// Bullets aanmaken
 		bullets = this.add.group();
@@ -443,7 +443,7 @@ SpaceBattalion.Game.prototype = {
 			self.explode(boss.x, boss.y);
 			player.score += 1000;
 			
-			alert('Total score: '+player.score);
+			alert('Total score: ' + player.score);
 			$.ajax({
 				type:"post",
 				url:"http://buitmediasolutions.nl/spacebattalion/score.php",
@@ -453,14 +453,26 @@ SpaceBattalion.Game.prototype = {
 					
 				}
 			});
-			
-			
 		});
 
 		// Locatie (GPS) van andere speler is geupdatet
 		socket.on('updatedLocation', function(data) {
 			players[data.session].lat = data.lat;
 			players[data.session].long = data.long;
+		});
+
+		// Als genoeg spelers in room zitten, start dan game
+		socket.on('startGame', function(data) {
+			alert('Game is ready to start!');
+
+			if(data === true) {
+				console.log('Game is ready, all players are in the room');
+
+				// Maak timer die na 5 sec game start
+				this.time.events.add(Phaser.Timer.SECOND * 5, startGame, this);
+			} else {
+				console.log('Not starting game, error!');
+			}
 		});
 
 	    if(this.game.device.desktop) {
@@ -496,6 +508,7 @@ SpaceBattalion.Game.prototype = {
 
 	    	// Camera instellingen
 	    	this.camera.setSize(500, 500);
+	    	this.camera.atLimit(true);
 
 			// Niet op desktop
 			navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate || null;
@@ -877,7 +890,7 @@ SpaceBattalion.Game.prototype = {
 				players[player2].enableBody = false;
 			}
 
-			this.camera.follow(coopPlayers[coopSession]);
+			this.camera.follow(coopPlayers[coopSession], Phaser.Camera.FOLLOW_TOPDOWN);
 
 		} else if (player2 === io.socket.sessionid) {
 
@@ -898,7 +911,7 @@ SpaceBattalion.Game.prototype = {
 				players[player1].enableBody = false;
 			}
 
-			this.camera.follow(coopPlayers[coopSession]);
+			this.camera.follow(coopPlayers[coopSession], Phaser.Camera.FOLLOW_TOPDOWN);
 
 		} else {
 
@@ -1330,6 +1343,10 @@ SpaceBattalion.Game.prototype = {
 	    //game.add.tween(moon).to( { alpha: 1 }, 1000, Phaser.Easing.Linear.None).start();
 	},
 
+	startGame: function() {
+		alert('STARTING GAME');
+	},
+
 	removePlayer: function(plr) {
 		if (plr !== io.socket.sessionid) {
 		   	// Check if player who disconnected was in coop mode
@@ -1533,5 +1550,5 @@ SpaceBattalion.Game.prototype = {
 
 	shutdown: function() {
 		this.world.removeAll();
-	}
+	},
 };

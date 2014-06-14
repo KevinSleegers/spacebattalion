@@ -4,7 +4,10 @@ var express = require('express'),
     io = require('socket.io', { rememberTransport: false, transports: ['WebSocket', 'Flash Socket', 'AJAX long-polling'] }).listen(server),
     players = {},
     bullets = {},
-    coopPlayers = {};
+    coopPlayers = {},
+    room = '',
+    rooms = {},
+    maxPlayers = 4;
 
 server.listen(process.env.PORT || 5000);
 
@@ -15,6 +18,35 @@ app.get('/', function(req, res){
 });
 
 io.sockets.on('connection', function(socket){
+
+    /*if(room == '') {
+        // maak nieuwe (eerste) room aan, je bent dan ook de eerste player
+        room = randName();
+
+        socket.join(room);
+        console.log('Nieuwe room is: ' + room);
+    } else {
+        if(io.sockets.clients(room).length < maxPlayers) {   
+
+            socket.join(room);
+
+            if(io.sockets.clients(room).length == (maxPlayers - 1)) {
+                // Socket emit naar iedereen in room, zodat de countdown kan starten
+                // io.sockets.in(room).emit('startGame', true);
+                socket.broadcast.to(room).emit('startGame', true);
+            }
+
+            console.log('Aantal players in Room: ' + io.sockets.clients(room).length);
+        } else {
+            console.log('Room: ' + room + ' is vol!, nieuwe Room wordt aangemaakt..');
+
+            // maak nieuwe room aan
+            room = randName();
+            socket.join(room);
+        }  
+    }*/
+
+    socket.emit('rooms', io.rooms);
     
     var ip_address = socket.handshake.address.address;
     var remote_address = socket.handshake.address.remoteAddress;
@@ -222,6 +254,19 @@ io.sockets.on('connection', function(socket){
         io.sockets.emit('minionPlayer', data);
     });
 
+    socket.on('newRoom', function() {
+        room = randName();
+
+        socket.join(room);
+
+        io.sockets.socket(socket.id).emit('joinedRoom');
+    });
+
+    socket.on('joinRoom', function(data) {
+        socket.join(data);
+        io.sockets.socket(socket.id).emit('joinedRoom');
+    });
+
     socket.on('disconnect', function() {
         // delete player from array of 'players'
         delete players[socket.id];
@@ -245,5 +290,24 @@ io.sockets.on('connection', function(socket){
         players[player.sessionID] = player;
 
         socket.broadcast.emit('updatePos', players);
+    }
+
+    function randName() {
+        var text = "";
+        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+        for( var i=0; i < 10; i++ )
+            text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+        return text;
+    }
+
+    function isEmpty(obj) {
+        for(var prop in obj) {
+            if(obj.hasOwnProperty(prop))
+                return false;
+        }
+
+        return true;
     }
 });

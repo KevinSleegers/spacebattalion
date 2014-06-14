@@ -38,10 +38,37 @@
     <link href='http://fonts.googleapis.com/css?family=Roboto:400,300,100' rel='stylesheet' type='text/css'>
 	<script type="text/javascript" src="js/min/phaser.min.js"></script>
 	<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+	<script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
     <script>
 		var socket = io.connect();
+
+		socket.on('rooms', function(data) {
+			// Dirty fix, rooms logt ook altijd een room zonder key, skip deze (voor nu)
+			$.each(data, function(key, value) {
+				if(key != '') {
+					// console.log(value);
+					// console.log(value.length + "/4");
+
+					$('.rooms').find('ul').empty().append("<li data-room='" + key + "'>" + key.replace(/\//g, '') + "<span>Players: " + value.length + "/4</span></li>");
+				}
+			});
+
+			$('.rooms li').click(function() {
+				console.log('join room: ' + $(this).attr('data-room'));
+
+				socket.emit('joinRoom', $(this).attr('data-room'));
+			});
+
+			$('.newroom').click(function() {
+				socket.emit('newRoom');
+			});
+		});
+
+		socket.on('joinedRoom', function() {
+			window.game.state.start('Game');
+			$('.overlay').fadeOut(200);
+		});
 	</script>
-	<script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
 	<script type="text/javascript" src="js/Boot.js"></script>
 	<script type="text/javascript" src="js/Preloader.js"></script>
 	<script type="text/javascript" src="js/MainMenu.js"></script>
@@ -156,6 +183,27 @@
 		.buttonleft  {display:block; float:left; max-height:30px; margin-top:14px; cursor:pointer;}
 		.buttonright  {display:block; float:right;  max-height:30px; margin-top:14px;  cursor:pointer;}
 		.buttonrighttwo {display:block; float:right;  max-height:30px; margin-top:14px;  cursor:pointer; margin-right:10px;}
+
+		.rooms {
+			padding:24px 40px 14px 40px; 
+			border:1px solid #a9a9a9;
+			background: -moz-linear-gradient(top, rgba(255,255,255,0.15) 0%, rgba(252,252,252,0.15) 1%, rgba(0,0,0,0) 100%); /* FF3.6+ */
+			background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(255,255,255,0.15)), color-stop(1%,rgba(252,252,252,0.15)), color-stop(100%,rgba(0,0,0,0))); /* Chrome,Safari4+ */
+			background: -webkit-linear-gradient(top, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* Chrome10+,Safari5.1+ */
+			background: -o-linear-gradient(top, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* Opera 11.10+ */
+			background: -ms-linear-gradient(top, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* IE10+ */
+			background: linear-gradient(to bottom, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* W3C */
+			filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#26ffffff', endColorstr='#00000000',GradientType=0 ); /* IE6-9 */
+			-webkit-box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
+			-moz-box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
+			box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
+		}
+		.rooms h1{font-size:30px; color:#FFF;  font-family: 'Roboto', sans-serif; font-weight: 300; position:relative; display:block; border-bottom:1px solid #FFF;}
+		.rooms h1 img{position:absolute; right:0; bottom:5px; display:block;}
+		.rooms ul {margin:20px 30px 0 30px; display:block; padding:0; list-style:none; font-family: 'Roboto', sans-serif; font-weight: 300; font-size:26px; color:#FFF;}
+		.rooms ul li {width:100%;}
+		.rooms ul li span {float:right; width:150px;}
+		.rooms .bottom {width:100%; border-top:1px solid #FFF; display:block; overflow:hidden;}
 		
 		.inventory {
 			padding:24px 40px 14px 40px; 
@@ -257,6 +305,18 @@
                 </div>
             </div>
             
+            <div class="rooms">
+            	<h1>Rooms<!--<img src="images/rooms-icon.png">--></h1>
+                <ul>
+                	<!-- li worden gevuld door bovenstaande jQuery -->
+                </ul>
+                <button type="button" class="newroom">New Room</button>
+                <div class="bottom">
+                	<div class="buttonleft backbutton"><img src="images/backbutton.png" /></div>
+                    <div class="buttonright accountbuttonpage"><img src="images/accountbutton.png" /></div>
+                </div>
+            </div>
+            
             <div class="inventory">
             	<h1>Statistics<img src="images/inventory-icon.png"></h1>
                 <div class="inv">
@@ -316,6 +376,7 @@
 		  $('.overlay').hide();
 		  $('.menulist').hide();
 		  $('.stats').hide();
+		  $('.rooms').hide();
 		  $('.inventory').hide();
 		  $('.account').hide();
 		  $("#submit").click(function (){
@@ -381,7 +442,9 @@
 			$('.roomsbutton').click(function(){
 				console.dir(window.SpaceBattalion.MainMenu);
 			 	//window.SpaceBattalion.MainMenu.music.stop();
-				window.game.state.start('Game');
+				//window.game.state.start('Game');
+				$('.mainmenu').fadeOut(200,function(){$('.rooms').fadeIn(200);});
+
 				//$('.overlay').fadeOut(200);
 			});
 			$('.mutebutton').click(function(){
@@ -403,7 +466,7 @@
 				$('.inventory').fadeOut(200)
 				$('.account').fadeOut(200)
 				$('.stats').fadeOut(200,function(){$('.mainmenu').fadeIn(200);});
-				
+				$('.rooms').fadeOut(200,function(){$('.mainmenu').fadeIn(200);});				
 			});
 		 	$('.accountbuttonpage').click(function(){
 				$('.stats').fadeOut(200,function(){$('.account').fadeIn(200);});
