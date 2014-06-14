@@ -492,7 +492,7 @@ SpaceBattalion.Game.prototype = {
 		} 
 		else {
 			// Hide logo op mobiel als game start..
-			document.getElementsByClassName('logo').style.display = 'none';
+			document.getElementsByClassName('logo').style.display = '';
 
 	    	// Camera instellingen
 	    	this.camera.setSize(300, 300);
