@@ -491,8 +491,8 @@ SpaceBattalion.Game.prototype = {
 		    this.createMoon();
 		} 
 		else {
-			// Hide logo op mobiel als game start..
-			$('.logo').css('display', 'none');
+			// Hide logo en payoff op mobiel als game start..
+			$('.logo, .payoff').css('display', 'none');
 
 	    	// Camera instellingen
 	    	this.camera.setSize(300, 300);
@@ -530,9 +530,7 @@ SpaceBattalion.Game.prototype = {
 	                    if(o.z < 9 || o.z > 10.5) {	
 	                    	self.changePosition('+', o.y * 20, '+', o.x * 20, anglePlayer, 'p');
 	                    } else {
-	                   		// Als je telefoon vrijwel horizontaal is
-	                   		// je positie niet veranderen, maar wel stil zetten?
-	                   		// playerType.angle ? 
+	                   		// Als je telefoon vrijwel horizontaal is, stop dan beweging maar behoudt angle
 	                        self.changePosition('+', 0, '+', 0, playerType.angle, 'p');
 	                    } 
 	                });
