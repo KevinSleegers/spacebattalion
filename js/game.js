@@ -491,6 +491,12 @@ SpaceBattalion.Game.prototype = {
 		    this.createMoon();
 		} 
 		else {
+			// Hide logo op mobiel als game start..
+			document.getElementsByClassName('logo').style.display = 'none';
+
+	    	// Camera instellingen
+	    	this.camera.setSize(300, 300);
+
 			// Niet op desktop
 			navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate || null;
 	        navigator.vibrate ? vibrate = true : vibrate = false;
