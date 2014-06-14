@@ -495,7 +495,7 @@ SpaceBattalion.Game.prototype = {
 			$('.logo, .payoff').css('display', 'none');
 
 	    	// Camera instellingen
-	    	this.camera.setSize(300, 300);
+	    	this.camera.setSize(500, 500);
 
 			// Niet op desktop
 			navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate || null;
@@ -1184,15 +1184,17 @@ SpaceBattalion.Game.prototype = {
 		    if(oldX !== playerType.x || oldY !== playerType.y) {
 			    	
 			    // Particles achter schip
-				emitter = this.add.emitter(playerType.x, playerType.y, 1);
-			    emitter.makeParticles('flyRail');
+				if(this.game.device.desktop) {
+					emitter = this.add.emitter(playerType.x, playerType.y, 1);
+				    emitter.makeParticles('flyRail');
 
-			    emitter.setRotation(0, 0);
-			    emitter.setAlpha(0.3, 0.8);
-			    emitter.setScale(0.8, 3);
-			    emitter.gravity = 400;
+				    emitter.setRotation(0, 0);
+				    emitter.setAlpha(0.3, 0.8);
+				    emitter.setScale(0.8, 3);
+				    emitter.gravity = 400;
 
-			    emitter.start(true, 150, 100);
+				    emitter.start(true, 150, 100);
+				}
 			    
 				this.world.bringToTop(playerGroup); 
 		                    
