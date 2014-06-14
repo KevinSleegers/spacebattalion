@@ -509,8 +509,8 @@ SpaceBattalion.Game.prototype = {
 
 	                    angleRadians = anglePlayer * Math.PI/180;
 	                    anglePlayer *= 180/Math.PI;
-	                    anglePlayer += 270;
-	                    anglePlayer = self.math.wrapAngle(anglePlayer);
+	                    anglePlayer += 90;
+	                    anglePlayer = self.math.wrapAngle(-anglePlayer);
 
 	                    //if(self.input.activePointer.isDown) {
 	                    	//self.fire();
