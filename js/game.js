@@ -525,7 +525,8 @@ SpaceBattalion.Game.prototype = {
 	                    	self.changePosition('+', o.y * 20, '+', o.x * 20, anglePlayer, 'p');
 	                    } else {
 	                   		// Als je telefoon vrijwel horizontaal is
-	                        self.changePosition('+', 0, '+', 0, anglePlayer, 'p');
+	                   		var lastAngle = anglePlayer;
+	                        self.changePosition('+', 0, '+', 0, lastAngle, 'p');
 	                    } 
 	                });
 	            }
