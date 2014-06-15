@@ -39,24 +39,28 @@
 	<script type="text/javascript" src="js/min/phaser.min.js"></script>
 	<script type="text/javascript" src="/socket.io/socket.io.js"></script>
 	<script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
+	<script type="text/javascript" src="js/Boot.js"></script>
+	<script type="text/javascript" src="js/Preloader.js"></script>
     <script>
 		var socket = io.connect();
 
-		socket.on('rooms', function(data) {
+		socket.on('rooms', function(data, i) {
+			var maxPlayers = i;
+ 
 			// Dirty fix, rooms logt ook altijd een room zonder key, skip deze (voor nu)
 			$.each(data, function(key, value) {
 				if(key != '') {
 					// console.log(value);
 					// console.log(value.length + "/4");
 
-					$('.rooms').find('ul').empty().append("<li data-room='" + key + "'>" + key.replace(/\//g, '') + "<span>Players: " + value.length + "/4</span></li>");
+					$('.rooms').find('ul').empty().append("<li data-room='" + key + "'>" + key.replace(/\//g, '') + "<span>Players: " + value.length + "/" + i + "</span></li>");
 				}
 			});
 
 			$('.rooms li').click(function() {
 				console.log('join room: ' + $(this).attr('data-room'));
 
-				socket.emit('joinRoom', $(this).attr('data-room'));
+				socket.emit('joinRoom', $(this).attr('data-room').replace(/\//g, ''));
 			});
 
 			$('.newroom').click(function() {
@@ -65,12 +69,32 @@
 		});
 
 		socket.on('joinedRoom', function() {
+			//window.game.state.start('Game');
+			//$('.overlay').fadeOut(200);
+
+			// Ga naar 'wachtkamer'
+			alert('waiting for other players..');			
+		});		
+
+		// Als genoeg spelers in room zitten, start dan game
+		socket.on('startGame', function(data) {
+			alert('Game is ready to start!');
+
+			if(data === true) {
+				// Maak timer die na 5 sec game start
+				game.time.events.add(Phaser.Timer.SECOND * 5, startGame, this);
+				console.log('Countdown timer has started');
+			} else {
+				console.log('Not starting game, error!');
+			}
+		});
+
+		function startGame() {
+			//alert('Starting Game!');
 			window.game.state.start('Game');
 			$('.overlay').fadeOut(200);
-		});
+		}
 	</script>
-	<script type="text/javascript" src="js/Boot.js"></script>
-	<script type="text/javascript" src="js/Preloader.js"></script>
 	<script type="text/javascript" src="js/MainMenu.js"></script>
 	<script type="text/javascript" src="js/game.js"></script>    
 	<script type="text/javascript" src="js/GameEnd.js"></script> 

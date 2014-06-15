@@ -466,8 +466,6 @@ SpaceBattalion.Game.prototype = {
 			alert('Game is ready to start!');
 
 			if(data === true) {
-				console.log('Game is ready, all players are in the room');
-
 				// Maak timer die na 5 sec game start
 				this.time.events.add(Phaser.Timer.SECOND * 5, startGame, this);
 			} else {

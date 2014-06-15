@@ -7,7 +7,7 @@ var express = require('express'),
     coopPlayers = {},
     room = '',
     rooms = {},
-    maxPlayers = 4;
+    maxPlayers = 2;
 
 server.listen(process.env.PORT || 5000);
 
@@ -46,7 +46,7 @@ io.sockets.on('connection', function(socket){
         }  
     }*/
 
-    socket.emit('rooms', io.rooms);
+    socket.emit('rooms', io.rooms, maxPlayers);
     
     var ip_address = socket.handshake.address.address;
     var remote_address = socket.handshake.address.remoteAddress;
@@ -265,6 +265,11 @@ io.sockets.on('connection', function(socket){
     socket.on('joinRoom', function(data) {
         socket.join(data);
         io.sockets.socket(socket.id).emit('joinedRoom');
+
+        if(io.sockets.clients(data).length === maxPlayers) {
+            console.log('Max Players in room, START GAME');
+            io.sockets.in(data).emit('startGame', true);
+        }
     });
 
     socket.on('disconnect', function() {
