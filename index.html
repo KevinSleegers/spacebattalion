@@ -44,18 +44,25 @@
     <script>
 		var socket = io.connect();
 
+		var myRoom = '';
+
 		socket.on('rooms', function(data, i) {
 			var maxPlayers = i;
- 
-			// Dirty fix, rooms logt ook altijd een room zonder key, skip deze (voor nu)
-			$.each(data, function(key, value) {
-				if(key != '') {
-					// console.log(value);
-					// console.log(value.length + "/4");
 
-					$('.rooms').find('ul').empty().append("<li data-room='" + key + "'>" + key.replace(/\//g, '') + "<span>Players: " + value.length + "/" + i + "</span></li>");
-				}
-			});
+			if(data == '') {
+				// Voor nu een span ipv een li omdat de li's klikbaar zijn
+				$('.rooms').find('ul').empty().append("<span>There are no rooms available, create a new room to play.</span>");
+			} else { 
+				// Dirty fix, rooms logt ook altijd een room zonder key, skip deze (voor nu)
+				$.each(data, function(key, value) {
+					if(key != '') {
+						// console.log(value);
+						// console.log(value.length + "/4");
+
+						$('.rooms').find('ul').empty().append("<li data-room='" + key + "'>" + key.replace(/\//g, '') + "<span>Players: " + value.length + "/" + i + "</span></li>");
+					}
+				});
+			}
 
 			$('.rooms li').click(function() {
 				console.log('join room: ' + $(this).attr('data-room'));
@@ -68,17 +75,19 @@
 			});
 		});
 
-		socket.on('joinedRoom', function() {
+		socket.on('joinedRoom', function(data) {
 			//window.game.state.start('Game');
 			//$('.overlay').fadeOut(200);
+			myRoom = data;
+			console.log('my room: ' + myRoom);
 
 			// Ga naar 'wachtkamer'
-			alert('waiting for other players..');			
+			console.log('waiting for other players..');			
 		});		
 
 		// Als genoeg spelers in room zitten, start dan game
 		socket.on('startGame', function(data) {
-			alert('Game is ready to start!');
+			console.log('Game is ready to start!');
 
 			if(data === true) {
 				// Maak timer die na 5 sec game start

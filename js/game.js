@@ -83,6 +83,9 @@ SpaceBattalion.Game.prototype = {
 		this.time.advancedTiming = true;
 		this.input.maxPointers = 1;
 
+		console.log('je huidige room is: ' + myRoom);
+		//alert('ROOM IM IN: ' + myRoom);
+
 		// Console.log aan / uit zetten
 		if(!logging) {
 			console.log = function() {};
@@ -186,12 +189,14 @@ SpaceBattalion.Game.prototype = {
 	        bullet.kill();
 	    };	
 
-		// Verzoek om spelers op te halen van server
-		socket.emit('requestPlayers', io.socket.sessionid);
+		// Verzoek om spelers op te halen van server uit je huidige room
+		socket.emit('requestPlayers', io.socket.sessionid, myRoom);
 
 		// Haal spelers van server die al online zijn
 	    var self = this;
     	socket.on('onlinePlayer', function(data) {
+    		console.log(data);
+
 	        if(Object.getOwnPropertyNames(data).length === 0) {
 	        	console.log('There are no other players online.');
 	        } else {
@@ -210,7 +215,7 @@ SpaceBattalion.Game.prototype = {
 	        }
 	    });
 
-	    // Haal co-op spelers van server die al online zijn
+	    /* Haal co-op spelers van server die al online zijn
 	    var self = this;
 	    socket.on('onlineCoop', function(data) {
 	    	for (var onlineCoop in data) {
@@ -229,6 +234,7 @@ SpaceBattalion.Game.prototype = {
 	    		}
 	    	}
 	    });
+		*/
 
 	    // Stuur nieuwe speler door naar server
 	    var playerData = JSON.stringify({
@@ -240,7 +246,7 @@ SpaceBattalion.Game.prototype = {
 	        long : longitude,
 	        angle : 0
 	    });
-	    socket.emit('newPlayer', playerData);
+	    socket.emit('newPlayer', playerData, myRoom);
 
 	    // Haal nieuwe speler op van server
 	    var self = this;
@@ -249,6 +255,7 @@ SpaceBattalion.Game.prototype = {
 	        //console.log('new player added', data.lat);
 	        onlinePlayers.push(data.session);
 	    });
+		
 
 	    // Andere spelers in co-op
 	    var self = this;
@@ -461,18 +468,6 @@ SpaceBattalion.Game.prototype = {
 			players[data.session].long = data.long;
 		});
 
-		// Als genoeg spelers in room zitten, start dan game
-		socket.on('startGame', function(data) {
-			alert('Game is ready to start!');
-
-			if(data === true) {
-				// Maak timer die na 5 sec game start
-				this.time.events.add(Phaser.Timer.SECOND * 5, startGame, this);
-			} else {
-				console.log('Not starting game, error!');
-			}
-		});
-
 	    if(this.game.device.desktop) {
 	    	cursors = this.input.keyboard.createCursorKeys();
 
@@ -506,7 +501,6 @@ SpaceBattalion.Game.prototype = {
 
 	    	// Camera instellingen
 	    	this.camera.setSize(500, 500);
-	    	this.camera.atLimit(true);
 
 			// Niet op desktop
 			navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate || null;
@@ -1006,7 +1000,7 @@ SpaceBattalion.Game.prototype = {
 	            randVelocity: randomVelocity
 	        });
 	        
-	        socket.emit('bulletChange', bulletPosition);
+	        socket.emit('bulletChange', bulletPosition, myRoom);
 
 	        if(SpaceBattalion.music) {
 				this.laserShotSound.play();
@@ -1226,7 +1220,7 @@ SpaceBattalion.Game.prototype = {
 		            }, 200);*/
 		            
 		            // Emit new position immediately, without delay
-		            socket.emit('positionChange', playerPosition);
+		            socket.emit('positionChange', playerPosition, myRoom);
 
 		            // store the old positions in oldX and oldY
 		            oldX = playerType.x;
@@ -1339,10 +1333,6 @@ SpaceBattalion.Game.prototype = {
 	    .start();
 
 	    //game.add.tween(moon).to( { alpha: 1 }, 1000, Phaser.Easing.Linear.None).start();
-	},
-
-	startGame: function() {
-		alert('STARTING GAME');
 	},
 
 	removePlayer: function(plr) {
