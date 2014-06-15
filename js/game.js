@@ -538,7 +538,8 @@ SpaceBattalion.Game.prototype = {
 
 	                    //if(o.z < 9.5 || o.z > 10) {
 	                    if(o.z < 9 || o.z > 10.5) {	
-	                    	self.changePosition('+', o.y * 20, '+', o.x * 20, anglePlayer, 'p');
+	                    	self.changePosition('+', o.y * 30, '+', o.x * 30, anglePlayer, 'p');
+	                    	
 	                    } else {
 	                   		// Als je telefoon vrijwel horizontaal is, stop dan beweging maar behoudt angle
 	                        self.changePosition('+', 0, '+', 0, playerType.angle, 'p');
