@@ -171,7 +171,7 @@ SpaceBattalion.Game.prototype = {
 	    boss.health = 1000;
 	    boss.frame = 1;
 	    boss.body.immovable = true;
-	    boss.move = true;
+	    boss.move = false;
 
 		this.camera.follow(playerType, Phaser.Camera.FOLLOW_TOPDOWN);	
 
@@ -251,11 +251,12 @@ SpaceBattalion.Game.prototype = {
 	    // Haal nieuwe speler op van server
 	    var self = this;
 	    socket.on('sendNewPlayer', function(data) {
-	        self.createPlayer(data);
-	        //console.log('new player added', data.lat);
-	        onlinePlayers.push(data.session);
-	    });
-		
+	    	if(data.session !== io.socket.sessionid) {
+	        	self.createPlayer(data);
+	        	//console.log('new player added', data.lat);
+	        	onlinePlayers.push(data.session);
+	        }
+	    });		
 
 	    // Andere spelers in co-op
 	    var self = this;
@@ -337,7 +338,7 @@ SpaceBattalion.Game.prototype = {
 						setTimeout(function() {
 							self.explode(player.x, player.y);
 
-							socket.emit('playerMinion', io.socket.sessionid);
+							socket.emit('playerMinion', io.socket.sessionid, myRoom);
 						}, 1000);
 		    		} else {
 		    			var currentFrame = player.frame;
@@ -450,7 +451,7 @@ SpaceBattalion.Game.prototype = {
 			self.explode(boss.x, boss.y);
 			player.score += 1000;
 			
-			alert('Total score: ' + player.score);
+			console.log('Total score: ' + player.score);
 			$.ajax({
 				type:"post",
 				url:"http://buitmediasolutions.nl/spacebattalion/score.php",
@@ -460,6 +461,10 @@ SpaceBattalion.Game.prototype = {
 					
 				}
 			});
+
+			setTimeout(function() {
+				self.shutdown();
+			}, 500);
 		});
 
 		// Locatie (GPS) van andere speler is geupdatet
@@ -583,23 +588,33 @@ SpaceBattalion.Game.prototype = {
 			// Laat achtergrond bewegen
 			bgtile.tilePosition.x -= 2;
 	    	bgtile.tilePosition.y += 1;
+
+	    	// Maak wolken aan
+	    	if(clouds.length >= 30) {
+	    		console.log('meer dan 30 wolken.. ');
+	    		clouds.removeAll();
+	    	} else {
+			    if(this.time.now > cloudTimer) {          
+			        this.createCloud();
+			    }
+			}
+			
+			// Maak sterren aan
+			if(stars.length >= 40) {
+	    		console.log('meer dan 40 sterren.. ');
+				stars.removeAll();
+			} else {
+				if(this.time.now > starTimer) {          
+			        this.createStar();
+			    }
+			}
 		
-			// Maak wolk aan
+			// Maak maan aan
 			if(moon.x > (this.world.width + moon.width)) {
 			    moon.destroy();
 
 			    this.createMoon();
 			}
-
-		    // Maak wolken aan
-		    if(this.time.now > cloudTimer) {          
-		        this.createCloud();
-		    }
-			
-			// Maak sterren aan
-			if(this.time.now > starTimer) {          
-		        this.createStar();
-		    }
 
 		    if(typeof player !== "undefined" && player.visible === true && player.coop === false) {
 	    		var currentSprite = 'p';
@@ -934,7 +949,7 @@ SpaceBattalion.Game.prototype = {
 		        y 		: 	coopPlayers[coopSession].y,
 		        angle 	: 	coopPlayers[coopSession].angle
 		    });
-			socket.emit('newCoop', coopData);
+			socket.emit('newCoop', coopData, myRoom);
 		}
 	},
 
@@ -1037,7 +1052,7 @@ SpaceBattalion.Game.prototype = {
 			blt.kill();
 		}, this);
 
-		socket.emit('damagePlayer', players[plr.name].name);
+		socket.emit('damagePlayer', players[plr.name].name, myRoom);
 	},
 
 	bulletPlayer: function(plr, blt) {
@@ -1055,7 +1070,7 @@ SpaceBattalion.Game.prototype = {
 			blt.kill();
 		}, this);
 
-		socket.emit('damagePlayer', coopPlayers[plr.name].name);
+		socket.emit('damagePlayer', coopPlayers[plr.name].name, myRoom);
 	},
 
 	bulletBoss: function(plr, blt) {
@@ -1104,15 +1119,11 @@ SpaceBattalion.Game.prototype = {
 
 					var self = this;
 					boss.events.onAnimationComplete.add(function() {
-						socket.emit('bossDied', io.socket.sessionid);
-
-						setTimeout(function() {
-							self.state.start('GameEnd');
-						}, 500);
+						socket.emit('bossDied', io.socket.sessionid, myRoom);
 					});	
 					player.score += 2000;
 			
-					alert('Total score: '+player.score);
+					console.log('Total score: '+player.score);
 					$.ajax({
 						type:"post",
 						url:"http://buitmediasolutions.nl/spacebattalion/score.php",
@@ -1285,12 +1296,13 @@ SpaceBattalion.Game.prototype = {
 	    cloud.alpha = 0;
 	    cloud.angle = this.rnd.angle();
 
-	    this.add.tween(cloud).to( { alpha: 1 }, 2000, Phaser.Easing.Linear.None)
+	    /*this.add.tween(cloud).to( { alpha: 1 }, 2000, Phaser.Easing.Linear.None)
 	    .to({ x: this.game.width + (1600 + cloud.x) }, 150000, Phaser.Easing.Linear.None)
 	    .to({ angle: cloud.angle}, 150000, Phaser.Easing.Linear.None)
-	    .start();
+	    .start();*/
 
-	    //this.add.tween(cloud).to( { alpha: 1 }, 2000, Phaser.Easing.Linear.None).start();
+	    // wolk alleen laten spawnen (niet bewegen)
+	    this.add.tween(cloud).to( { alpha: 1 }, 2000, Phaser.Easing.Linear.None).start();
 
 	    // Spawn elke 5 sec een nieuwe wolk random
 	    cloudTimer = this.time.now + 5000;
@@ -1492,7 +1504,7 @@ SpaceBattalion.Game.prototype = {
 				lat : latitude,
 				long : longitude
 			});
-			socket.emit('locationUpdate', updatedLocation);
+			socket.emit('locationUpdate', updatedLocation, myRoom);
 		}
 	},
 
@@ -1537,6 +1549,24 @@ SpaceBattalion.Game.prototype = {
 	},
 
 	shutdown: function() {
-		this.world.removeAll();
+		bgtile.destroy();
+		clouds.destroy();
+		stars.destroy();
+		moon.destroy();
+		player.destroy();
+		boss.destroy();
+		bullets.destroy();
+		muzzleFlash.destroy();
+
+		coopPlayers = {};
+		players 	= {};
+
+		emitter.destroy();
+		radarCursor.destroy();
+		radarMeters.destroy();
+		mergeIcon.destroy();
+		playerType.destroy();
+
+		window.location.href = "index.html";
 	},
 };

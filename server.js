@@ -7,7 +7,7 @@ var express = require('express'),
     coopPlayers = {},
     room = '',
     rooms = {},
-    maxPlayers = 2;
+    maxPlayers = 1;
 
 server.listen(process.env.PORT || 5000);
 
@@ -63,8 +63,10 @@ io.sockets.on('connection', function(socket){
         // Haal spelers op uit huidige room
         var roster = io.sockets.clients(i);
         roster.forEach(function(plr) {
-            console.log('player: ' + plr.session);
-            roomPlayers[plr.session] = players[plr.session];
+            if(plr.session !== socket.id) {
+                roomPlayers[plr.session] = players[plr.session];
+                console.log('player: ' + plr.session);
+            }
         });
 
         //io.sockets.socket(data).emit('onlinePlayer', players);
@@ -99,13 +101,13 @@ io.sockets.on('connection', function(socket){
 
         // Save details in 'player' object
         var player = {};
-        player.session = player_session;
+        player.session  = player_session;
         player.nickname = player_nick;
-        player.x = player_x;
-        player.y = player_y;
-        player.angle = player_angle;
-        player.lat = player_lat;
-        player.long = player_long;
+        player.x        = player_x;
+        player.y        = player_y;
+        player.angle    = player_angle;
+        player.lat      = player_lat;
+        player.long     = player_long;
 
         // Add player to 'players' array
         players[player.session] = player;
@@ -115,7 +117,8 @@ io.sockets.on('connection', function(socket){
         socket.broadcast.to(myRoom).emit('sendNewPlayer', players[player.session]);
     });      
 
-    socket.on('newCoop', function(data) {
+    socket.on('newCoop', function(data, i) {
+        var myRoom = i;
         var obj = JSON.parse(data);
 
         var player1 = obj.player1;
@@ -147,7 +150,8 @@ io.sockets.on('connection', function(socket){
         // players[player1].move = move;
 
         // Send to other co-op player
-        socket.broadcast.emit('joinCoop', data);
+        //socket.broadcast.emit('joinCoop', data);
+        socket.broadcast.to(myRoom).emit('joinCoop', data);
         //io.sockets.socket(player1).emit('joinCoop', data);
     });
 
@@ -183,19 +187,19 @@ io.sockets.on('connection', function(socket){
             io.sockets.socket(data).emit('notCoop', coopPlrs);
         }
     });
-    
-    // Get updated position of player            
-    socket.on('newPos', function(data) {  
-        newPlayer(data);
-    });
 
-    socket.on('damagePlayer', function(data) {
+    socket.on('damagePlayer', function(data, i) {
+        var myRoom = i;
         // Send to all clients (including sender)
-        io.sockets.emit('playerShot', data);
+        // io.sockets.emit('playerShot', data);
+        io.sockets.in(myRoom).emit('playerShot', data);
     });
 
-    socket.on('bossDied', function(data) {
-        socket.broadcast.emit('bossDead', data);
+    socket.on('bossDied', function(data, i) {
+        //socket.broadcast.emit('bossDead', data);
+        var myRoom = i;
+
+        io.sockets.in(myRoom).emit('bossDead', data);
     });
 
     socket.on('positionChange', function(data, i) {        
@@ -210,12 +214,12 @@ io.sockets.on('connection', function(socket){
         var player_y = obj.y;
 		var player_angle = obj.angle;
 
-        var player = {};
-        player.session = player_session;
+        var player      = {};
+        player.session  = player_session;
         player.nickname = player_nick;
-        player.x = player_x;
-        player.y = player_y;
-		player.angle = player_angle;
+        player.x        = player_x;
+        player.y        = player_y;
+		player.angle    = player_angle;
 
         players[player.session] = player;
         
@@ -225,7 +229,8 @@ io.sockets.on('connection', function(socket){
         socket.broadcast.to(myRoom).emit('updatePlayer', players[player.session]);
     });
 
-    socket.on('locationUpdate', function(data) {
+    socket.on('locationUpdate', function(data, i) {
+        var myRoom = i;
         var obj = JSON.parse(data);
 
         if(typeof obj !== 'undefined') {
@@ -238,7 +243,8 @@ io.sockets.on('connection', function(socket){
                     players[obj.sessionid].long = obj.long;
                 }
 
-                socket.broadcast.emit('updatedLocation', players[obj.sessionid]);
+                socket.broadcast.to(myRoom).emit('updatedLocation', players[obj.sessionid]);
+                //socket.broadcast.emit('updatedLocation', players[obj.sessionid]);
             }
         }
     });
@@ -270,30 +276,50 @@ io.sockets.on('connection', function(socket){
         console.log('Removed dead player: ', data);
     });
 
-    socket.on('playerMinion', function(data) {
+    socket.on('playerMinion', function(data, i) {
+        var myRoom = i;
         players[data].minion = true;
 
-        io.sockets.emit('minionPlayer', data);
+        // io.sockets.emit('minionPlayer', data);
+        io.sockets.in(myRoom).emit('minionPlayer', data);
     });
 
     socket.on('newRoom', function() {
         room = randName();
 
-        socket.session = socket.id;
-        socket.join(room);
+        // Voeg nieuwe room toe aan rooms
+        var newRoom     = {};
+        newRoom.name    = room;
+        newRoom.players = io.sockets.clients(room).length;
+        newRoom.max     = maxPlayers;
 
-        io.sockets.socket(socket.id).emit('joinedRoom', room);
+        rooms[newRoom.name] = newRoom;
+
+        //socket.session = socket.id;
+        //socket.join(room);
+
+        //io.sockets.socket(socket.id).emit('joinedRoom', room);
+
+        io.sockets.emit('roomUpdate', rooms);
     });
 
     socket.on('joinRoom', function(data) {
-        socket.session = socket.id;
-        socket.join(data);
+        if(io.sockets.clients(data).length < maxPlayers) {
+            socket.session = socket.id;
+            socket.join(data);
 
-        io.sockets.socket(socket.id).emit('joinedRoom', data);
+            io.sockets.socket(socket.id).emit('joinedRoom', data);
 
-        if(io.sockets.clients(data).length === maxPlayers) {
-            console.log('Max Players in room, START GAME');
-            io.sockets.in(data).emit('startGame', true);
+            if(io.sockets.clients(data).length === maxPlayers) {
+                console.log('Max Players in room, START GAME');
+                io.sockets.in(data).emit('startGame', true);
+            }
+
+            rooms[data].players = io.sockets.clients(room).length;
+
+            io.sockets.emit('roomUpdate', rooms);
+        } else {
+            io.sockets.socket(socket.id).emit('roomFull');
         }
     });
 
@@ -306,21 +332,6 @@ io.sockets.on('connection', function(socket){
 		
 		console.log('player deleted: ', socket.id);
     });
-
-    function newPlayer(data) {
-        var obj = JSON.parse(data);
-
-        var player = {};
-        player.sessionID = obj.player;
-        player.x = obj.x;
-        player.y = obj.y;
-        player.angle = obj.angle;
-        player.minion = false;
-
-        players[player.sessionID] = player;
-
-        socket.broadcast.emit('updatePos', players);
-    }
 
     function randName() {
         var text = "";

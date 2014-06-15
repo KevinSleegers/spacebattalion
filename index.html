@@ -54,12 +54,13 @@
 				$('.rooms').find('ul').empty().append("<span>There are no rooms available, create a new room to play.</span>");
 			} else { 
 				// Dirty fix, rooms logt ook altijd een room zonder key, skip deze (voor nu)
+				$('.rooms').find('ul').empty();
 				$.each(data, function(key, value) {
 					if(key != '') {
 						// console.log(value);
 						// console.log(value.length + "/4");
 
-						$('.rooms').find('ul').empty().append("<li data-room='" + key + "'>" + key.replace(/\//g, '') + "<span>Players: " + value.length + "/" + i + "</span></li>");
+						$('.rooms').find('ul').append("<li data-room='" + key + "'>" + key.replace(/\//g, '') + "<span>Players: " + value.length + "/" + i + "</span></li>");
 					}
 				});
 			}
@@ -68,10 +69,15 @@
 				console.log('join room: ' + $(this).attr('data-room'));
 
 				socket.emit('joinRoom', $(this).attr('data-room').replace(/\//g, ''));
+
+				$(this).css('color', 'green');
 			});
 
 			$('.newroom').click(function() {
 				socket.emit('newRoom');
+				console.log('newRoom!');
+
+				$('.rooms').find('ul').children('li:last-child span').text("1/" + maxPlayers);
 			});
 		});
 
@@ -96,6 +102,35 @@
 			} else {
 				console.log('Not starting game, error!');
 			}
+		});
+
+		// Update rooms
+		socket.on('roomUpdate', function(data) {
+			if(data !== '') {
+				$('.rooms').find('ul').empty();
+
+				for(var r in data) {
+					// data[r].name, data[r].players, data[r].max
+					$('.rooms').find('ul').append("<li data-room='/" + data[r].name + "'>" + data[r].name + "<span>Players: " + data[r].players + "/" + data[r].max + "</span></li>");
+				}
+
+				$('.rooms li').click(function() {
+					console.log('join room: ' + $(this).attr('data-room'));
+
+					socket.emit('joinRoom', $(this).attr('data-room').replace(/\//g, ''));
+
+					$(this).css('color', 'green');
+				});
+
+				$('.newroom').click(function() {
+					socket.emit('newRoom');
+				});
+			}
+		});
+
+		// Room is vol
+		socket.on('roomFull', function() {
+			alert('De room die je probeert te joinen is vol.');
 		});
 
 		function startGame() {
