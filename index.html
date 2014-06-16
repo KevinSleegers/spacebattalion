@@ -143,6 +143,7 @@
 	<script type="text/javascript" src="js/game.js"></script>    
 	<script type="text/javascript" src="js/GameEnd.js"></script> 
 	<script type="text/javascript" src="js/gyro.min.js"></script>
+    <script type="text/javascript" src="jquery.cookie.js"></script>
 	<!--<script type="text/javascript" src="js/game.js"></script>-->
 
 	<style type="text/css">
@@ -219,11 +220,11 @@
 			overflow:hidden;
 				
 		}
-		.overlay .wrapper {width:100%; height:100%; position:relative;}
+		.overlay .wrapper {width:96%; height:96%; position:relative; padding:2%;}
 		.overlay .logo {width:100%; display:block; margin-top:20px;}
 		.overlay .logo img{max-width:445px; max-height:116px; width:100%; height:100%; display:block; margin:0 auto;}
 		.overlay .wrapper .payoff {width:100%; font-size:1em; display:block; color:#FFF; font-family: 'Roboto', sans-serif; font-weight: 300; text-align:center;}
-		.overlay .menu {width:100%; display:block; position:absolute; bottom:20px; left:0; background-color:#FFF;}
+		.overlay .menu {width:100%; display:block; position:absolute; bottom:30px; left:0; background-color:#FFF;}
 		.overlay .menu ul {display:block; overflow:hidden; list-style:none; margin-top:12px; margin-bottom:12px;}
 		.overlay .menu ul li {margin-left:20px; display:block; float:left; max-height:56px; cursor:pointer;}
 		.overlay .menu ul li img {width:56px; height:56px;}
@@ -244,7 +245,7 @@
 		}
 		.stats h1{font-size:30px; color:#FFF;  font-family: 'Roboto', sans-serif; font-weight: 300; position:relative; display:block; border-bottom:1px solid #FFF;}
 		.stats h1 img{position:absolute; right:0; bottom:5px; display:block;}
-		.stats ul {margin:20px 30px 0 30px; display:block; padding:0; list-style:none; font-family: 'Roboto', sans-serif; font-weight: 300; font-size:26px; color:#FFF;}
+		.stats ul {margin:20px 30px 20px 30px; display:block; padding:0; list-style:none; font-family: 'Roboto', sans-serif; font-weight: 300; font-size:26px; color:#FFF;}
 		.stats ul li {width:100%;}
 		.stats ul li span {float:right; width:150px;}
 		.stats .bottom {width:100%; border-top:1px solid #FFF; display:block; overflow:hidden;}
@@ -295,13 +296,16 @@
 		.inventory .inv .aircraft {width:50%!important; display:block; float:left!important;}
 		.inventory .inv .aircraft .wrap {width:100%; display:block; overflow:hidden; position:relative;}
 		.inventory .inv .aircraft .wrap .item {width:25%; display:block; padding:2px; float:left; box-sizing: border-box; position:relative;}
-		.inventory .inv .aircraft .wrap .item img {display:block; padding:4px; border:1px solid #ff7302;}
+		.inventory .inv .aircraft .wrap .item img {display:block; padding:4px; border:1px solid #ff7302; width:94%;}
 		.inventory .inv .aircraft .wrap .item .active {background-image:url('images/equiped.png'); width:19px; height:18px; position:absolute; bottom:6px; right:6px;}
+		
+		.inventory .inv .aircraft .wrap .locked img {opacity:0.3;}
+		
 		.inventory .inv .colors h2 {font-family: 'Roboto', sans-serif; font-weight: 300; font-size:20px; color:#FFF; margin-top:10px; margin-bottom:10px; border-top:1px solid #FFF; margin-left: 2px;}
 		.inventory .inv .colors {width:50%; display:block; float:left;}
 		.inventory .inv .colors .wrap {width:100%; display:block; overflow:hidden; position:relative;}
 		.inventory .inv .colors .wrap .item {width:25%; display:block; padding:2px; float:left; box-sizing: border-box; position:relative;}
-		.inventory .inv .colors .wrap .item div {width:42px; height:48px; display:block; padding:4px; border:1px solid #ff7302;}
+		.inventory .inv .colors .wrap .item div {width:94%; height:48px; display:block; padding:4px; border:1px solid #ff7302;}
 		.inventory .inv .colors .wrap .item .active {background-image:url('images/equiped.png'); width:19px; height:18px; position:absolute; bottom:6px; right:6px; }
 		
 		
@@ -322,7 +326,7 @@
 		.account h1{font-size:30px; color:#FFF;  font-family: 'Roboto', sans-serif; font-weight: 300; position:relative; display:block; border-bottom:1px solid #FFF;}
 		.account h1 img{position:absolute; right:0; bottom:5px; display:block;}
 		.account .bottom {width:100%; border-top:1px solid #FFF; display:block; overflow:hidden;}
-		.account ul {margin:20px 30px 0 30px; display:block; padding:0; list-style:none; font-family: 'Roboto', sans-serif; font-weight: 300; font-size:26px; color:#FFF;}
+		.account ul {margin:20px 30px 20px 30px; display:block; padding:0; list-style:none; font-family: 'Roboto', sans-serif; font-weight: 300; font-size:26px; color:#FFF;}
 		.account ul li {width:100%;}
 		.account ul li span {float:right; width:150px;}
 	</style>
@@ -390,14 +394,12 @@
                 <div class="inv">
                 	<div class="aircraft">
                     	<div class="wrap">
-                        	<div class="item"><img src="images/skin.png" /><span class="active"></span></div>
-                            <div class="item"><img src="images/skin.png" /></div>
-                            <div class="item"><img src="images/skin.png" /></div>
-                            <div class="item"><img src="images/skin.png" /></div>
-                            <div class="item"><img src="images/skin.png" /></div>
-                            <div class="item"><img src="images/skin.png" /></div>
-                            <div class="item"><img src="images/skin.png" /></div>
-                            <div class="item"><img src="images/skin.png" /></div>
+                        	<div class="item" data-skin="plane"><img src="images/skin.png" /><span class="active"></span></div>
+                            <div class="item" data-skin="ns"><img src="images/nsskin.png" /></div>
+                            <div class="item locked"><img src="images/mcskin.png" /><span class="notavailable"></span></div>
+                            <div class="item locked"><img src="images/wkskin.png" /><span class="notavailable"></span></div>
+                            <div class="item locked"><img src="images/wkskin2.png" /><span class="notavailable"></span></div>
+                            <div class="item locked"><img src="images/wkskin3.png" /><span class="notavailable"></span></div>
                         </div>
                     	<h2>Aircraft skins</h2>
                     </div>
@@ -447,6 +449,11 @@
 		  $('.rooms').hide();
 		  $('.inventory').hide();
 		  $('.account').hide();
+		  window.skin = "plane";
+		  console.log($.cookie('inlog'));
+		  console.log($.cookie('inlognaam'));
+		  console.log($.cookie('password'));
+		  if ($.cookie('inlog') != '1') {
 		  $("#submit").click(function (){
 			i = $("#inlognaam").val();
 			p = $("#password").val();
@@ -464,6 +471,12 @@
                         }
                         else{
 							$('#inlog').hide();
+							
+							$.cookie('inlog', '1', { expires: 1, path: '/' });
+							$.cookie('inlognaam', i, { expires: 1, path: '/' });
+							$.cookie('password', p, { expires: 1, path: '/' });
+							
+							
 							window.inlognaam = i;
 							window.password = p;
 							window.playerObject = $.parseJSON(data);
@@ -477,6 +490,8 @@
 							$('.emailvalue').text(window.playerObject.email);
 							$('.nicknamevalue').text(window.inlognaam);
 							$('.passwordvalue').text('******');
+							
+							
 							
 							var w = window.innerWidth,
 							h = window.innerHeight;
@@ -496,6 +511,56 @@
                     }
                  });
 		 });
+		 }
+		 else
+		 {
+			$('#inlog').hide();
+			$.ajax({
+			type:"post",
+			url:"http://buitmediasolutions.nl/spacebattalion/check.php",
+			data:{inlognaam: $.cookie('inlognaam'),password: $.cookie('password')},
+				success:function(data){
+					console.log(data);
+				if(data=='no'){
+					alert('COOKIE ERROR');
+				}
+				else{
+					
+
+					window.inlognaam = $.cookie('inlognaam');
+					window.password = $.cookie('password');
+					window.playerObject = $.parseJSON(data);
+					$('.playedvalue').text(window.playerObject.played);
+					$('.wonvalue').text(window.playerObject.win);
+					$('.losevalue').text(window.playerObject.lose);
+					$('.highscorevalue').text(window.playerObject.topscore);
+					$('.totalscorevalue').text(window.playerObject.totalscore);
+					
+					$('.namevalue').text(window.playerObject.name);
+					$('.emailvalue').text(window.playerObject.email);
+					$('.nicknamevalue').text(window.inlognaam);
+					$('.passwordvalue').text('******');
+					
+					
+					
+					var w = window.innerWidth,
+					h = window.innerHeight;
+					
+					/* ~~~~~~~ NEW GAME ~~~~~~~ */
+					window.game = new Phaser.Game(w, h, Phaser.WEBGL, '');
+					
+					window.game.state.add('Boot', SpaceBattalion.Boot);
+					window.game.state.add('Preloader', SpaceBattalion.Preloader);
+					window.game.state.add('MainMenu', SpaceBattalion.MainMenu);
+					window.game.state.add('Game', SpaceBattalion.Game);
+					window.game.state.add('GameEnd', SpaceBattalion.GameEnd);
+					
+					window.game.state.start('Boot');
+					$('.overlay').fadeIn(200);
+				}
+			}
+		 });
+		 }
 		 
 		 	/* Main menu buttons */
 			$('.accountbutton').click(function(){
@@ -551,12 +616,15 @@
 				if($(this).find('.active').length != 0){
 					console.log('yes');	
 				}
+				else if($(this).find('.notavailable').length != 0){
+					alert('To unlock this skin you have to play at special locations');
+				}
 				else
 				{
 					console.log('no');
 					$('.inventory .inv .aircraft .wrap').find('.active').remove();
 					$(this).append('<span class="active"></span>');
-					
+					window.skin = $(this).attr('data-skin');
 				}
 			});
 			$('.inventory .inv .colors .wrap .item').click(function(){
