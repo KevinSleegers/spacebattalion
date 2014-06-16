@@ -246,6 +246,7 @@ SpaceBattalion.Game.prototype = {
 	        long : longitude,
 	        angle : 0
 	    });
+		this.getLocation();
 	    socket.emit('newPlayer', playerData, myRoom);
 
 	    // Haal nieuwe speler op van server
@@ -741,7 +742,23 @@ SpaceBattalion.Game.prototype = {
         this.physics.arcade.collide(bullets, boss, this.bulletBoss, null, this);
 
         // Overlap tussen boss en player
-        this.physics.arcade.overlap(player, boss, this.overlapPlayer, null, this);			
+        this.physics.arcade.overlap(player, boss, this.overlapPlayer, null, this);	
+
+		if(radarMeters)
+		{
+			for(var plr in players) 
+			{				
+				var dist = this.distance(latitude, longitude, players[plr].latitude, players[plr].longitude, "k");
+
+				//	Als afstand kleiner dan 100 meter is
+				if(dist < 100)
+				{
+					var distMeters = Math.floor(dist * 1000);	
+					radarMeters.setText(distMeters + " M");
+
+				}			
+			}
+		}
 	},
 
 	createPlayer: function(plr) {
@@ -804,7 +821,7 @@ SpaceBattalion.Game.prototype = {
 		
 		for(var plr in players) 
 		{
-			console.log(newPlayerNick + " : " + players[plr].latitude);
+			console.log(newPlayerNick + " : " + players[plr].latitude + " : " + players[plr].longitude);
 			
 			var dist = this.distance(latitude, longitude, players[plr].latitude, players[plr].longitude, "k");
 
@@ -1497,8 +1514,8 @@ SpaceBattalion.Game.prototype = {
 
 	foundPosition: function(pos) {
 		if(pos.coords.latitude !== latitude || pos.coords.longitude !== longitude) {
-			latitude = position.coords.latitude;
-			longitude = position.coords.longitude;
+			latitude = pos.coords.latitude;
+			longitude = pos.coords.longitude;
 
 			var updatedLocation = JSON.stringify({
 				sessionid : io.socket.sessionid,
@@ -1511,6 +1528,8 @@ SpaceBattalion.Game.prototype = {
 
 	// Bron : http://www.geodatasource.com/developers/javascript
 	distance: function(lat1, lon1, lat2, lon2, unit) {
+		console.log("Spelers lat en long : " + lat1 + " " + lat2 + " " + lon1 + " " + lon2);
+
 		var radlat1 = Math.PI * lat1/180;
 	    var radlat2 = Math.PI * lat2/180;
 	    var radlon1 = Math.PI * lon1/180;
@@ -1525,8 +1544,10 @@ SpaceBattalion.Game.prototype = {
 	    dist = dist * 180/Math.PI;
 	    dist = dist * 60 * 1.1515;
 
-	    if (unit=="K") { dist = dist * 1.609344 };
-	    if (unit=="N") { dist = dist * 0.8684 };
+	    if (unit=="k") { dist = dist * 1.609344 };
+	    if (unit=="n") { dist = dist * 0.8684 };
+		
+		console.log("DIT IS DE AFSTAND IN KM : " + Math.floor(dist));
 	    return dist;
 	}, 
 
