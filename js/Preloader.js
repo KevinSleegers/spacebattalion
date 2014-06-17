@@ -19,6 +19,7 @@ SpaceBattalion.Preloader.prototype = {
 		// Sprites, audio etc inladen voor daadwerkelijke game
 	    this.load.spritesheet('mainBg', 'assets/img/spr_backgroundOverlay.png', 160, 160);
 		this.load.spritesheet('player', 'assets/img/spr_plane_strip11.png', 64, 64);
+		this.load.spritesheet('ns', 'assets/img/spr_ns_strip11.png', 64, 64);
 		this.load.spritesheet('otherPlayers', 'assets/img/spr_plane_strip2.png', 64, 64);
 		this.load.spritesheet('boss', 'assets/img/spr_boss_die_strip13.png', 128, 256);
 		this.load.spritesheet('coop', 'assets/img/spr_double_final_strip4.png', 96, 128);

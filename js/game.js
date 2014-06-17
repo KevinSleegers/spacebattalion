@@ -122,7 +122,7 @@ SpaceBattalion.Game.prototype = {
     		longitude = localStorage.getItem('longitude');
     	}
 
-		player 	= this.add.sprite(this.world.centerX, this.world.centerY, 'player');
+		player 	= this.add.sprite(this.world.centerX, this.world.centerY, window.skin);
 		boss 	= this.add.sprite(100, 200, 'boss'); 
 
 		if(playerName === 'boss') {

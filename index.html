@@ -224,7 +224,19 @@
 		.overlay .logo {width:100%; display:block; margin-top:20px;}
 		.overlay .logo img{max-width:445px; max-height:116px; width:100%; height:100%; display:block; margin:0 auto;}
 		.overlay .wrapper .payoff {width:100%; font-size:1em; display:block; color:#FFF; font-family: 'Roboto', sans-serif; font-weight: 300; text-align:center;}
-		.overlay .menu {width:100%; display:block; position:absolute; bottom:30px; left:0; background-color:#FFF;}
+		.overlay .menu {width:100%; display:block; position:absolute; bottom:30px; left:0; 
+		border:1px solid #a9a9a9;
+		background: -moz-linear-gradient(top, rgba(255,255,255,0.15) 0%, rgba(252,252,252,0.15) 1%, rgba(0,0,0,0) 100%); /* FF3.6+ */
+		background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(255,255,255,0.15)), color-stop(1%,rgba(252,252,252,0.15)), color-stop(100%,rgba(0,0,0,0))); /* Chrome,Safari4+ */
+		background: -webkit-linear-gradient(top, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* Chrome10+,Safari5.1+ */
+		background: -o-linear-gradient(top, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* Opera 11.10+ */
+		background: -ms-linear-gradient(top, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* IE10+ */
+		background: linear-gradient(to bottom, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* W3C */
+		filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#26ffffff', endColorstr='#00000000',GradientType=0 ); /* IE6-9 */
+		-webkit-box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
+		-moz-box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
+		box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
+		}
 		.overlay .menu ul {display:block; overflow:hidden; list-style:none; margin-top:12px; margin-bottom:12px;}
 		.overlay .menu ul li {margin-left:20px; display:block; float:left; max-height:56px; cursor:pointer;}
 		.overlay .menu ul li img {width:56px; height:56px;}
@@ -394,7 +406,7 @@
                 <div class="inv">
                 	<div class="aircraft">
                     	<div class="wrap">
-                        	<div class="item" data-skin="plane"><img src="images/skin.png" /><span class="active"></span></div>
+                        	<div class="item" data-skin="player"><img src="images/skin.png" /><span class="active"></span></div>
                             <div class="item" data-skin="ns"><img src="images/nsskin.png" /></div>
                             <div class="item locked"><img src="images/mcskin.png" /><span class="notavailable"></span></div>
                             <div class="item locked"><img src="images/wkskin.png" /><span class="notavailable"></span></div>
@@ -449,7 +461,7 @@
 		  $('.rooms').hide();
 		  $('.inventory').hide();
 		  $('.account').hide();
-		  window.skin = "plane";
+		  window.skin = "player";
 		  console.log($.cookie('inlog'));
 		  console.log($.cookie('inlognaam'));
 		  console.log($.cookie('password'));
