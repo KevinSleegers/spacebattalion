@@ -332,7 +332,8 @@ SpaceBattalion.Game.prototype = {
 						// verder worden ook alle events gebonden aan de speler removed
 						player.alive = true;
 						player.exists = true;
-						player.visible = true;		  
+						player.visible = true;		
+						player.allowControls = false;  
 
 		    			socket.emit('playerDied', io.socket.sessionid);
 
