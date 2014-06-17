@@ -626,7 +626,7 @@ SpaceBattalion.Game.prototype = {
 	    		movementSpeed = 175;
 	    	}
 
-	    	if(typeof player !== "undefined" && player.move === true || coopMovement === true) {
+	    	if(typeof player !== "undefined" && player.move === true || coopMovement === true && player.allowControls === true) {
 
 	    		// Ga na welke coopspeler je bent, andere waardes kan ik hier niet aan.. dus dan maar zo
 	        	Object.keys(coopPlayers).forEach(function(key) {
