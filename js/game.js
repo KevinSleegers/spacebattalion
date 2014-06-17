@@ -340,7 +340,7 @@ SpaceBattalion.Game.prototype = {
 						setTimeout(function() {
 							self.explode(player.x, player.y);
 
-							socket.emit('playerMinion', io.socket.sessionid, myRoom);
+							//socket.emit('playerMinion', io.socket.sessionid, myRoom);
 						}, 1000);
 		    		} else {
 		    			var currentFrame = player.frame;
