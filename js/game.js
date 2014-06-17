@@ -333,12 +333,12 @@ SpaceBattalion.Game.prototype = {
 						player.alive = true;
 						player.exists = true;
 						player.visible = true;		
-						player.allowControls = false;  
 
 		    			socket.emit('playerDied', io.socket.sessionid);
 
 						setTimeout(function() {
 							self.explode(player.x, player.y);
+							player.allowControls = false;  
 
 							//socket.emit('playerMinion', io.socket.sessionid, myRoom);
 						}, 1000);
