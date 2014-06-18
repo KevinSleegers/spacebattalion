@@ -246,7 +246,6 @@ SpaceBattalion.Game.prototype = {
 	        long : longitude,
 	        angle : 0
 	    });
-		this.getLocation();
 	    socket.emit('newPlayer', playerData, myRoom);
 
 	    // Haal nieuwe speler op van server
@@ -332,15 +331,14 @@ SpaceBattalion.Game.prototype = {
 						// verder worden ook alle events gebonden aan de speler removed
 						player.alive = true;
 						player.exists = true;
-						player.visible = true;		
+						player.visible = true;		  
 
 		    			socket.emit('playerDied', io.socket.sessionid);
 
 						setTimeout(function() {
 							self.explode(player.x, player.y);
-							player.allowControls = false;  
 
-							//socket.emit('playerMinion', io.socket.sessionid, myRoom);
+							socket.emit('playerMinion', io.socket.sessionid, myRoom);
 						}, 1000);
 		    		} else {
 		    			var currentFrame = player.frame;
@@ -627,7 +625,7 @@ SpaceBattalion.Game.prototype = {
 	    		movementSpeed = 175;
 	    	}
 
-	    	if(typeof player !== "undefined" && player.move === true || coopMovement === true && player.allowControls === true) {
+	    	if(typeof player !== "undefined" && player.move === true || coopMovement === true) {
 
 	    		// Ga na welke coopspeler je bent, andere waardes kan ik hier niet aan.. dus dan maar zo
 	        	Object.keys(coopPlayers).forEach(function(key) {
@@ -743,23 +741,7 @@ SpaceBattalion.Game.prototype = {
         this.physics.arcade.collide(bullets, boss, this.bulletBoss, null, this);
 
         // Overlap tussen boss en player
-        this.physics.arcade.overlap(player, boss, this.overlapPlayer, null, this);	
-
-		if(radarMeters)
-		{
-			for(var plr in players) 
-			{				
-				var dist = this.distance(latitude, longitude, players[plr].latitude, players[plr].longitude, "k");
-
-				//	Als afstand kleiner dan 100 meter is
-				if(dist < 100)
-				{
-					var distMeters = Math.floor(dist * 1000);	
-					radarMeters.setText(distMeters + " M");
-
-				}			
-			}
-		}
+        this.physics.arcade.overlap(player, boss, this.overlapPlayer, null, this);			
 	},
 
 	createPlayer: function(plr) {
@@ -822,7 +804,7 @@ SpaceBattalion.Game.prototype = {
 		
 		for(var plr in players) 
 		{
-			console.log(newPlayerNick + " : " + players[plr].latitude + " : " + players[plr].longitude);
+			console.log(newPlayerNick + " : " + players[plr].latitude);
 			
 			var dist = this.distance(latitude, longitude, players[plr].latitude, players[plr].longitude, "k");
 
@@ -1515,8 +1497,8 @@ SpaceBattalion.Game.prototype = {
 
 	foundPosition: function(pos) {
 		if(pos.coords.latitude !== latitude || pos.coords.longitude !== longitude) {
-			latitude = pos.coords.latitude;
-			longitude = pos.coords.longitude;
+			latitude = position.coords.latitude;
+			longitude = position.coords.longitude;
 
 			var updatedLocation = JSON.stringify({
 				sessionid : io.socket.sessionid,
@@ -1529,8 +1511,6 @@ SpaceBattalion.Game.prototype = {
 
 	// Bron : http://www.geodatasource.com/developers/javascript
 	distance: function(lat1, lon1, lat2, lon2, unit) {
-		console.log("Spelers lat en long : " + lat1 + " " + lat2 + " " + lon1 + " " + lon2);
-
 		var radlat1 = Math.PI * lat1/180;
 	    var radlat2 = Math.PI * lat2/180;
 	    var radlon1 = Math.PI * lon1/180;
@@ -1545,10 +1525,8 @@ SpaceBattalion.Game.prototype = {
 	    dist = dist * 180/Math.PI;
 	    dist = dist * 60 * 1.1515;
 
-	    if (unit=="k") { dist = dist * 1.609344 };
-	    if (unit=="n") { dist = dist * 0.8684 };
-		
-		console.log("DIT IS DE AFSTAND IN KM : " + Math.floor(dist));
+	    if (unit=="K") { dist = dist * 1.609344 };
+	    if (unit=="N") { dist = dist * 0.8684 };
 	    return dist;
 	}, 
 

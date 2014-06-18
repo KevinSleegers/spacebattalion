@@ -46,6 +46,16 @@ SpaceBattalion.Preloader.prototype = {
 		this.load.audio('shipHitSound', ['assets/audio/SFX/shipHit.mp3', 'assets/audio/SFX/shipHit.ogg']);
 
 		this.load.bitmapFont('C64', 'assets/fonts/font.png', 'assets/fonts/font.fnt');
+		
+		
+	},
+	loadUpdate: function() {
+		window.progressbar = this.load.progress
+		$('.loader span').animate({"width":window.progressbar+"%"}, 200,function(){
+			//$('.loader span').text(window.progressbar+'%');	
+		});
+		
+		
 	},
 
 	create: function() {
@@ -54,8 +64,7 @@ SpaceBattalion.Preloader.prototype = {
 
 	update: function() {
 		// Voortgang in percentage -> this.load.progress
-		console.log('voortgang', this.load.progress);
-
+		//console.log('voortgang', this.load.progress);
 		if(this.cache.isSoundDecoded('backgroundMusic') && 
 			this.cache.isSoundDecoded('loadingMusic') 	&&
 			this.cache.isSoundDecoded('explosionSound') &&
@@ -65,9 +74,28 @@ SpaceBattalion.Preloader.prototype = {
 			this.ready == false) 
 		{
 			this.ready = true;
-			// this.state.start('Game');
+			$('.loader span').stop();
+			$('.loader span').animate({"width":"100%"}, 200);
+			$('.payoff').fadeOut(200);
 			this.state.start('MainMenu');
-			$('.menulist').fadeIn(200);
+			
+			var loadbar = setInterval(function(){
+				var width = $('.loader span').width();
+				var parentWidth = $('.loader span').offsetParent().width();
+				var percent = 100*width/parentWidth;
+				console.log(percent);
+				if(percent == 100)
+				{
+					clearInterval(loadbar);
+					window.startbutton = 1;
+					
+					$('.loader').animate({"height":"40px"},200,function(){
+						$('.loader span').text('Start Game');	
+					});
+					$('.menulist').fadeIn(200);
+				}
+			}, 200);
+
 			
 		}
 	}
