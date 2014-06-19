@@ -212,14 +212,14 @@ io.sockets.on('connection', function(socket){
         var player_nick = obj.nickname;
         var player_x = obj.x;
         var player_y = obj.y;
-		var player_angle = obj.angle;
+        var player_angle = obj.angle;
 
         var player      = {};
         player.session  = player_session;
         player.nickname = player_nick;
         player.x        = player_x;
         player.y        = player_y;
-		player.angle    = player_angle;
+        player.angle    = player_angle;
 
         players[player.session] = player;
         
@@ -329,8 +329,8 @@ io.sockets.on('connection', function(socket){
 
         // delete player from other clients
         socket.broadcast.emit('removePlayer', socket.id);
-		
-		console.log('player deleted: ', socket.id);
+        
+        console.log('player deleted: ', socket.id);
     });
 
     function randName() {
