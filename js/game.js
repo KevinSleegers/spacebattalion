@@ -822,6 +822,8 @@ SpaceBattalion.Game.prototype = {
 				radarMeters = this.add.text(0, 0, dist + " M", { font: "14px Arial", fill: "#ffffff", align: "center" });
 				radarMeters.fixedToCamera = true;
 				radarMeters.cameraOffset.setTo(cursorOffsetX - 15, 140);	
+
+				players[plr].frame = 6;
 				
 				cursorOffsetX += 60;
 			}
