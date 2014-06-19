@@ -44,8 +44,6 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     backgroundMusic,
     shipHitSound,
 
-    latitude,
-    longitude,
     range = 500,
 
     coop,
@@ -117,11 +115,6 @@ SpaceBattalion.Game.prototype = {
 
 		bgtile = this.add.tileSprite(0, 0, bounds, bounds, 'mainBg');
 
-		if(localStorage.getItem('latitude') !== null && localStorage.getItem('longitude') !== null) {
-    		latitude = localStorage.getItem('latitude');
-    		longitude = localStorage.getItem('longitude');
-    	}
-
 		player 	= this.add.sprite(this.world.centerX, this.world.centerY, window.skin);
 		boss 	= this.add.sprite(100, 200, 'boss'); 
 
@@ -135,8 +128,8 @@ SpaceBattalion.Game.prototype = {
 		player.anchor.setTo(.5,.5);
 		player.name = io.socket.sessionid;
 		player.allowControls = true;
-		player.latitude = latitude;
-		player.longitude = longitude;
+		player.lat = 0;
+		player.lng = 0;
 		player.coop = false;
 		player.move = true;
 		player.shoot = true;
@@ -242,8 +235,8 @@ SpaceBattalion.Game.prototype = {
 	        nickname : playerName,
 	        x : this.world.centerX,
 	        y : this.world.centerY,
-	        lat : latitude,
-	        long : longitude,
+	        lat : player.lat,
+	        long : player.lng,
 	        angle : 0
 	    });
 	    socket.emit('newPlayer', playerData, myRoom);
@@ -717,7 +710,7 @@ SpaceBattalion.Game.prototype = {
             }
 
 		
-			var dist = this.distance(latitude, longitude, players[plr].latitude, players[plr].longitude, "k");
+			var dist = this.distance(player.lat, player.lng, players[plr].lat, players[plr].lng, "k");
 
 			//	Als afstand kleiner dan 100 meter is
 			if(dist < 100 && this.physics.arcade.distanceBetween(players[plr], player) < 100) 
@@ -780,8 +773,8 @@ SpaceBattalion.Game.prototype = {
 	    }
 
 	    // Sla gps locatie van speler op (om na te gaan of iemand anders in de buurt is)
-	    players[plr.session].latitude = plr.lat;
-	    players[plr.session].longitude = plr.long;
+	    players[plr.session].lat = plr.lat;
+	    players[plr.session].lng = plr.long;
 	    players[plr.session].coop = false;
 	    players[plr.session].coopPlayer = '';
 
@@ -804,9 +797,9 @@ SpaceBattalion.Game.prototype = {
 		
 		for(var plr in players) 
 		{
-			console.log(newPlayerNick + " : " + players[plr].latitude);
+			console.log(newPlayerNick + " : " + players[plr].lat + " : " + players[plr].lng);
 			
-			var dist = this.distance(latitude, longitude, players[plr].latitude, players[plr].longitude, "k");
+			var dist = this.distance(player.lat, player.lng, players[plr].lat, players[plr].lng, "k");
 
 			//	Als afstand kleiner dan 100 meter is
 			if(dist < 100)
@@ -1494,18 +1487,16 @@ SpaceBattalion.Game.prototype = {
 		}
 	},
 
-	foundPosition: function(pos) {
-		if(pos.coords.latitude !== latitude || pos.coords.longitude !== longitude) {
-			latitude = position.coords.latitude;
-			longitude = position.coords.longitude;
+	foundPosition: function(position) {
+		player.lat = position.coords.latitude;
+		player.lng = position.coords.longitude;
 
-			var updatedLocation = JSON.stringify({
-				sessionid : io.socket.sessionid,
-				lat : latitude,
-				long : longitude
-			});
-			socket.emit('locationUpdate', updatedLocation, myRoom);
-		}
+		var updatedLocation = JSON.stringify({
+			sessionid : io.socket.sessionid,
+			lat : position.coords.latitude,
+			long : position.coords.longitude
+		});
+		socket.emit('locationUpdate', updatedLocation, myRoom);
 	},
 
 	// Bron : http://www.geodatasource.com/developers/javascript
