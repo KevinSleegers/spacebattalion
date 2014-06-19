@@ -200,6 +200,8 @@ SpaceBattalion.Game.prototype = {
 
 	        for(var onlinePlayer in data) {
 	        	if(data[onlinePlayer].session.length <= 20) {
+	        		console.log('onlinePlayer object: ' + data[onlinePlayer]);
+
 	        		console.log('Creating player', data[onlinePlayer].session);
 	            	self.createPlayer(data[onlinePlayer]);
 	            	//onlinePlayers.push(data[onlinePlayer].nickname);
