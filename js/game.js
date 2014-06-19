@@ -200,7 +200,9 @@ SpaceBattalion.Game.prototype = {
 
 	        for(var onlinePlayer in data) {
 	        	if(data[onlinePlayer].session.length <= 20) {
-	        		console.log('onlinePlayer object: ' + data[onlinePlayer]);
+	        		console.log('onlinePlayer lat: ' + data[onlinePlayer].lat);
+	        		console.log('onlinePlayer lng 1: ' + data[onlinePlayer].lng);
+	        		console.log('onlinePlayer lng 2: ' + data[onlinePlayer].long);
 
 	        		console.log('Creating player', data[onlinePlayer].session);
 	            	self.createPlayer(data[onlinePlayer]);
