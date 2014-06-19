@@ -1488,8 +1488,7 @@ SpaceBattalion.Game.prototype = {
 	                latitude = 0;
 	                longitude = 0;
 	            }
-	        }, {enableHighAccuracy: false});
-	        // HighAccuracy staat uit i.v.m. accu duur
+	        }, {enableHighAccuracy: true, timeout: 5000});
 		} else {
 			console.log('Het ophalen van uw locatie is mislukt\nGPS wordt niet ondersteund op uw smart device.');
 		}

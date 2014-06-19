@@ -82,7 +82,7 @@ io.sockets.on('connection', function(socket){
 
         var obj = JSON.parse(data);
 
-        // Save data in variables
+        // Save data in variable
         var player_session = obj.sessionid;
         var player_nick = obj.nickname;
         var player_x = obj.x;
