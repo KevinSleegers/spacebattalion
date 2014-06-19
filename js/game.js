@@ -738,6 +738,8 @@ SpaceBattalion.Game.prototype = {
 	},
 
 	createPlayer: function(plr) {
+		console.log('latitude', plr.lat, 'longitude', plr.long);
+
 		// new player variables
 	    var newSession = plr.session;
 	    var newPlayerNick = plr.nickname;
