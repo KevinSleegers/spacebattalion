@@ -51,7 +51,8 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     coopShooting = false,
 
     logging = true,
-    bounds = 2000;
+    bounds = 2000,
+    friendlyFire = false;
 
 SpaceBattalion.Game = function(game) {
 	this.game;		//	a reference to the currently running game
@@ -711,11 +712,11 @@ SpaceBattalion.Game.prototype = {
         // Collision detection voor alle players && Icoon om samen te voegen
         for(var plr in players) {
         	// Bullets raken andere players
-        	if(players[plr].visible !== false) {
+        	if(players[plr].visible !== false && friendlyFire == true) {
             	this.physics.arcade.collide(bullets, players[plr], this.bulletOtherPlayer, null, this);
             }
 
-            if(player.visible !== false) {
+            if(player.visible !== false && friendlyFire == true) {
             	// Bullets raken jou
             	this.physics.arcade.collide(bullets, player, this.bulletPlayer, null, this);
             }
@@ -737,7 +738,7 @@ SpaceBattalion.Game.prototype = {
 		}
 
         // Collision detection voor co-op players
-        for(var plr in coopPlayers) {
+        for(var plr in coopPlayers && friendlyFire == true) {
         	// Bullets raken co-op players
         	this.physics.arcade.collide(bullets, coopPlayers[plr], this.bulletCoop, null, this);
         }
