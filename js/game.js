@@ -472,13 +472,14 @@ SpaceBattalion.Game.prototype = {
 		});
 
 		// Locatie (GPS) van andere speler is geupdatet
+		var self = this;
 		socket.on('updatedLocation', function(data) {
 			console.log('updating position');
 
 			players[data.session].lat = data.lat;
 			players[data.session].lng = data.long;
 
-			var dist = this.distance(player.lat, player.lng, players[data.session].lat, players[data.session].lng, "k");
+			var dist = self.distance(player.lat, player.lng, players[data.session].lat, players[data.session].lng, "k");
 			dist = dist * 1000;
 
 			if(dist <= range) {
