@@ -114,6 +114,7 @@ io.sockets.on('connection', function(socket){
         if(Object.getOwnPropertyNames(skins).length !== 0) {
             Object.keys(skins).forEach(function(key) {
                 if(key.indexOf(obj.sessionid) > -1) {
+                    console.log('my session id has chosen a skin');
                     player.skin = skins[obj.sessionid];
                 } else {
                     player.skin = 0;

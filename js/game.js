@@ -743,6 +743,7 @@ SpaceBattalion.Game.prototype = {
 
 	createPlayer: function(plr) {
 		console.log('latitude', plr.lat, 'longitude', plr.long);
+		console.log('skin', plr.skin);
 
 		// new player variables
 	    var newSession = plr.session;
@@ -754,6 +755,8 @@ SpaceBattalion.Game.prototype = {
 	    //players[plr.session] = game.add.sprite(plr.x, plr.y, 'otherPlayers');
 	    if(plr.skin == 'ns') {
 	    	players[plr.session] = this.add.sprite(plr.x, plr.y, 'ns');
+	    } elseif (plr.skin == 'wk') {
+	    	players[plr.session] = this.add.sprite(plr.x, plr.y, 'wk');
 	    } else {
 			players[plr.session] = this.add.sprite(plr.x, plr.y, 'player');
 		}
