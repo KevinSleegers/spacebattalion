@@ -122,12 +122,13 @@ SpaceBattalion.Game.prototype = {
 			playerType = player;
 		}
 
+		// Locatie van player ophalen
+		this.getLocation();
+
 		// Player instellingen
 		player.anchor.setTo(.5,.5);
 		player.name = io.socket.sessionid;
 		player.allowControls = true;
-		player.lat = 0;
-		player.lng = 0;
 		player.coop = false;
 		player.move = true;
 		player.shoot = true;
@@ -141,9 +142,6 @@ SpaceBattalion.Game.prototype = {
 		player.score = 0;
 		player.frame = 3;
 		player.minion = false;
-
-		// Locatie van player ophalen
-		this.getLocation();
 
 		// Player group instellingen
 		playerGroup = this.add.group();
@@ -466,6 +464,8 @@ SpaceBattalion.Game.prototype = {
 
 		// Locatie (GPS) van andere speler is geupdatet
 		socket.on('updatedLocation', function(data) {
+			console.log('updating position');
+
 			players[data.session].lat = data.lat;
 			players[data.session].lng = data.long;
 		});
@@ -714,7 +714,7 @@ SpaceBattalion.Game.prototype = {
             	this.physics.arcade.collide(bullets, player, this.bulletPlayer, null, this);
             }
 		
-			if(player.lat !== 0 && player.lng !== 0) {
+			if(typeof player.lat !== "undefined" && typeof player.lng !== "undefined") {
 				var dist = this.distance(player.lat, player.lng, players[plr].lat, players[plr].lng, "k");
 
 				//	Als afstand kleiner dan 100 meter is
