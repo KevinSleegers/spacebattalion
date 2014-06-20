@@ -1544,7 +1544,7 @@ SpaceBattalion.Game.prototype = {
 		if(navigator.geolocation) {
 			navigator.geolocation.watchPosition(this.foundPosition, function(error) {
 	            console.log('OEPS', error.code);
-	        }, {enableHighAccuracy: false, timeout: 5000});
+	        }, {enableHighAccuracy: false});
 		} else {
 			console.log('Het ophalen van uw locatie is mislukt\nGPS wordt niet ondersteund op uw smart device.');
 		}
