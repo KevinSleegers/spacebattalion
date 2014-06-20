@@ -51,7 +51,7 @@
 		if(navigator.geolocation) {
 			navigator.geolocation.watchPosition(foundPosition, function(error) {
 	            console.log('OEPS', error.code);
-	        }, {enableHighAccuracy: false});
+	        }, {enableHighAccuracy: true});
 		} else {
 			console.log('Het ophalen van uw locatie is mislukt\nGPS wordt niet ondersteund op uw smart device.');
 		}

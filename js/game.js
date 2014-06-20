@@ -219,7 +219,7 @@ SpaceBattalion.Game.prototype = {
 	        }
 	    });
 
-	    /* Haal co-op spelers van server die al online zijn
+	    // Haal co-op spelers van server die al online zijn
 	    var self = this;
 	    socket.on('onlineCoop', function(data) {
 	    	for (var onlineCoop in data) {
@@ -238,7 +238,6 @@ SpaceBattalion.Game.prototype = {
 	    		}
 	    	}
 	    });
-		*/
 
 	    // Stuur nieuwe speler door naar server
 	    var playerData = JSON.stringify({
@@ -1544,7 +1543,7 @@ SpaceBattalion.Game.prototype = {
 		if(navigator.geolocation) {
 			navigator.geolocation.watchPosition(this.foundPosition, function(error) {
 	            console.log('OEPS', error.code);
-	        }, {enableHighAccuracy: false});
+	        }, {enableHighAccuracy: true});
 		} else {
 			console.log('Het ophalen van uw locatie is mislukt\nGPS wordt niet ondersteund op uw smart device.');
 		}
