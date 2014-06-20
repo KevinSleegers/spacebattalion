@@ -712,9 +712,12 @@ SpaceBattalion.Game.prototype = {
             	// Bullets raken jou
             	this.physics.arcade.collide(bullets, player, this.bulletPlayer, null, this);
             }
-
 		
 			var dist = this.distance(player.lat, player.lng, players[plr].lat, players[plr].lng, "k");
+
+			console.log('my dist', player.lat, player.lng);
+			console.log('other dist', players[plr].lat, players[plr].lng);
+			console.log(dist);
 
 			//	Als afstand kleiner dan 100 meter is
 			if(dist < 100 && this.physics.arcade.distanceBetween(players[plr], player) < 100) 
@@ -813,6 +816,10 @@ SpaceBattalion.Game.prototype = {
 			console.log(newPlayerNick + " : " + players[plr].lat + " : " + players[plr].lng);
 			
 			var dist = this.distance(player.lat, player.lng, players[plr].lat, players[plr].lng, "k");
+
+			console.log('my dist', player.lat, player.lng);
+			console.log('other dist', players[plr].lat, players[plr].lng);
+			console.log(dist);
 
 			//	Als afstand kleiner dan 100 meter is
 			if(dist < 100)
