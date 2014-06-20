@@ -105,10 +105,7 @@
 						$('.waiting h2').text('waiting for other players...')
 					}
 				}, 500);
-			});
-			
-			
-			
+			});			
 		});		
 
 		// Als genoeg spelers in room zitten, start dan game
@@ -186,8 +183,7 @@
 		function startGame() {
 			//alert('Starting Game!');
 			$('.overlay').fadeOut(200);
-			window.game.state.start('Game');
-			
+			window.game.state.start('Game');			
 		}
 	</script>
 	<script type="text/javascript" src="js/MainMenu.js"></script>
@@ -727,8 +723,13 @@
 					$('.inventory .inv .aircraft .wrap').find('.active').remove();
 					$(this).append('<span class="active"></span>');
 					window.skin = $(this).attr('data-skin');
+
+					console.log($(this).attr('data-skin'));
+					socket.emit('skin', $(this).attr('data-skin'));
 				}
 			});
+
+
 			$('.inventory .inv .colors .wrap .item').click(function(){
 				if($(this).find('.active').length != 0){
 					console.log('yes yes');	

@@ -752,7 +752,11 @@ SpaceBattalion.Game.prototype = {
 	    var newPlayerAngle = plr.angle;
 
 	    //players[plr.session] = game.add.sprite(plr.x, plr.y, 'otherPlayers');
-		players[plr.session] = this.add.sprite(plr.x, plr.y, 'player');
+	    if(plr.skin == 'ns') {
+	    	players[plr.session] = this.add.sprite(plr.x, plr.y, 'ns');
+	    } else {
+			players[plr.session] = this.add.sprite(plr.x, plr.y, 'player');
+		}
 
 	    // configurations for new player
 	    players[plr.session].anchor.setTo(.5,.5);

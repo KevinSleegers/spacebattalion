@@ -8,6 +8,7 @@ var express = require('express'),
     room = '',
     rooms = {},
     maxPlayers = 2;
+    skins = {};
 
 server.listen(process.env.PORT || 5000);
 
@@ -108,6 +109,19 @@ io.sockets.on('connection', function(socket){
         player.angle    = player_angle;
         player.lat      = player_lat;
         player.long     = player_long;
+
+        // Check if player has chosen a different skin
+        if(Object.getOwnPropertyNames(skins).length !== 0) {
+            Object.keys(skins).forEach(function(key) {
+                if(key.indexOf(obj.sessionid) > -1) {
+                    player.skin = skins[obj.sessionid];
+                } else {
+                    player.skin = 0;
+                }
+            });
+        } else {
+            player.skin = 0;
+        }
 
         // Add player to 'players' array
         players[player.session] = player;
@@ -321,6 +335,12 @@ io.sockets.on('connection', function(socket){
         } else {
             io.sockets.socket(socket.id).emit('roomFull');
         }
+    });
+
+    socket.on('skin', function(data) {
+        skins[socket.id] = data;
+
+        console.log(skins);
     });
 
     socket.on('disconnect', function() {
