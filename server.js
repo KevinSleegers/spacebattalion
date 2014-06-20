@@ -7,7 +7,7 @@ var express = require('express'),
     coopPlayers = {},
     room = '',
     rooms = {},
-    maxPlayers = 1;
+    maxPlayers = 2;
     skins = {};
 
 server.listen(process.env.PORT || 5000);

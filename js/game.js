@@ -108,12 +108,8 @@ SpaceBattalion.Game.prototype = {
 		this.shipHitSound 	= this.add.audio('shipHitSound');
 		this.laserShotSound = this.add.audio('laserShotSound');
 		this.explosionSound	= this.add.audio('explosionSound');
-
 		
 		playerName = window.inlognaam;
-
-		this.getLocation();
-
 
 		bgtile = this.add.tileSprite(0, 0, bounds, bounds, 'mainBg');
 
@@ -145,6 +141,9 @@ SpaceBattalion.Game.prototype = {
 		player.score = 0;
 		player.frame = 3;
 		player.minion = false;
+
+		// Locatie van player ophalen
+		this.getLocation();
 
 		// Player group instellingen
 		playerGroup = this.add.group();
@@ -203,7 +202,7 @@ SpaceBattalion.Game.prototype = {
 	        for(var onlinePlayer in data) {
 	        	if(data[onlinePlayer].session.length <= 20) {
 	        		console.log('onlinePlayer lat: ' + data[onlinePlayer].lat);
-	        		console.log('onlinePlayer lng: ' + data[onlinePlayer].lng);
+	        		console.log('onlinePlayer lng: ' + data[onlinePlayer].long);
 
 	        		console.log('Creating player', data[onlinePlayer].session);
 	            	self.createPlayer(data[onlinePlayer]);
@@ -718,10 +717,6 @@ SpaceBattalion.Game.prototype = {
 			if(player.lat !== 0 && player.lng !== 0) {
 				var dist = this.distance(player.lat, player.lng, players[plr].lat, players[plr].lng, "k");
 
-				console.log('my dist', player.lat, player.lng);
-				console.log('other dist', players[plr].lat, players[plr].lng);
-				console.log(dist);
-
 				//	Als afstand kleiner dan 100 meter is
 				if(dist <= range && this.physics.arcade.distanceBetween(players[plr], player) < range) 
 				{				
@@ -814,8 +809,38 @@ SpaceBattalion.Game.prototype = {
 	    playerGroup.bringToTop(player);
 		
 		var cursorOffsetX = 400;
+
+		if(player.lat !== 0 && player.lng !== 0 && players[plr.session].lat !== 0 && players[plr.session].lng !== 0) {
+			var dist = this.distance(player.lat, player.lng, players[plr.session].lat, players[plr.session].lng, "k");
+			dist = dist * 1000;
+
+			console.log('distance tussen mijzelf en andere: ' + dist);
+
+			if(dist <= range) {
+				console.log('dist', dist, 'kleiner dan', range);
+
+				// Radar cursor aanmaken
+				radarCursor = this.add.sprite(0, 0, 'radarCursor');
+				radarCursor.anchor.setTo(.5, .5);
+				radarCursor.fixedToCamera = true;
+				radarCursor.cameraOffset.setTo(cursorOffsetX, 100);	
+						
+				radarMeters = this.add.text(0, 0, dist + " M", { font: "14px Arial", fill: "#ffffff", align: "center" });
+				radarMeters.fixedToCamera = true;
+				radarMeters.cameraOffset.setTo(cursorOffsetX - 15, 140);	
+
+				players[plr].frame = 6;
+					
+				cursorOffsetX += 60;
+			} else {				
+				console.log('dist', dist, ' groter dan ', range);
+			}
+		} else {
+			console.log('1 van deze waardes zijn 0 of undefined');
+			console.log(player.lat, player.lng, players[plr.session].lat, players[plr.session].lng);
+		}
 		
-		for(var plr in players) 
+		/*for(var plr in players) 
 		{
 			console.log(newPlayerNick + " : " + players[plr].lat + " : " + players[plr].lng);
 			
@@ -824,13 +849,13 @@ SpaceBattalion.Game.prototype = {
 				// Afstand omrekenen naar m
 				dist = dist * 1000;		
 
-				console.log('my dist', player.lat, player.lng);
-				console.log('other dist', players[plr].lat, players[plr].lng);
-				console.log(dist);
+				console.log('dist: ' + dist);
 
 				//	Als afstand kleiner dan 100 meter is
-				if(dist < range)
+				if(dist <= range)
 				{					
+					console.log('dist', dist, ' kleiner dan ', range);
+
 					// Radar cursor aanmaken
 					radarCursor = this.add.sprite(0, 0, 'radarCursor');
 					radarCursor.anchor.setTo(.5, .5);
@@ -844,10 +869,12 @@ SpaceBattalion.Game.prototype = {
 					players[plr].frame = 6;
 					
 					cursorOffsetX += 60;
+				} else {
+					console.log('dist', dist, ' groter dan ', range);
 				}
 				//console.log(players[plr].nickname + players[plr].latitude + " ");
 			}
-		}
+		}*/
 		
 		//compareGPS(players[plr.session].latitude, players[plr.session].longitude, players[plr.session].name);		
 	},
@@ -1503,12 +1530,11 @@ SpaceBattalion.Game.prototype = {
 	},
 
 	getLocation: function() {
+		console.log('getting location');
+
 		if(navigator.geolocation) {
 			navigator.geolocation.watchPosition(this.foundPosition, function(error) {
-	            if(error.code == error.PERMISSION_DENIED) {
-	                latitude = 0;
-	                longitude = 0;
-	            }
+	            console.log('OEPS', error.code);
 	        }, {enableHighAccuracy: true, timeout: 5000});
 		} else {
 			console.log('Het ophalen van uw locatie is mislukt\nGPS wordt niet ondersteund op uw smart device.');
@@ -1516,6 +1542,8 @@ SpaceBattalion.Game.prototype = {
 	},
 
 	foundPosition: function(position) {
+		console.log('position lat', position.coords.latitude, 'long', position.coords.longitude);
+
 		player.lat = position.coords.latitude;
 		player.lng = position.coords.longitude;
 
