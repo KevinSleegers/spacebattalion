@@ -44,6 +44,24 @@
     <script>
 		var socket = io.connect();
 
+		// Locatie ophalen
+		console.log('getting location');
+
+		if(navigator.geolocation) {
+			navigator.geolocation.watchPosition(foundPosition, function(error) {
+	            console.log('OEPS', error.code);
+	        }, {enableHighAccuracy: true, timeout: 5000});
+		} else {
+			console.log('Het ophalen van uw locatie is mislukt\nGPS wordt niet ondersteund op uw smart device.');
+		}
+
+		function foundPosition(position) {
+			window.lat = position.coords.latitude;
+			window.lng = position.coords.longitude;
+
+			console.log(window.lat, window.lng);
+		}
+
 		var myRoom = '';
 
 		socket.on('rooms', function(data, i) {

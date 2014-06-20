@@ -236,6 +236,20 @@ io.sockets.on('connection', function(socket){
         player.y        = player_y;
         player.angle    = player_angle;
 
+        // Check if player has chosen a different skin
+        if(Object.getOwnPropertyNames(skins).length !== 0) {
+            Object.keys(skins).forEach(function(key) {
+                if(key.indexOf(obj.sessionid) > -1) {
+                    console.log('my session id has chosen a skin');
+                    player.skin = skins[obj.sessionid];
+                } else {
+                    player.skin = 0;
+                }
+            });
+        } else {
+            player.skin = 0;
+        }
+
         players[player.session] = player;
         
         //socket.broadcast.emit('updatePlayer', players[player.session]);

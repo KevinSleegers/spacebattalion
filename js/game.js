@@ -76,7 +76,15 @@ SpaceBattalion.Game = function(game) {
 
 SpaceBattalion.Game.prototype = {
 
-	create: function() {
+	create: function() {		
+		// Stuur huidige locatie naar server
+		var updatedLocation = JSON.stringify({
+			sessionid : io.socket.sessionid,
+			lat : window.lat,
+			long : window.lng
+		});
+		socket.emit('locationUpdate', updatedLocation, myRoom);		
+
 		// Phaser advanced timing aan -> FPS
 		this.time.advancedTiming = true;
 		this.input.maxPointers = 1;
@@ -143,6 +151,9 @@ SpaceBattalion.Game.prototype = {
 		player.frame = 3;
 		player.minion = false;
 
+		player.lat = window.lat;
+		player.lng = window.lng;
+
 		// Player group instellingen
 		playerGroup = this.add.group();
 		playerGroup.add(player);
@@ -199,10 +210,8 @@ SpaceBattalion.Game.prototype = {
 
 	        for(var onlinePlayer in data) {
 	        	if(data[onlinePlayer].session.length <= 20) {
-	        		console.log('onlinePlayer lat: ' + data[onlinePlayer].lat);
-	        		console.log('onlinePlayer lng: ' + data[onlinePlayer].long);
-
 	        		console.log('Creating player', data[onlinePlayer].session);
+	        		console.log(data[onlinePlayer]);
 	            	self.createPlayer(data[onlinePlayer]);
 	            	//onlinePlayers.push(data[onlinePlayer].nickname);
 	            }
@@ -533,9 +542,7 @@ SpaceBattalion.Game.prototype = {
 	                        //self.fire();
 	                    //}
 
-	                    //if(o.z < 9.5 || o.z > 10) {
-	                    console.log(o.z);
-	                    if(o.z < 9 || o.z > 10.5) {	
+	                    if(o.z < 9.5 || o.z > 10) {	
 	                    	self.changePosition('+', o.y * 50, '+', o.x * 50, anglePlayer, 'p');
 	                    	
 	                    } else {
@@ -789,6 +796,8 @@ SpaceBattalion.Game.prototype = {
 	    // Sla gps locatie van speler op (om na te gaan of iemand anders in de buurt is)
 	    players[plr.session].lat = plr.lat; 	
 	    players[plr.session].lng = plr.long;
+
+	    console.log('new player pos', players[plr.session].lat, players[plr.session].lng);
 
 	    players[plr.session].coop = false;
 	    players[plr.session].coopPlayer = '';
@@ -1535,7 +1544,7 @@ SpaceBattalion.Game.prototype = {
 		if(navigator.geolocation) {
 			navigator.geolocation.watchPosition(this.foundPosition, function(error) {
 	            console.log('OEPS', error.code);
-	        }, {enableHighAccuracy: true, timeout: 5000});
+	        }, {enableHighAccuracy: false, timeout: 5000});
 		} else {
 			console.log('Het ophalen van uw locatie is mislukt\nGPS wordt niet ondersteund op uw smart device.');
 		}
@@ -1544,15 +1553,17 @@ SpaceBattalion.Game.prototype = {
 	foundPosition: function(position) {
 		console.log('position lat', position.coords.latitude, 'long', position.coords.longitude);
 
-		player.lat = position.coords.latitude;
-		player.lng = position.coords.longitude;
+		if(position.coords.latitude !== player.lat || position.coords.longitude !== player.lng) {
+			player.lat = position.coords.latitude;
+			player.lng = position.coords.longitude;
 
-		var updatedLocation = JSON.stringify({
-			sessionid : io.socket.sessionid,
-			lat : position.coords.latitude,
-			long : position.coords.longitude
-		});
-		socket.emit('locationUpdate', updatedLocation, myRoom);
+			var updatedLocation = JSON.stringify({
+				sessionid : io.socket.sessionid,
+				lat : position.coords.latitude,
+				long : position.coords.longitude
+			});
+			socket.emit('locationUpdate', updatedLocation, myRoom);			
+		}
 	},
 
 	// Bron : http://www.geodatasource.com/developers/javascript
