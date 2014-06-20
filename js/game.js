@@ -44,7 +44,7 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     backgroundMusic,
     shipHitSound,
 
-    range = 500,
+    range = 100,
 
     coop,
     coopMovement = false,
@@ -535,8 +535,9 @@ SpaceBattalion.Game.prototype = {
 	                    //}
 
 	                    //if(o.z < 9.5 || o.z > 10) {
+	                    console.log(o.z);
 	                    if(o.z < 9 || o.z > 10.5) {	
-	                    	self.changePosition('+', o.y * 30, '+', o.x * 30, anglePlayer, 'p');
+	                    	self.changePosition('+', o.y * 50, '+', o.x * 50, anglePlayer, 'p');
 	                    	
 	                    } else {
 	                   		// Als je telefoon vrijwel horizontaal is, stop dan beweging maar behoudt angle
@@ -722,7 +723,7 @@ SpaceBattalion.Game.prototype = {
 				console.log(dist);
 
 				//	Als afstand kleiner dan 100 meter is
-				if(dist < 100 && this.physics.arcade.distanceBetween(players[plr], player) < 100) 
+				if(dist <= range && this.physics.arcade.distanceBetween(players[plr], player) < range) 
 				{				
 					mergeIcon.visible = true;
 				}
@@ -820,17 +821,16 @@ SpaceBattalion.Game.prototype = {
 			
 			if(player.lat !== 0 && player.lng !== 0) {
 				var dist = this.distance(player.lat, player.lng, players[plr].lat, players[plr].lng, "k");
+				// Afstand omrekenen naar m
+				dist = dist * 1000;		
 
 				console.log('my dist', player.lat, player.lng);
 				console.log('other dist', players[plr].lat, players[plr].lng);
 				console.log(dist);
 
 				//	Als afstand kleiner dan 100 meter is
-				if(dist < 100)
-				{
-					// Afstand omrekenen naar m
-					dist = dist * 1000;				
-					
+				if(dist < range)
+				{					
 					// Radar cursor aanmaken
 					radarCursor = this.add.sprite(0, 0, 'radarCursor');
 					radarCursor.anchor.setTo(.5, .5);
@@ -1477,7 +1477,7 @@ SpaceBattalion.Game.prototype = {
 			dist = dist * 1000;
 
 			// Ga na of afstand binnen 'range' iss
-			//if(dist <= range && !isNaN(dist)) {
+			if(dist <= range && !isNaN(dist)) {
 				// Ga na of te vergelijken speler niet jijzelf is (je kunt niet co-oppen met jezelf :p)
 				if(playerSession != io.socket.sessionid) {
 					console.log('Distance between YOU and ' + playerSession + ' is: ' + dist.toString() + ' meters.');
@@ -1495,6 +1495,7 @@ SpaceBattalion.Game.prototype = {
 						console.log('oke, maak maar coop van');
 						newCoop(player.name, players[playerSession].name, players[playerSession].name, player.name, 'new');
 					}*/
+				}
 			} else {
 				console.log('Distance between YOU and ' + players[playerSession].name + ' (' + dist + ') is greater than the given range (' + range + ').');
 			}
