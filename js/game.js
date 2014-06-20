@@ -477,6 +477,29 @@ SpaceBattalion.Game.prototype = {
 
 			players[data.session].lat = data.lat;
 			players[data.session].lng = data.long;
+
+			var dist = this.distance(player.lat, player.lng, players[data.session].lat, players[data.session].lng, "k");
+			dist = dist * 1000;
+
+			if(dist <= range) {
+				if(radarCursor == '' || radarCursor == null) {
+					// Radar cursor aanmaken
+					radarCursor = this.add.sprite(0, 0, 'radarCursor');
+					radarCursor.anchor.setTo(.5, .5);
+					radarCursor.fixedToCamera = true;
+					radarCursor.cameraOffset.setTo(cursorOffsetX, 100);	
+						
+					radarMeters = this.add.text(0, 0, dist + " M", { font: "14px Arial", fill: "#ffffff", align: "center" });
+					radarMeters.fixedToCamera = true;
+					radarMeters.cameraOffset.setTo(cursorOffsetX - 15, 140);	
+
+					players[plr].frame = 6;
+					
+					cursorOffsetX += 60;
+				} else {
+					radarMeters.setText(dist + ' M');
+				}
+			}
 		});
 
 	    if(this.game.device.desktop) {
