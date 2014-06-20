@@ -498,7 +498,7 @@ SpaceBattalion.Game.prototype = {
 					
 					cursorOffsetX += 60;
 				} else {
-					radarMeters.setText(dist + ' M');
+					radarMeters.setText(dist.toFixed(2) + ' M');
 				}
 			}
 		});
@@ -867,7 +867,7 @@ SpaceBattalion.Game.prototype = {
 						
 					cursorOffsetX += 60;
 				} else {
-					radarMeters.setText(dist + ' M');
+					radarMeters.setText(dist.toFixed(2) + ' M');
 				}
 			} else {				
 				console.log('dist', dist, ' groter dan ', range);
