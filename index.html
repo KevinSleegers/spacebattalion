@@ -43,6 +43,7 @@
 	<script type="text/javascript" src="js/Preloader.js"></script>
     <script>
 		var socket = io.connect();
+		var gotPosition = false;
 
 		// Locatie ophalen
 		console.log('getting location');
@@ -60,6 +61,8 @@
 			window.lng = position.coords.longitude;
 
 			console.log(window.lat, window.lng);
+
+			gotPosition = true;
 		}
 
 		var myRoom = '';
@@ -704,7 +707,7 @@
 			
 			/* Start game button */
 			$('.loader').click(function(){
-				if(window.startbutton == 1)
+				if(window.startbutton == 1 && gotPosition == true)
 				{
 					$('.mainmenu').fadeOut(200,function(){$('.rooms').fadeIn(200);});
 				}
