@@ -755,7 +755,7 @@ SpaceBattalion.Game.prototype = {
 	    //players[plr.session] = game.add.sprite(plr.x, plr.y, 'otherPlayers');
 	    if(plr.skin == 'ns') {
 	    	players[plr.session] = this.add.sprite(plr.x, plr.y, 'ns');
-	    } elseif (plr.skin == 'wk') {
+	    } else if (plr.skin == 'wk') {
 	    	players[plr.session] = this.add.sprite(plr.x, plr.y, 'wk');
 	    } else {
 			players[plr.session] = this.add.sprite(plr.x, plr.y, 'player');
