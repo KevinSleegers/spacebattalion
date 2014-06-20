@@ -483,14 +483,14 @@ SpaceBattalion.Game.prototype = {
 			dist = dist * 1000;
 
 			if(dist <= range) {
-				if(radarCursor == '' || radarCursor == null) {
+				if(radarCursor == '' || radarCursor == null || typeof radarCursor == "undefined") {
 					// Radar cursor aanmaken
-					radarCursor = this.add.sprite(0, 0, 'radarCursor');
+					radarCursor = self.add.sprite(0, 0, 'radarCursor');
 					radarCursor.anchor.setTo(.5, .5);
 					radarCursor.fixedToCamera = true;
 					radarCursor.cameraOffset.setTo(cursorOffsetX, 100);	
 						
-					radarMeters = this.add.text(0, 0, dist + " M", { font: "14px Arial", fill: "#ffffff", align: "center" });
+					radarMeters = self.add.text(0, 0, dist + " M", { font: "14px Arial", fill: "#ffffff", align: "center" });
 					radarMeters.fixedToCamera = true;
 					radarMeters.cameraOffset.setTo(cursorOffsetX - 15, 140);	
 
