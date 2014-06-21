@@ -863,7 +863,7 @@ SpaceBattalion.Game.prototype = {
 					radarMeters.fixedToCamera = true;
 					radarMeters.cameraOffset.setTo(cursorOffsetX - 15, 140);	
 
-					players[plr].frame = 6;
+					players[plr.session].frame = 6;
 						
 					cursorOffsetX += 60;
 				} else {
@@ -1582,6 +1582,8 @@ SpaceBattalion.Game.prototype = {
 		console.log('position lat', position.coords.latitude, 'long', position.coords.longitude);
 
 		if(position.coords.latitude !== player.lat || position.coords.longitude !== player.lng) {
+			// also update distance meters between me and nearest player
+
 			player.lat = position.coords.latitude;
 			player.lng = position.coords.longitude;
 
