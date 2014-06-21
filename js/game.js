@@ -78,6 +78,10 @@ SpaceBattalion.Game = function(game) {
 SpaceBattalion.Game.prototype = {
 
 	create: function() {		
+		if(window.boss === io.socket.sessionid) {
+			console.log('ik ben de boss');
+		}
+
 		// Stuur huidige locatie naar server
 		var updatedLocation = JSON.stringify({
 			sessionid : io.socket.sessionid,

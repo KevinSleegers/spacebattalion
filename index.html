@@ -115,16 +115,14 @@
 
 			$('.newroom').click(function() {
 				if(adres !== '' && typeof adres !== 'undefined') {
-					var adressComplete = JSON.stringify({
+					var addressComplete = JSON.stringify({
 						address: adres,
 						lat: window.lat,
 						lng: window.lng
 					});
 
-					socket.emit('newRoom', adressComplete);
+					socket.emit('newRoom', addressComplete);
 				}
-
-				$('.rooms').find('ul').children('li:last-child span').text("1/" + maxPlayers);
 			});
 		});
 
@@ -156,10 +154,12 @@
 		});		
 
 		// Als genoeg spelers in room zitten, start dan game
-		socket.on('startGame', function(data) {
+		socket.on('startGame', function(data, boss) {
 			console.log('Game is ready to start!');
 			clearInterval(window.textInterval);
 			if(data === true) {
+				console.log('boss = ', boss);
+				window.boss = boss;
 				// Maak timer die na 5 sec game start
 				//game.time.events.add(Phaser.Timer.SECOND * 5, startGame, this);
 				console.log('Countdown timer has started');

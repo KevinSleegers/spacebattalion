@@ -50,16 +50,9 @@ io.sockets.on('connection', function(socket){
 
     socket.emit('rooms', rooms);
     
-    var ip_address = socket.handshake.address.address;
-    var remote_address = socket.handshake.address.remoteAddress;
-    
-    console.log('ip address: ', ip_address);
-    console.log('remote ip: ', remote_address);
-    
     // 1. Send already online players to client who requested the players data
     socket.on('requestPlayers', function(data, i) {    
         var myRoom = i;
-        console.log('Huidige room: ' + i);
 
         var roomPlayers = {};
         // Haal spelers op uit huidige room
@@ -67,11 +60,8 @@ io.sockets.on('connection', function(socket){
         roster.forEach(function(plr) {
             if(plr.session !== socket.id) {
                 roomPlayers[plr.session] = players[plr.session];
-                console.log('player: ' + plr.session);
             }
         });
-
-        console.log(roomPlayers);
 
         //io.sockets.socket(data).emit('onlinePlayer', players);
         io.sockets.socket(socket.id).emit('onlinePlayer', roomPlayers);
@@ -117,7 +107,6 @@ io.sockets.on('connection', function(socket){
         if(Object.getOwnPropertyNames(skins).length !== 0) {
             Object.keys(skins).forEach(function(key) {
                 if(key.indexOf(obj.sessionid) > -1) {
-                    console.log('my session id has chosen a skin');
                     player.skin = skins[obj.sessionid];
                 } else {
                     player.skin = 0;
@@ -131,7 +120,6 @@ io.sockets.on('connection', function(socket){
         if(Object.getOwnPropertyNames(tints).length !== 0) {
             Object.keys(tints).forEach(function(key) {
                 if(key.indexOf(obj.sessionid) > -1) {
-                    console.log('my session id has chosen a tint');
                     player.tint = tints[obj.sessionid];
                 } else {
                     player.tint = 0;
@@ -212,8 +200,6 @@ io.sockets.on('connection', function(socket){
             }
         }
 
-        console.log('alle NIET coop players', coopPlrs);
-
         if(Object.getOwnPropertyNames(coopPlrs).length !== 0) {
             // Send players who are NOT YET in coop mode to clientside.
             io.sockets.socket(data).emit('notCoop', coopPlrs);
@@ -257,7 +243,6 @@ io.sockets.on('connection', function(socket){
         if(Object.getOwnPropertyNames(skins).length !== 0) {
             Object.keys(skins).forEach(function(key) {
                 if(key.indexOf(obj.sessionid) > -1) {
-                    console.log('my session id has chosen a skin');
                     player.skin = skins[obj.sessionid];
                 } else {
                     player.skin = 0;
@@ -360,7 +345,12 @@ io.sockets.on('connection', function(socket){
 
             if(io.sockets.clients(data).length === maxPlayers) {
                 console.log('Max Players in room, START GAME');
-                io.sockets.in(data).emit('startGame', true);
+
+                // Choose random boss from players in room
+                var randNumber = Math.floor(Math.random() * io.sockets.clients(data).length);
+                var boss = io.sockets.clients(data)[randNumber].session;
+
+                io.sockets.in(data).emit('startGame', true, boss);
             }
 
             rooms[data].players = io.sockets.clients(data).length;
@@ -373,14 +363,10 @@ io.sockets.on('connection', function(socket){
 
     socket.on('skin', function(data) {
         skins[socket.id] = data;
-
-        console.log(skins);
     });
 
     socket.on('tint', function(data) {
         tints[socket.id] = data;
-
-        console.log(tints);
     });
 
     socket.on('disconnect', function() {
@@ -389,8 +375,6 @@ io.sockets.on('connection', function(socket){
 
         // delete player from other clients
         socket.broadcast.emit('removePlayer', socket.id);
-        
-        console.log('player deleted: ', socket.id);
     });
 
     function randName() {
