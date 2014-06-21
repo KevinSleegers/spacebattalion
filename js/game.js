@@ -494,7 +494,7 @@ SpaceBattalion.Game.prototype = {
 					radarMeters.fixedToCamera = true;
 					radarMeters.cameraOffset.setTo(cursorOffsetX - 15, 140);	
 
-					players[plr].frame = 6;
+					players[data.session].frame = 6;
 					
 					cursorOffsetX += 60;
 				} else {
@@ -1582,10 +1582,40 @@ SpaceBattalion.Game.prototype = {
 		console.log('position lat', position.coords.latitude, 'long', position.coords.longitude);
 
 		if(position.coords.latitude !== player.lat || position.coords.longitude !== player.lng) {
-			// also update distance meters between me and nearest player
-
 			player.lat = position.coords.latitude;
 			player.lng = position.coords.longitude;
+			
+			// Vergelijk opnieuw afstand tussen andere spelers en mijzelef
+			for(var plr in players) {
+				var dist = this.distance(player.lat, player.lng, players[plr.session].lat, players[plr.session].lng, "k");
+				dist = dist * 1000;
+
+				console.log('distance tussen mijzelf en andere: ' + dist);
+
+				if(dist <= range) {
+					console.log('dist', dist, 'kleiner dan', range);
+
+					if(radarCursor == '' || radarCursor == null || typeof radarCursor == "undefined") {
+						// Radar cursor aanmaken
+						radarCursor = this.add.sprite(0, 0, 'radarCursor');
+						radarCursor.anchor.setTo(.5, .5);
+						radarCursor.fixedToCamera = true;
+						radarCursor.cameraOffset.setTo(cursorOffsetX, 100);	
+								
+						radarMeters = this.add.text(0, 0, dist + " M", { font: "14px Arial", fill: "#ffffff", align: "center" });
+						radarMeters.fixedToCamera = true;
+						radarMeters.cameraOffset.setTo(cursorOffsetX - 15, 140);	
+
+						players[plr.session].frame = 6;
+							
+						cursorOffsetX += 60;
+					} else {
+						radarMeters.setText(dist.toFixed(2) + ' M');
+					}
+				} else {				
+					console.log('dist', dist, ' groter dan ', range);
+				}
+			}
 
 			var updatedLocation = JSON.stringify({
 				sessionid : io.socket.sessionid,
