@@ -331,9 +331,13 @@ io.sockets.on('connection', function(socket){
     });
 
     socket.on('newRoom', function(data) {
+        var obj = JSON.parse(data);        
+
         // Voeg nieuwe room toe aan rooms
         var newRoom     = {};
-        newRoom.name    = data;
+        newRoom.name    = data.adres;
+        newRoom.lat     = data.lat;
+        newRoom.lng     = data.lng;
         newRoom.players = io.sockets.clients(room).length;
         newRoom.max     = maxPlayers;
 

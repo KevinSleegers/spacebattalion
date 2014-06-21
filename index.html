@@ -107,8 +107,13 @@
 
 			$('.newroom').click(function() {
 				if(adres !== '' && typeof adres !== 'undefined') {
-					socket.emit('newRoom', adres);
-					console.log('newRoom!');
+					var adresCompleet = JSON.stringify({
+						adres: adres,
+						lat: window.lat,
+						lng: window.lng
+					});
+
+					socket.emit('newRoom', adresCompleet);
 				}
 
 				$('.rooms').find('ul').children('li:last-child span').text("1/" + maxPlayers);
