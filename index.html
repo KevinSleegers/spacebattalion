@@ -72,6 +72,7 @@
 			geocoder.geocode({"latLng":latlng},function(data,status){			 
 				if(status == google.maps.GeocoderStatus.OK){				 
 					adres = data[1].formatted_address;
+					console.log(adres);
 				}			 
 			});
 		}
@@ -107,13 +108,13 @@
 
 			$('.newroom').click(function() {
 				if(adres !== '' && typeof adres !== 'undefined') {
-					var adresCompleet = JSON.stringify({
-						adres: adres,
+					var adressComplete = JSON.stringify({
+						address: adres,
 						lat: window.lat,
 						lng: window.lng
 					});
 
-					socket.emit('newRoom', adresCompleet);
+					socket.emit('newRoom', adressComplete);
 				}
 
 				$('.rooms').find('ul').children('li:last-child span').text("1/" + maxPlayers);
