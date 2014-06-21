@@ -1589,7 +1589,9 @@ SpaceBattalion.Game.prototype = {
 			
 			// Vergelijk opnieuw afstand tussen andere spelers en mijzelef
 			for(var plr in players) {
-				var dist = this.distance(player.lat, player.lng, players[plr.session].lat, players[plr.session].lng, "k");
+				console.log(players[plr]);
+
+				var dist = this.distance(player.lat, player.lng, players[plr].lat, players[plr].lng, "k");
 				dist = dist * 1000;
 
 				console.log('distance tussen mijzelf en andere: ' + dist);
