@@ -778,6 +778,7 @@ SpaceBattalion.Game.prototype = {
 
 	createPlayer: function(plr) {
 		console.log('skin', plr.skin);
+		console.log('tint', plr.tint);
 
 		// new player variables
 	    var newSession = plr.session;
@@ -793,6 +794,10 @@ SpaceBattalion.Game.prototype = {
 	    	players[plr.session] = this.add.sprite(plr.x, plr.y, 'wk');
 	    } else {
 			players[plr.session] = this.add.sprite(plr.x, plr.y, 'player');
+		}
+
+		if(plr.tint !== 0) {
+			players[plr.session].tint = plr.tint;
 		}
 
 	    // configurations for new player

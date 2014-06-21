@@ -507,14 +507,14 @@
                     </div>
                     <div class="colors">
                     	<div class="wrap">
-                        	<div class="item"><div style="background-color:transparent;"></div><span class="active"></span></div>
-                            <div class="item"><div style="background-color:#c0c0c0;"></div></div>
-                            <div class="item"><div style="background-color:#2a2a2a;"></div></div>
-                            <div class="item"><div style="background-color:#c0c0c0;"></div></div>
-                            <div class="item"><div style="background-color:#ff0000;"></div></div>
-                            <div class="item"><div style="background-color:#2a2a2a;"></div></div>
-                            <div class="item"><div style="background-color:#c0c0c0;"></div></div>
-                            <div class="item"><div style="background-color:#ff0000;"></div></div>
+                        	<div class="item" data-tint="0"><div style="background-color:transparent;"></div><span class="active"></span></div>
+                            <div class="item" data-tint="0xc0c0c0"><div style="background-color:#c0c0c0;"></div></div>
+                            <div class="item" data-tint="0x2a2a2a"><div style="background-color:#2a2a2a;"></div></div>
+                            <div class="item" data-tint="0xc0c0c0"><div style="background-color:#c0c0c0;"></div></div>
+                            <div class="item" data-tint="0xff0000"><div style="background-color:#ff0000;"></div></div>
+                            <div class="item" data-tint="0x2a2a2a"><div style="background-color:#2a2a2a;"></div></div>
+                            <div class="item" data-tint="0xc0c0c0"><div style="background-color:#c0c0c0;"></div></div>
+                            <div class="item" data-tint="0xff0000"><div style="background-color:#ff0000;"></div></div>
                         </div>
                         <h2>Color Pallets</h2>
                     </div>
@@ -762,6 +762,8 @@
 					console.log('no no');
 					$('.inventory .inv .colors .wrap').find('.active').remove();
 					$(this).append('<span class="active"></span>');
+
+					socket.emit('tint', $(this).attr('data-tint'));
 				}
 			});
 		 

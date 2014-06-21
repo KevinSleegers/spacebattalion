@@ -8,7 +8,8 @@ var express = require('express'),
     room = '',
     rooms = {},
     maxPlayers = 2;
-    skins = {};
+    skins = {},
+    tints = {};
 
 server.listen(process.env.PORT || 5000);
 
@@ -124,6 +125,20 @@ io.sockets.on('connection', function(socket){
             });
         } else {
             player.skin = 0;
+        }
+
+        // Check if player has chosen a different tint
+        if(Object.getOwnPropertyNames(tints).length !== 0) {
+            Object.keys(tints).forEach(function(key) {
+                if(key.indexOf(obj.sessionid) > -1) {
+                    console.log('my session id has chosen a tint');
+                    player.tint = tints[obj.sessionid];
+                } else {
+                    player.tint = 0;
+                }
+            });
+        } else {
+            player.tint = 0;
         }
 
         // Add player to 'players' array
@@ -358,6 +373,12 @@ io.sockets.on('connection', function(socket){
         skins[socket.id] = data;
 
         console.log(skins);
+    });
+
+    socket.on('tint', function(data) {
+        tints[socket.id] = data;
+
+        console.log(tints);
     });
 
     socket.on('disconnect', function() {
