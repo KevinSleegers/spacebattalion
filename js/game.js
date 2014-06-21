@@ -154,6 +154,10 @@ SpaceBattalion.Game.prototype = {
 		player.frame = 3;
 		player.minion = false;
 
+		if(typeof window.tint !== "undefined" && window.tint !== 0) {
+			player.tint = window.tint;
+		}
+
 		player.lat = window.lat;
 		player.lng = window.lng;
 

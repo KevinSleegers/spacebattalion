@@ -761,7 +761,8 @@
 				{
 					console.log('no no');
 					$('.inventory .inv .colors .wrap').find('.active').remove();
-					$(this).append('<span class="active"></span>');
+					$(this).append('<span class="active"></span>');					
+					window.tint = $(this).attr('data-tint');
 
 					socket.emit('tint', $(this).attr('data-tint'));
 				}
