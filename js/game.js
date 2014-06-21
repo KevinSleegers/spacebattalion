@@ -791,19 +791,6 @@ SpaceBattalion.Game.prototype = {
 	    var newPlayerY = plr.y;
 	    var newPlayerAngle = plr.angle;
 
-	    //players[plr.session] = game.add.sprite(plr.x, plr.y, 'otherPlayers');
-	    if(plr.skin == 'ns') {
-	    	players[plr.session] = this.add.sprite(plr.x, plr.y, 'ns');
-	    } else if (plr.skin == 'wk') {
-	    	players[plr.session] = this.add.sprite(plr.x, plr.y, 'wk');
-	    } else {
-			players[plr.session] = this.add.sprite(plr.x, plr.y, 'player');
-		}
-
-		if(plr.tint !== 0) {
-			players[plr.session].tint = plr.tint;
-		}
-
 	    // configurations for new player
 	    players[plr.session].anchor.setTo(.5,.5);
 	    //players[plr.session].animations.add('fly'); 
@@ -833,6 +820,19 @@ SpaceBattalion.Game.prototype = {
 	    players[plr.session].lng = plr.long;
 
 	    console.log('new player pos', players[plr.session].lat, players[plr.session].lng);
+
+	    //players[plr.session] = game.add.sprite(plr.x, plr.y, 'otherPlayers');
+	    if(plr.skin == 'ns') {
+	    	players[plr.session] = this.add.sprite(plr.x, plr.y, 'ns');
+	    } else if (plr.skin == 'wk') {
+	    	players[plr.session] = this.add.sprite(plr.x, plr.y, 'wk');
+	    } else {
+			players[plr.session] = this.add.sprite(plr.x, plr.y, 'player');
+		}
+
+		if(plr.tint !== 0) {
+			players[plr.session].tint = plr.tint;
+		}
 
 	    players[plr.session].coop = false;
 	    players[plr.session].coopPlayer = '';
