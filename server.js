@@ -307,6 +307,12 @@ io.sockets.on('connection', function(socket){
         console.log('Removed dead player: ', data);
     });
 
+    socket.on('playerRevive', function(data, i) {
+        var myRoom = i;
+
+        socket.broadcast.to(myRoom).emit('playerAlive', data);
+    });
+
     socket.on('playerMinion', function(data, i) {
         var myRoom = i;
         players[data].minion = true;
