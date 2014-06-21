@@ -86,6 +86,8 @@ SpaceBattalion.Game.prototype = {
 		});
 		socket.emit('locationUpdate', updatedLocation, myRoom);		
 
+		this.stage.disableVisibilityChange = true;
+
 		// Phaser advanced timing aan -> FPS
 		this.time.advancedTiming = true;
 		this.input.maxPointers = 1;

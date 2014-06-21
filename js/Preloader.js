@@ -61,6 +61,8 @@ SpaceBattalion.Preloader.prototype = {
 
 	create: function() {
 		this.preloadBar.cropEnabled = false;
+
+		this.stage.disableVisibilityChange = true;
 	},
 
 	update: function() {
