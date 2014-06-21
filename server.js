@@ -48,7 +48,7 @@ io.sockets.on('connection', function(socket){
         }  
     }*/
 
-    socket.emit('rooms', io.rooms, maxPlayers);
+    socket.emit('rooms', rooms);
     
     var ip_address = socket.handshake.address.address;
     var remote_address = socket.handshake.address.remoteAddress;
@@ -338,7 +338,7 @@ io.sockets.on('connection', function(socket){
         newRoom.name    = obj.address;
         newRoom.lat     = obj.lat;
         newRoom.lng     = obj.lng;
-        newRoom.players = io.sockets.clients(room).length;
+        newRoom.players = io.sockets.clients(obj.address).length;
         newRoom.max     = maxPlayers;
 
         rooms[newRoom.name] = newRoom;
@@ -363,7 +363,7 @@ io.sockets.on('connection', function(socket){
                 io.sockets.in(data).emit('startGame', true);
             }
 
-            rooms[data].players = io.sockets.clients(room).length;
+            rooms[data].players = io.sockets.clients(data).length;
 
             io.sockets.emit('roomUpdate', rooms);
         } else {

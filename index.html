@@ -82,9 +82,7 @@
 
 		var myRoom = '';
 
-		socket.on('rooms', function(data, i) {
-			var maxPlayers = i;
-
+		socket.on('rooms', function(data) {
 			if(data == '') {
 				// Voor nu een span ipv een li omdat de li's klikbaar zijn
 				$('.rooms').find('ul').empty().append("<span>There are no rooms available, create a new room to play.</span>");
@@ -93,12 +91,16 @@
 				$('.rooms').find('ul').empty();
 				$.each(data, function(key, value) {
 					if(key != '') {
-						console.log('key val: ', key);
-						console.log('val: ', value);
-						// console.log(value);
-						// console.log(value.length + "/4");
+						// calc dist
+						var dist = distance(window.lat, window.lng, value.lat, value.lng, "M");
 
-						$('.rooms').find('ul').append("<li data-room='" + key + "'>" + key.replace(/\//g, '') + "<span>Players: " + value.length + "/" + i + "</span></li>");
+						if(dist < 1) {
+							var newDist = Math.round((dist * 100)) + 'cm';
+						} else {
+							var newDist = dist.toFixed(2) + 'm';
+						}
+
+						$('.rooms').find('ul').append("<li data-room='" + value.name + "'>" + value.name.replace(/\//g, '') + " ( " + newDist + " ) <span>Players: " + value.players + "/" + value.max + "</span></li>");
 					}
 				});
 			}
@@ -201,10 +203,20 @@
 			if(data !== '') {
 				$('.rooms').find('ul').empty();
 
-				for(var r in data) {
-					// data[r].name, data[r].players, data[r].max
-					$('.rooms').find('ul').append("<li data-room='/" + data[r].name + "'>" + data[r].name + "<span>Players: " + data[r].players + "/" + data[r].max + "</span></li>");
-				}
+				$.each(data, function(key, value) {
+					if(key != '') {
+						// calc dist
+						var dist = distance(window.lat, window.lng, value.lat, value.lng, "M");
+
+						if(dist < 1) {
+							var newDist = Math.round((dist * 100)) + 'cm';
+						} else {
+							var newDist = dist.toFixed(2) + 'm';
+						}
+
+						$('.rooms').find('ul').append("<li data-room='" + value.name + "'>" + value.name.replace(/\//g, '') + " ( " + newDist + " ) <span>Players: " + value.players + "/" + value.max + "</span></li>");
+					}
+				});
 
 				$('.rooms li').click(function() {
 					console.log('join room: ' + $(this).attr('data-room'));
@@ -240,6 +252,29 @@
 
 		    return text;
 		}	
+
+		// Bron : http://www.geodatasource.com/developers/javascript
+		function distance(lat1, lon1, lat2, lon2, unit) {
+			var radlat1 = Math.PI * lat1/180;
+		    var radlat2 = Math.PI * lat2/180;
+		    var radlon1 = Math.PI * lon1/180;
+		    var radlon2 = Math.PI * lon2/180;
+
+		    var theta = lon1-lon2;
+
+		    var radtheta = Math.PI * theta/180;
+
+		    var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+		    dist = Math.acos(dist);
+		    dist = dist * 180/Math.PI;
+		    dist = dist * 60 * 1.1515;
+
+		    if (unit=="K") { dist = dist * 1.609344 };
+		    if (unit=="N") { dist = dist * 0.8684 };
+		    if (unit=="M") { dist = ((dist * 1.609344) * 1000) };
+		    return dist;
+		}
+
 	</script>
 	<script type="text/javascript" src="js/MainMenu.js"></script>
 	<script type="text/javascript" src="js/game.js"></script>    
