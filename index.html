@@ -710,6 +710,8 @@
 				if(window.startbutton == 1 && gotPosition == true)
 				{
 					$('.mainmenu').fadeOut(200,function(){$('.rooms').fadeIn(200);});
+				} else if(gotPosition == false) {
+					alert('Het ophalen van je locatie is mislukt.\nJe locatie is nodig om te spelen.');
 				}
 			});
 			
