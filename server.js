@@ -330,12 +330,10 @@ io.sockets.on('connection', function(socket){
         io.sockets.in(myRoom).emit('minionPlayer', data);
     });
 
-    socket.on('newRoom', function() {
-        room = randName();
-
+    socket.on('newRoom', function(data) {
         // Voeg nieuwe room toe aan rooms
         var newRoom     = {};
-        newRoom.name    = room;
+        newRoom.name    = data;
         newRoom.players = io.sockets.clients(room).length;
         newRoom.max     = maxPlayers;
 

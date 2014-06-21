@@ -41,9 +41,11 @@
 	<script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
 	<script type="text/javascript" src="js/Boot.js"></script>
 	<script type="text/javascript" src="js/Preloader.js"></script>
+	<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
     <script>
 		var socket = io.connect();
 		var gotPosition = false;
+		var adres = '';
 
 		// Locatie ophalen
 		console.log('getting location');
@@ -63,6 +65,15 @@
 			console.log(window.lat, window.lng);
 
 			gotPosition = true;
+
+			var geocoder = new google.maps.Geocoder();
+			var latlng = new google.maps.LatLng(window.lat, window.lng);
+ 
+			geocoder.geocode({"latLng":latlng},function(data,status){			 
+				if(status == google.maps.GeocoderStatus.OK){				 
+					adres = data[1].formatted_address;
+				}			 
+			});
 		}
 
 		var myRoom = '';
@@ -95,8 +106,10 @@
 			});
 
 			$('.newroom').click(function() {
-				socket.emit('newRoom');
-				console.log('newRoom!');
+				if(adres !== '' && typeof adres !== 'undefined') {
+					socket.emit('newRoom', adres);
+					console.log('newRoom!');
+				}
 
 				$('.rooms').find('ul').children('li:last-child span').text("1/" + maxPlayers);
 			});
