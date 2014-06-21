@@ -370,7 +370,7 @@ io.sockets.on('connection', function(socket){
         }
     });
 
-    socket.on('firstLocation', function(data)) {
+    socket.on('firstLocation', function(data) {
         var obj = JSON.parse(data);
 
         var location = {};
