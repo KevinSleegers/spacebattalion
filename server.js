@@ -381,7 +381,7 @@ io.sockets.on('connection', function(socket){
         locations[socket.id] = location;
 
         console.log(locations);
-    }
+    });
 
     socket.on('skin', function(data) {
         skins[socket.id] = data;
