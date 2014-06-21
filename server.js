@@ -8,8 +8,7 @@ var express = require('express'),
     room = '',
     rooms = {},
     maxPlayers = 2;
-    skins = {}
-    locations = {};
+    skins = {};
 
 server.listen(process.env.PORT || 5000);
 
@@ -91,23 +90,8 @@ io.sockets.on('connection', function(socket){
         var player_nick = obj.nickname;
         var player_x = obj.x;
         var player_y = obj.y;
-
-        // Check if player has location
-        if(Object.getOwnPropertyNames(locations).length !== 0) {
-            Object.keys(locations).forEach(function(key) {
-                if(key.indexOf(obj.sessionid) > -1) {
-                    var player_lat = locations[obj.sessionid].lat;
-                    var player_long = locations[obj.sessionid].lng;
-                } else {
-                    var player_lat = obj.lat;
-                    var player_long = obj.long;
-                }
-            });
-        } else {        
-            var player_lat = obj.lat;
-            var player_long = obj.long;
-        }
-
+        var player_lat = obj.lat;
+        var player_long = obj.long;
         var player_angle = obj.angle;
 
         if(typeof player_lat === 'undefined') {
@@ -368,19 +352,6 @@ io.sockets.on('connection', function(socket){
         } else {
             io.sockets.socket(socket.id).emit('roomFull');
         }
-    });
-
-    socket.on('firstLocation', function(data) {
-        var obj = JSON.parse(data);
-
-        var location = {};
-
-        location.lat = obj.lat;
-        location.lng = obj.lng;
-
-        locations[socket.id] = location;
-
-        console.log(locations);
     });
 
     socket.on('skin', function(data) {
