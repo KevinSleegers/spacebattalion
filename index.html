@@ -62,6 +62,13 @@
 
 			console.log(window.lat, window.lng);
 
+			var location = JSON.stringify({
+				lat : window.lat,
+				lng : window.lng
+			});
+
+			socket.emit('firstLocation', location);
+
 			gotPosition = true;
 		}
 
