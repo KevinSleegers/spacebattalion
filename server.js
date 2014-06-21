@@ -335,9 +335,9 @@ io.sockets.on('connection', function(socket){
 
         // Voeg nieuwe room toe aan rooms
         var newRoom     = {};
-        newRoom.name    = data.adress;
-        newRoom.lat     = data.lat;
-        newRoom.lng     = data.lng;
+        newRoom.name    = obj.address;
+        newRoom.lat     = obj.lat;
+        newRoom.lng     = obj.lng;
         newRoom.players = io.sockets.clients(room).length;
         newRoom.max     = maxPlayers;
 

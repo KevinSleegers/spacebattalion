@@ -73,6 +73,9 @@
 				if(status == google.maps.GeocoderStatus.OK){				 
 					adres = data[1].formatted_address;
 					console.log(adres);
+				} else {
+					adres = randName();
+					console.log(adres);
 				}			 
 			});
 		}
@@ -90,6 +93,8 @@
 				$('.rooms').find('ul').empty();
 				$.each(data, function(key, value) {
 					if(key != '') {
+						console.log('key val: ', key);
+						console.log('val: ', value);
 						// console.log(value);
 						// console.log(value.length + "/4");
 
@@ -225,6 +230,16 @@
 			$('.overlay').fadeOut(200);
 			window.game.state.start('Game');			
 		}
+
+		function randName() {
+			var text = "";
+		    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+		    for( var i=0; i < 10; i++ )
+		        text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+		    return text;
+		}	
 	</script>
 	<script type="text/javascript" src="js/MainMenu.js"></script>
 	<script type="text/javascript" src="js/game.js"></script>    
