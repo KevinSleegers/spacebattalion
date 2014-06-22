@@ -53,7 +53,8 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     logging = true,
     bounds = 2000,
     friendlyFire = true,
-    deadTimer;
+    deadTimer,
+    revived = 0;
 
 SpaceBattalion.Game = function(game) {
 	this.game;		//	a reference to the currently running game
@@ -410,21 +411,35 @@ SpaceBattalion.Game.prototype = {
 	    	} else {
 	    		players[data].damage(10);
 
+	    		var dist = self.distance(player.lat, player.lng, players[data].lat, players[data].lng, "M");
+
 	    		if(players[data].minion === false) { 
 
 	    			if(players[data].health <= 70 && players[data].health > 30) {
-		        		players[data].frame = 10;
+	    				players[data].frame = 10;
 
-		    			setTimeout(function() {
-		    				players[data].frame = 1;
-		    			}, 100);
+	    				if(dist <= range) {
+	    					setTimeout(function() {
+	    						players[data].frame = 7;
+	    					}, 100);
+ 	    				} else {
+			    			setTimeout(function() {
+			    				players[data].frame = 1;
+			    			}, 100);
+		    			}
 						//player.tint = 0xFF9933;				
 		        	} else if(players[data].health <= 30 && players[data].health > 0) {
 		        		players[data].frame = 10;
 
-		    			setTimeout(function() {
-		    				players[data].frame = 2;
-		    			}, 100);
+		    			if(dist <= range) {
+		    				setTimeout(function() {
+		    					players[data].frame = 8;
+		    				}, 100);
+		    			} else {
+		    				setTimeout(function() {
+		    					players[data].frame = 2;
+		    				}, 100);
+		    			}
 						//player.tint = 0xFF3300;
 					} else if(players[data].health <= 0) {		
 		    			players[data].frame = 10;
@@ -798,7 +813,7 @@ SpaceBattalion.Game.prototype = {
 				var dist = this.distance(player.lat, player.lng, players[plr].lat, players[plr].lng, "M");
 
 				//	Als afstand kleiner dan 100 meter is
-				if(dist <= range && this.physics.arcade.distanceBetween(players[plr], player) < range && player.minion === false && players[plr].minion === false) 
+				if(dist <= range && this.physics.arcade.distanceBetween(players[plr], player) < range && player.minion === false && players[plr].minion === false && players[plr].health > 0 && player.health > 0) 
 				{				
 					mergeIcon.visible = true;
 				}
@@ -810,7 +825,7 @@ SpaceBattalion.Game.prototype = {
 			}
 
 			// Player revived andere player
-			if(player.health === 0 && player.minion === false) {
+			if(player.health === 0 && player.minion === false && revived === 0) {
 				this.physics.arcade.overlap(players[plr], player, this.revivePlayer, null, this);
 			}
 		}
@@ -1598,6 +1613,8 @@ SpaceBattalion.Game.prototype = {
 		myPlr.allowControls = true;
 
 		socket.emit('playerRevive', myPlr.name, myRoom);
+
+		revived++;
 	},
 
 	diagonalSpeed: function(speed) {
