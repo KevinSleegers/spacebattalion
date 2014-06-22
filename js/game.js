@@ -1540,7 +1540,7 @@ SpaceBattalion.Game.prototype = {
 				       	player.move = true;
 				       	player.shoot = true;
 				       	player.enableBody = true;
-				       	//self.camera.follow(player, Phaser.Camera.FOLLOW_TOPDOWN);	
+				       	this.camera.follow(player, Phaser.Camera.FOLLOW_TOPDOWN);	
 
 				       	Object.keys(coopPlayers).forEach(function(key2) {
 		        			if(key2.indexOf(key) > -1) {
