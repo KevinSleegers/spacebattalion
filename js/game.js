@@ -1533,16 +1533,14 @@ SpaceBattalion.Game.prototype = {
 				    if(key.indexOf(io.socket.sessionid) > -1) {
 
 				       	coopPlayers[key].kill();
+				    	coopMovement = false;
+				       	player.coop = false;
 				       	player.visible = true;
 				       	player.allowControls = true;
 				       	player.move = true;
 				       	player.shoot = true;
 				       	player.enableBody = true;
-				       	self.camera.follow(player, Phaser.Camera.FOLLOW_TOPDOWN);	
-
-				       	coopMovement = false;
-
-				       	player.coop = false;
+				       	//self.camera.follow(player, Phaser.Camera.FOLLOW_TOPDOWN);	
 
 				       	Object.keys(coopPlayers).forEach(function(key2) {
 		        			if(key2.indexOf(key) > -1) {
