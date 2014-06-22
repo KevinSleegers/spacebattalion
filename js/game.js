@@ -809,9 +809,12 @@ SpaceBattalion.Game.prototype = {
 				var dist = this.distance(player.lat, player.lng, players[plr].lat, players[plr].lng, "M");
 
 				//	Als afstand kleiner dan 100 meter is
-				if(dist <= range && this.physics.arcade.distanceBetween(players[plr], player) < range && player.minion === false && players[plr].minion === false && players[plr].health > 0 && player.health > 0) 
+				if(dist <= range && this.physics.arcade.distanceBetween(players[plr], player) < range && player.minion === false && players[plr].minion === false && players[plr].health > 0 && player.health > 0 && player.coop === false && players[plr].coop === false) 
 				{				
 					mergeIcon.visible = true;
+
+	    			mergeIcon.inputEnabled = true;
+	    			mergeIcon.events.onInputDown.add(this.mergePlayers, this);
 				}
 				else
 				{
@@ -893,9 +896,6 @@ SpaceBattalion.Game.prototype = {
 
 	    players[plr.session].coop = false;
 	    players[plr.session].coopPlayer = '';
-
-	    players[plr.session].inputEnabled = true;
-	    players[plr.session].events.onInputDown.add(this.clickedPlayer, this);
 
 	    // Ga na of speler in co-op mode is, zo ja 'hide' deze speler dan
 	    if(typeof plr.coop !== "undefined" && plr.coop === true) {
@@ -1321,8 +1321,31 @@ SpaceBattalion.Game.prototype = {
 		}*/
 	},
 
-	clickedPlayer: function(event, sprite) {
-		this.compareGPS(players[event.name].lat, players[event.name].lng, players[event.name].name);
+	mergePlayers: function(event, sprite) {
+		var playerFound = 0;
+
+		// Pak alleen eerste player uit for loop
+		if(playerFound == 0) {
+			for(var plr in players) {
+				if(this.physics.arcade.distanceBetween(players[plr], player) <= range && playerFound == 0) {
+					// Ga na of jijzelf nog niet in co-op bent
+					if(player.coop === false) {
+						console.log('Ik ben nog niet in co-op modus');
+						if(players[plr].coop === false) {
+							console.log(players[plr].name + ' is ook nog niet in co-op modus');
+
+							this.createCoop(player.name, players[plr].name, players[plr].name, player.name, '', '', '', 'new');
+						}
+					}
+					/*if(player.coop === false && players[playerSession].coop === false) {
+						console.log('oke, maak maar coop van');
+						newCoop(player.name, players[playerSession].name, players[playerSession].name, player.name, 'new');
+					}*/
+					playerFound++;
+				}
+			}
+		}
+		//this.compareGPS(players[event.name].lat, players[event.name].lng, players[event.name].name);
 	},
 
 	tapScreen: function(pointer) {
