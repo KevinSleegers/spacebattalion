@@ -171,6 +171,13 @@ SpaceBattalion.Game.prototype = {
 		player.lat = window.lat;
 		player.lng = window.lng;
 
+		if(isBoss === true) {
+			player.visible = false;
+			player.enableBody = false;
+			player.alive = false;
+			player.exists = false;
+		}
+
 		// Player group instellingen
 		playerGroup = this.add.group();
 		playerGroup.add(player);
