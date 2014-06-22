@@ -256,23 +256,34 @@ SpaceBattalion.Game.prototype = {
 	    	}
 	    });
 
-	    // Stuur nieuwe speler door naar server
-		var sendBoss = false;
-		
-		if(!isBoss)
-		{	sendBoss = true;
-			
+	    // Stuur nieuwe speler door naar server		
+		if(playerType == boss)
+		{	
+			var playerData = JSON.stringify({
+				sessionid : io.socket.sessionid,
+				nickname : playerName,
+				x : this.world.centerX,
+				y : this.world.centerY,
+				lat : player.lat,
+				long : player.lng,
+				angle : 0,
+				isboss : true
+			});			
 		}
-	    var playerData = JSON.stringify({
-	        sessionid : io.socket.sessionid,
-	        nickname : playerName,
-	        x : this.world.centerX,
-	        y : this.world.centerY,
-	        lat : player.lat,
-	        long : player.lng,
-	        angle : 0,
-			isboss : sendBoss
-	    });
+		else
+		{
+			var playerData = JSON.stringify({
+				sessionid : io.socket.sessionid,
+				nickname : playerName,
+				x : this.world.centerX,
+				y : this.world.centerY,
+				lat : player.lat,
+				long : player.lng,
+				angle : 0,
+				isboss : false
+			});				
+		}
+
 	    socket.emit('newPlayer', playerData, myRoom);
 
 	    // Haal nieuwe speler op van server
@@ -1117,10 +1128,13 @@ SpaceBattalion.Game.prototype = {
 		}
 	},
 
-	updatePlayer: function(plr) {		
-		if(!isBoss) {
-			boss.x = plr.x;
-			boss.y = plr.y;
+	updatePlayer: function(plr) {
+		console.dir(plr);
+		//console.log("Speler is een boss? : " + plr.boss);
+		
+		if(plr.boss == true) {
+			boss.x = players[plr.session].x;
+			boss.y = players[plr.session].y;
 			boss.angle = plr.angle;
 		}
 		else if(plr.nickname === 'coop') {
@@ -1401,21 +1415,30 @@ SpaceBattalion.Game.prototype = {
 			    
 				this.world.bringToTop(playerGroup); 
 				
-				var sendBoss = false;
-				
-				if(!isBoss)
-				{	sendBoss = true;
-					
-				}				
+				if(playerType == boss)
+				{
+					var playerPosition = JSON.stringify({
+						sessionid: io.socket.sessionid,
+						nickname: playerName,
+						x : playerType.x,
+						y : playerType.y,
+						angle : playerType.angle,
+						isboss : true
+					});   					
+				}	
+				else				
+				{
+					var playerPosition = JSON.stringify({
+						sessionid: io.socket.sessionid,
+						nickname: playerName,
+						x : playerType.x,
+						y : playerType.y,
+						angle : playerType.angle,
+						isboss : false
+					});  				
+				}
 		                    
-		        var playerPosition = JSON.stringify({
-		            sessionid: io.socket.sessionid,
-		            nickname: playerName,
-		            x : playerType.x,
-		            y : playerType.y,
-		            angle : playerType.angle,
-					isBoss : sendBoss
-		        });   
+
 
 		        // Check if difference between x or y values is larger than 1
 		        if(this.diffNumbers(playerType.x, oldX) >= 1 || this.diffNumbers(playerType.y, oldY) >= 1 ) {
