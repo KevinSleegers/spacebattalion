@@ -750,9 +750,8 @@
 
 				//$('.overlay').fadeOut(200);
 			});
-			$('.mutebutton').click(function(){
-				
-				/*if(game.music.isPlaying) {
+			$('.mutebutton').click(function(){				
+				if(game.music.isPlaying) {
 					game.music.pause();
 					SpaceBattalion.music = false;
 					$(this).find('img').attr('src','images/mute.jpg');
@@ -760,7 +759,7 @@
 					game.music.resume();
 					SpaceBattalion.music = true;
 					$(this).find('img').attr('src','images/sound.jpg');
-				}*/	
+				}
 			});
 			$('.shopbutton').click(function(){});
 			
@@ -769,7 +768,7 @@
 				if(window.startbutton == 1 && gotPosition == true)
 				{
 					$('.mainmenu').fadeOut(200,function(){$('.rooms').fadeIn(200);});
-				} else if(gotPosition == false) {
+				} else if(window.startbutton == 1 && gotPosition == false) {
 					alert('Het ophalen van je locatie is mislukt.\nJe locatie is nodig om te kunnen spelen.');
 				}
 			});

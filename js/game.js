@@ -122,7 +122,7 @@ SpaceBattalion.Game.prototype = {
 		// Achtergrond muziek en andere geluiden
 		this.backgroundMusic = this.add.audio('backgroundMusic');
 		if(SpaceBattalion.music) {
-			//this.backgroundMusic.play('', 0, 1, true);
+			this.backgroundMusic.play('', 0, 1, true);
 		}
 
 		this.shipHitSound 	= this.add.audio('shipHitSound');
