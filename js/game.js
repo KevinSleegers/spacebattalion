@@ -495,6 +495,7 @@ SpaceBattalion.Game.prototype = {
 				player.frame = 12;
 				player.minion = true;
 				player.health = 100;
+				player.allowControls = true;
 
 			} else {
 
@@ -502,6 +503,7 @@ SpaceBattalion.Game.prototype = {
 				players[data].frame = 13;
 				players[data].minion = true;
 				players[data].health = 100;
+				players[data].allowControls = true;
 
 			}
 		});
@@ -1594,7 +1596,7 @@ SpaceBattalion.Game.prototype = {
 
 	revivePlayer: function(plr, myPlr) {
 		console.log('overlap');
-		
+
 		deadTimer.stop();
 
 		// Frame updaten
