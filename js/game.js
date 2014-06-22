@@ -131,9 +131,7 @@ SpaceBattalion.Game.prototype = {
 
 		bgtile = this.add.tileSprite(0, 0, bounds, bounds, 'mainBg');
 
-		//player 	= this.add.sprite(this.world.centerX, this.world.centerY, window.skin);
-		player 	= this.add.sprite(this.world.randomX, this.world.randomY, window.skin);
-		
+		player 	= this.add.sprite(this.world.centerX, this.world.centerY, window.skin);		
 
 		boss 	= this.add.sprite(100, 200, 'boss'); 
 
@@ -812,7 +810,7 @@ SpaceBattalion.Game.prototype = {
 				var dist = this.distance(player.lat, player.lng, players[plr].lat, players[plr].lng, "M");
 
 				//	Als afstand kleiner dan 100 meter is
-				if(dist <= range && this.physics.arcade.distanceBetween(players[plr], player) <= range * 3 && player.minion === false && players[plr].minion === false && players[plr].health > 0 && player.health > 0 && player.coop === false && players[plr].coop === false) 
+				if(dist <= range && this.physics.arcade.distanceBetween(players[plr], player) <= range * 2 && player.minion === false && players[plr].minion === false && players[plr].health > 0 && player.health > 0 && player.coop === false && players[plr].coop === false) 
 				{				
 					mergeIcon.visible = true;
 
@@ -1332,7 +1330,7 @@ SpaceBattalion.Game.prototype = {
 		// Pak alleen eerste player uit for loop
 		if(playerFound == 0) {
 			for(var plr in players) {
-				if(this.physics.arcade.distanceBetween(players[plr], player) <= range && playerFound == 0) {
+				if(this.physics.arcade.distanceBetween(players[plr], player) <= range * 2 && playerFound == 0) {
 					// Ga na of jijzelf nog niet in co-op bent
 					if(player.coop === false) {
 						console.log('Ik ben nog niet in co-op modus');
