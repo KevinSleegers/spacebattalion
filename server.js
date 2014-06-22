@@ -8,6 +8,8 @@ var express = require('express'),
     room = '',
     rooms = {},
     maxPlayers = 2;
+    skins = {},
+    tints = {};
 
 server.listen(process.env.PORT || 5000);
 
@@ -46,18 +48,11 @@ io.sockets.on('connection', function(socket){
         }  
     }*/
 
-    socket.emit('rooms', io.rooms, maxPlayers);
-    
-    var ip_address = socket.handshake.address.address;
-    var remote_address = socket.handshake.address.remoteAddress;
-    
-    console.log('ip address: ', ip_address);
-    console.log('remote ip: ', remote_address);
+    socket.emit('rooms', rooms);
     
     // 1. Send already online players to client who requested the players data
     socket.on('requestPlayers', function(data, i) {    
         var myRoom = i;
-        console.log('Huidige room: ' + i);
 
         var roomPlayers = {};
         // Haal spelers op uit huidige room
@@ -65,7 +60,6 @@ io.sockets.on('connection', function(socket){
         roster.forEach(function(plr) {
             if(plr.session !== socket.id) {
                 roomPlayers[plr.session] = players[plr.session];
-                console.log('player: ' + plr.session);
             }
         });
 
@@ -90,6 +84,7 @@ io.sockets.on('connection', function(socket){
         var player_lat = obj.lat;
         var player_long = obj.long;
         var player_angle = obj.angle;
+		var isBoss = obj.isboss;
 
         if(typeof player_lat === 'undefined') {
             player_lat = 0;
@@ -108,6 +103,33 @@ io.sockets.on('connection', function(socket){
         player.angle    = player_angle;
         player.lat      = player_lat;
         player.long     = player_long;
+		player.boss 	= isBoss;
+
+        // Check if player has chosen a different skin
+        if(Object.getOwnPropertyNames(skins).length !== 0) {
+            Object.keys(skins).forEach(function(key) {
+                if(key.indexOf(obj.sessionid) > -1) {
+                    player.skin = skins[obj.sessionid];
+                } else {
+                    player.skin = 0;
+                }
+            });
+        } else {
+            player.skin = 0;
+        }
+
+        // Check if player has chosen a different tint
+        if(Object.getOwnPropertyNames(tints).length !== 0) {
+            Object.keys(tints).forEach(function(key) {
+                if(key.indexOf(obj.sessionid) > -1) {
+                    player.tint = tints[obj.sessionid];
+                } else {
+                    player.tint = 0;
+                }
+            });
+        } else {
+            player.tint = 0;
+        }
 
         // Add player to 'players' array
         players[player.session] = player;
@@ -180,8 +202,6 @@ io.sockets.on('connection', function(socket){
             }
         }
 
-        console.log('alle NIET coop players', coopPlrs);
-
         if(Object.getOwnPropertyNames(coopPlrs).length !== 0) {
             // Send players who are NOT YET in coop mode to clientside.
             io.sockets.socket(data).emit('notCoop', coopPlrs);
@@ -213,6 +233,7 @@ io.sockets.on('connection', function(socket){
         var player_x = obj.x;
         var player_y = obj.y;
         var player_angle = obj.angle;
+		var isBoss = obj.isboss;		
 
         var player      = {};
         player.session  = player_session;
@@ -220,6 +241,21 @@ io.sockets.on('connection', function(socket){
         player.x        = player_x;
         player.y        = player_y;
         player.angle    = player_angle;
+        player.b    = player_angle;
+		player.boss = isBoss;
+
+        // Check if player has chosen a different skin
+        if(Object.getOwnPropertyNames(skins).length !== 0) {
+            Object.keys(skins).forEach(function(key) {
+                if(key.indexOf(obj.sessionid) > -1) {
+                    player.skin = skins[obj.sessionid];
+                } else {
+                    player.skin = 0;
+                }
+            });
+        } else {
+            player.skin = 0;
+        }
 
         players[player.session] = player;
         
@@ -276,6 +312,12 @@ io.sockets.on('connection', function(socket){
         console.log('Removed dead player: ', data);
     });
 
+    socket.on('playerRevive', function(data, i) {
+        var myRoom = i;
+
+        socket.broadcast.to(myRoom).emit('playerAlive', data);
+    });
+
     socket.on('playerMinion', function(data, i) {
         var myRoom = i;
         players[data].minion = true;
@@ -284,13 +326,15 @@ io.sockets.on('connection', function(socket){
         io.sockets.in(myRoom).emit('minionPlayer', data);
     });
 
-    socket.on('newRoom', function() {
-        room = randName();
+    socket.on('newRoom', function(data) {
+        var obj = JSON.parse(data);        
 
         // Voeg nieuwe room toe aan rooms
         var newRoom     = {};
-        newRoom.name    = room;
-        newRoom.players = io.sockets.clients(room).length;
+        newRoom.name    = obj.address;
+        newRoom.lat     = obj.lat;
+        newRoom.lng     = obj.lng;
+        newRoom.players = io.sockets.clients(obj.address).length;
         newRoom.max     = maxPlayers;
 
         rooms[newRoom.name] = newRoom;
@@ -312,15 +356,30 @@ io.sockets.on('connection', function(socket){
 
             if(io.sockets.clients(data).length === maxPlayers) {
                 console.log('Max Players in room, START GAME');
-                io.sockets.in(data).emit('startGame', true);
+
+                // Choose random boss from players in room
+                var randNumber = Math.floor(Math.random() * io.sockets.clients(data).length);
+                var boss = io.sockets.clients(data)[randNumber].session;
+				
+				var playerBoss = true;
+
+                io.sockets.in(data).emit('startGame', true, boss);
             }
 
-            rooms[data].players = io.sockets.clients(room).length;
+            rooms[data].players = io.sockets.clients(data).length;
 
             io.sockets.emit('roomUpdate', rooms);
         } else {
             io.sockets.socket(socket.id).emit('roomFull');
         }
+    });
+
+    socket.on('skin', function(data) {
+        skins[socket.id] = data;
+    });
+
+    socket.on('tint', function(data) {
+        tints[socket.id] = data;
     });
 
     socket.on('disconnect', function() {
@@ -329,8 +388,6 @@ io.sockets.on('connection', function(socket){
 
         // delete player from other clients
         socket.broadcast.emit('removePlayer', socket.id);
-        
-        console.log('player deleted: ', socket.id);
     });
 
     function randName() {

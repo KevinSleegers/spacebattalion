@@ -42,14 +42,48 @@
 	<script type="text/javascript" src="js/jquery-1.11.1.min.js"></script>
 	<script type="text/javascript" src="js/Boot.js"></script>
 	<script type="text/javascript" src="js/Preloader.js"></script>
+	<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
     <script>
 		var socket = io.connect();
+		var gotPosition = false;
+		var adres = '';
+
+		// Locatie ophalen
+		console.log('getting location');
+
+		if(navigator.geolocation) {
+			navigator.geolocation.watchPosition(foundPosition, function(error) {
+	            console.log('OEPS', error.code);
+	        }, {enableHighAccuracy: true});
+		} else {
+			console.log('Het ophalen van uw locatie is mislukt\nGPS wordt niet ondersteund op uw smart device.');
+		}
+
+		function foundPosition(position) {
+			window.lat = position.coords.latitude;
+			window.lng = position.coords.longitude;
+
+			console.log(window.lat, window.lng);
+
+			gotPosition = true;
+
+			var geocoder = new google.maps.Geocoder();
+			var latlng = new google.maps.LatLng(window.lat, window.lng);
+ 
+			geocoder.geocode({"latLng":latlng},function(data,status){			 
+				if(status == google.maps.GeocoderStatus.OK){				 
+					adres = data[1].formatted_address;
+					console.log(adres);
+				} else {
+					adres = randName();
+					console.log(adres);
+				}			 
+			});
+		}
 
 		var myRoom = '';
 
-		socket.on('rooms', function(data, i) {
-			var maxPlayers = i;
-
+		socket.on('rooms', function(data) {
 			if(data == '') {
 				// Voor nu een span ipv een li omdat de li's klikbaar zijn
 				$('.rooms').find('ul').empty().append("<span>There are no rooms available, create a new room to play.</span>");
@@ -58,10 +92,11 @@
 				$('.rooms').find('ul').empty();
 				$.each(data, function(key, value) {
 					if(key != '') {
-						// console.log(value);
-						// console.log(value.length + "/4");
+						// calc dist
+						var dist = distance(window.lat, window.lng, value.lat, value.lng, "M");
+						dist = dist.toFixed(2) + 'm';
 
-						$('.rooms').find('ul').append("<li data-room='" + key + "'>" + key.replace(/\//g, '') + "<span>Players: " + value.length + "/" + i + "</span></li>");
+						$('.rooms').find('ul').append("<li data-room='" + value.name + "'>" + value.name.replace(/\//g, '') + " ( " + dist + " ) <span>Players: " + value.players + "/" + value.max + "</span></li>");
 					}
 				});
 			}
@@ -75,10 +110,15 @@
 			});
 
 			$('.newroom').click(function() {
-				socket.emit('newRoom');
-				console.log('newRoom!');
+				if(adres !== '' && typeof adres !== 'undefined') {
+					var addressComplete = JSON.stringify({
+						address: adres,
+						lat: window.lat,
+						lng: window.lng
+					});
 
-				$('.rooms').find('ul').children('li:last-child span').text("1/" + maxPlayers);
+					socket.emit('newRoom', addressComplete);
+				}
 			});
 		});
 
@@ -106,23 +146,22 @@
 						$('.waiting h2').text('waiting for other players...')
 					}
 				}, 500);
-			});
-			
-			
-			
+			});			
 		});		
 
 		// Als genoeg spelers in room zitten, start dan game
-		socket.on('startGame', function(data) {
+		socket.on('startGame', function(data, boss) {
 			console.log('Game is ready to start!');
 			clearInterval(window.textInterval);
 			if(data === true) {
+				console.log('boss = ', boss);
+				window.boss = boss;
 				// Maak timer die na 5 sec game start
 				//game.time.events.add(Phaser.Timer.SECOND * 5, startGame, this);
 				console.log('Countdown timer has started');
 				$('.waiting').fadeOut(200,function(){
 					$('.countdown').fadeIn(200);
-					var sec = 5
+					var sec = 1;
 					var timer = setInterval(function() {
 						$('.waiting').hide();
 						$('.countdown h2').animate({
@@ -160,10 +199,15 @@
 			if(data !== '') {
 				$('.rooms').find('ul').empty();
 
-				for(var r in data) {
-					// data[r].name, data[r].players, data[r].max
-					$('.rooms').find('ul').append("<li data-room='/" + data[r].name + "'>" + data[r].name + "<span>Players: " + data[r].players + "/" + data[r].max + "</span></li>");
-				}
+				$.each(data, function(key, value) {
+					if(key != '') {
+						// calc dist
+						var dist = distance(window.lat, window.lng, value.lat, value.lng, "M");
+						dist = dist.toFixed(2) + 'm';
+
+						$('.rooms').find('ul').append("<li data-room='" + value.name + "'>" + value.name.replace(/\//g, '') + " ( " + dist + " ) <span>Players: " + value.players + "/" + value.max + "</span></li>");
+					}
+				});
 
 				$('.rooms li').click(function() {
 					console.log('join room: ' + $(this).attr('data-room'));
@@ -187,9 +231,41 @@
 		function startGame() {
 			//alert('Starting Game!');
 			$('.overlay').fadeOut(200);
-			window.game.state.start('Game');
-			
+			window.game.state.start('Game');			
 		}
+
+		function randName() {
+			var text = "";
+		    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+		    for( var i=0; i < 10; i++ )
+		        text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+		    return text;
+		}	
+
+		// Bron : http://www.geodatasource.com/developers/javascript
+		function distance(lat1, lon1, lat2, lon2, unit) {
+			var radlat1 = Math.PI * lat1/180;
+		    var radlat2 = Math.PI * lat2/180;
+		    var radlon1 = Math.PI * lon1/180;
+		    var radlon2 = Math.PI * lon2/180;
+
+		    var theta = lon1-lon2;
+
+		    var radtheta = Math.PI * theta/180;
+
+		    var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+		    dist = Math.acos(dist);
+		    dist = dist * 180/Math.PI;
+		    dist = dist * 60 * 1.1515;
+
+		    if (unit=="K") { dist = dist * 1.609344 };
+		    if (unit=="N") { dist = dist * 0.8684 };
+		    if (unit=="M") { dist = ((dist * 1.609344) * 1000) };
+		    return dist;
+		}
+
 	</script>
 	<script type="text/javascript" src="js/MainMenu.js"></script>
 	<script type="text/javascript" src="js/game.js"></script>    
@@ -265,12 +341,32 @@
                 <div class="inv">
                 	<div class="aircraft">
                     	<div class="wrap">
+<<<<<<< HEAD
                         	<div class="item" data-skin="player"><img class="invimg" src="images/playerskin.png" /><span class="active"></span></div>
+=======
+                        	<div class="item" data-skin="player"><img src="images/skin.png" /><span class="active"></span></div>
+                            <div class="item" data-skin="ns"><img src="images/nsskin.png" /></div>
+                            <div class="item locked"><img src="images/mcskin.png" /><span class="notavailable"></span></div>
+                            <div class="item locked"><img src="images/wkskin.png" /><span class="notavailable"></span></div>
+                            <div class="item" data-skin="wk"><img src="images/wkskin2.png" /></div>
+                            <div class="item locked"><img src="images/wkskin3.png" /><span class="notavailable"></span></div>
+>>>>>>> origin/master
                         </div>
                     	<h2>Aircraft skins</h2>
                     </div>
                     <div class="colors">
                     	<div class="wrap">
+<<<<<<< HEAD
+=======
+                        	<div class="item" data-tint="0"><div style="background-color:transparent;"></div><span class="active"></span></div>
+                            <div class="item" data-tint="0xdfdfdf"><div style="background-color:#c0c0c0;"></div></div>
+                            <div class="item" data-tint="0x949494"><div style="background-color:#2a2a2a;"></div></div>
+                            <div class="item" data-tint="0xdfdfdf"><div style="background-color:#c0c0c0;"></div></div>
+                            <div class="item" data-tint="0xff7f7f"><div style="background-color:#ff0000;"></div></div>
+                            <div class="item" data-tint="0x949494"><div style="background-color:#2a2a2a;"></div></div>
+                            <div class="item" data-tint="0xdfdfdf"><div style="background-color:#c0c0c0;"></div></div>
+                            <div class="item" data-tint="0xff7f7f"><div style="background-color:#ff0000;"></div></div>
+>>>>>>> origin/master
                         </div>
                         <h2>Color Pallets</h2>
                     </div>
@@ -666,7 +762,7 @@
 					h = window.innerHeight;
 					
 					/* ~~~~~~~ NEW GAME ~~~~~~~ */
-					window.game = new Phaser.Game(w, h, Phaser.WEBGL, '');
+					window.game = new Phaser.Game(w, h, Phaser.AUTO, '');
 					
 					window.game.state.add('Boot', SpaceBattalion.Boot);
 					window.game.state.add('Preloader', SpaceBattalion.Preloader);
@@ -700,9 +796,8 @@
 
 				//$('.overlay').fadeOut(200);
 			});
-			$('.mutebutton').click(function(){
-				
-				/*if(game.music.isPlaying) {
+			$('.mutebutton').click(function(){				
+				if(game.music.isPlaying) {
 					game.music.pause();
 					SpaceBattalion.music = false;
 					$(this).find('img').attr('src','images/mute.jpg');
@@ -710,7 +805,7 @@
 					game.music.resume();
 					SpaceBattalion.music = true;
 					$(this).find('img').attr('src','images/sound.jpg');
-				}*/	
+				}
 			});
 			$('.shopbutton').click(function(){
 				$('.mainmenu').fadeOut(200,function(){$('.shop').fadeIn(200);});
@@ -718,9 +813,11 @@
 			
 			/* Start game button */
 			$('.loader').click(function(){
-				if(window.startbutton == 1)
+				if(window.startbutton == 1 && gotPosition == true)
 				{
 					$('.mainmenu').fadeOut(200,function(){$('.rooms').fadeIn(200);});
+				} else if(window.startbutton == 1 && gotPosition == false) {
+					alert('Het ophalen van je locatie is mislukt.\nJe locatie is nodig om te kunnen spelen.');
 				}
 			});
 			
@@ -766,9 +863,18 @@
 					$('.inventory .inv .aircraft .wrap').find('.active').remove();
 					$(this).append('<span class="active"></span>');
 					window.skin = $(this).attr('data-skin');
+
+					console.log($(this).attr('data-skin'));
+					socket.emit('skin', $(this).attr('data-skin'));
 				}
 			});
+<<<<<<< HEAD
 			$('.inventory .inv .colors .wrap').on('click', '.item', function(){
+=======
+
+
+			$('.inventory .inv .colors .wrap .item').click(function(){
+>>>>>>> origin/master
 				if($(this).find('.active').length != 0){
 					console.log('yes yes');	
 				}
@@ -776,7 +882,10 @@
 				{
 					console.log('no no');
 					$('.inventory .inv .colors .wrap').find('.active').remove();
-					$(this).append('<span class="active"></span>');
+					$(this).append('<span class="active"></span>');					
+					window.tint = $(this).attr('data-tint');
+
+					socket.emit('tint', $(this).attr('data-tint'));
 				}
 			});
 		 
