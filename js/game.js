@@ -1136,6 +1136,10 @@ SpaceBattalion.Game.prototype = {
 			boss.x = players[plr.session].x;
 			boss.y = players[plr.session].y;
 			boss.angle = plr.angle;
+			
+	    	players[plr.session].x = plr.x;
+	    	players[plr.session].y = plr.y;	
+			players[plr.session].angle = plr.angle;
 		}
 		else if(plr.nickname === 'coop') {
 			coopPlayers[plr.session].x = plr.x;
