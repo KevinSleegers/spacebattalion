@@ -1079,6 +1079,7 @@ SpaceBattalion.Game.prototype = {
 				players[player1].coop = true;
 				players[player1].renderable = false;
 				players[player1].enableBody = false;
+				players[player1].allowControls = false;
 			}
 
 			if(typeof players[player2] !== 'undefined') {
@@ -1086,6 +1087,7 @@ SpaceBattalion.Game.prototype = {
 				players[player2].coop = true;
 				players[player2].renderable = false;
 				players[player2].enableBody = false;
+				players[player2].allowControls = false;
 			}
 
 		}
@@ -1535,7 +1537,7 @@ SpaceBattalion.Game.prototype = {
 				       	player.move = true;
 				       	player.shoot = true;
 				       	player.enableBody = true;
-				       	this.camera.follow(playerType, Phaser.Camera.FOLLOW_TOPDOWN);
+				       	this.camera.follow(player, Phaser.Camera.FOLLOW_TOPDOWN);	
 
 				       	coopMovement = false;
 
