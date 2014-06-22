@@ -131,7 +131,10 @@ SpaceBattalion.Game.prototype = {
 
 		bgtile = this.add.tileSprite(0, 0, bounds, bounds, 'mainBg');
 
-		player 	= this.add.sprite(this.world.centerX, this.world.centerY, window.skin);
+		//player 	= this.add.sprite(this.world.centerX, this.world.centerY, window.skin);
+		player 	= this.add.sprite(this.world.randomX, this.world.randomY, window.skin);
+		
+
 		boss 	= this.add.sprite(100, 200, 'boss'); 
 
 		if(playerName === 'boss') {
