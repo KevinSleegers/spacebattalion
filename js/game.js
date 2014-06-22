@@ -24,6 +24,7 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     muzzleFlash,
     playerType,
 	bossIsDying = false,
+	isBoss = false,
     playerGroup,
     bgtile,
     clouds,
@@ -83,6 +84,7 @@ SpaceBattalion.Game.prototype = {
 	create: function() {		
 		if(window.boss === io.socket.sessionid) {
 			console.log('ik ben de boss');
+			isBoss = true;
 		}
 
 		// Stuur huidige locatie naar server
@@ -135,7 +137,7 @@ SpaceBattalion.Game.prototype = {
 
 		boss 	= this.add.sprite(100, 200, 'boss'); 
 
-		if(playerName === 'boss') {
+		if(isBoss) {
 			playerType = boss;
 		} else {
 			playerType = player;
@@ -255,6 +257,12 @@ SpaceBattalion.Game.prototype = {
 	    });
 
 	    // Stuur nieuwe speler door naar server
+		var sendBoss = false;
+		
+		if(!isBoss)
+		{	sendBoss = true;
+			
+		}
 	    var playerData = JSON.stringify({
 	        sessionid : io.socket.sessionid,
 	        nickname : playerName,
@@ -262,7 +270,8 @@ SpaceBattalion.Game.prototype = {
 	        y : this.world.centerY,
 	        lat : player.lat,
 	        long : player.lng,
-	        angle : 0
+	        angle : 0,
+			isboss : sendBoss
 	    });
 	    socket.emit('newPlayer', playerData, myRoom);
 
@@ -843,14 +852,14 @@ SpaceBattalion.Game.prototype = {
         this.physics.arcade.overlap(player, boss, this.overlapPlayer, null, this);			
 	},
 
-	createPlayer: function(plr) {
-
+	createPlayer: function(plr) {		
 		// new player variables
 	    var newSession = plr.session;
 	    var newPlayerNick = plr.nickname;
 	    var newPlayerX = plr.x;
 	    var newPlayerY = plr.y;
 	    var newPlayerAngle = plr.angle;
+
 
 	    players[plr.session] = this.add.sprite(plr.x, plr.y, 'player');
 
@@ -877,7 +886,7 @@ SpaceBattalion.Game.prototype = {
 	    		players[plr.session].frame = 0;
 	    	}
 	    }
-
+	
 	    // Sla gps locatie van speler op (om na te gaan of iemand anders in de buurt is)
 	    players[plr.session].lat = plr.lat; 	
 	    players[plr.session].lng = plr.long;
@@ -1108,8 +1117,8 @@ SpaceBattalion.Game.prototype = {
 		}
 	},
 
-	updatePlayer: function(plr) {
-		if(plr.nickname === 'boss') {
+	updatePlayer: function(plr) {		
+		if(!isBoss) {
 			boss.x = plr.x;
 			boss.y = plr.y;
 			boss.angle = plr.angle;
@@ -1378,7 +1387,7 @@ SpaceBattalion.Game.prototype = {
 		    if(oldX !== playerType.x || oldY !== playerType.y) {
 			    	
 			    // Particles achter schip
-				if(this.game.device.desktop) {
+				if(this.game.device.desktop && playerType == 'player') {
 					emitter = this.add.emitter(playerType.x, playerType.y, 1);
 				    emitter.makeParticles('flyRail');
 
@@ -1391,13 +1400,21 @@ SpaceBattalion.Game.prototype = {
 				}
 			    
 				this.world.bringToTop(playerGroup); 
+				
+				var sendBoss = false;
+				
+				if(!isBoss)
+				{	sendBoss = true;
+					
+				}				
 		                    
 		        var playerPosition = JSON.stringify({
 		            sessionid: io.socket.sessionid,
 		            nickname: playerName,
 		            x : playerType.x,
 		            y : playerType.y,
-		            angle : playerType.angle
+		            angle : playerType.angle,
+					isBoss : sendBoss
 		        });   
 
 		        // Check if difference between x or y values is larger than 1

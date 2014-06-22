@@ -7,7 +7,7 @@ var express = require('express'),
     coopPlayers = {},
     room = '',
     rooms = {},
-    maxPlayers = 2;
+    maxPlayers = 3;
     skins = {},
     tints = {};
 
@@ -84,6 +84,7 @@ io.sockets.on('connection', function(socket){
         var player_lat = obj.lat;
         var player_long = obj.long;
         var player_angle = obj.angle;
+		var isBoss = obj.isboss;
 
         if(typeof player_lat === 'undefined') {
             player_lat = 0;
@@ -102,6 +103,7 @@ io.sockets.on('connection', function(socket){
         player.angle    = player_angle;
         player.lat      = player_lat;
         player.long     = player_long;
+		player.boss 	= isBoss;
 
         // Check if player has chosen a different skin
         if(Object.getOwnPropertyNames(skins).length !== 0) {
@@ -231,6 +233,7 @@ io.sockets.on('connection', function(socket){
         var player_x = obj.x;
         var player_y = obj.y;
         var player_angle = obj.angle;
+		var isBoss = obj.isboss;		
 
         var player      = {};
         player.session  = player_session;
@@ -238,6 +241,8 @@ io.sockets.on('connection', function(socket){
         player.x        = player_x;
         player.y        = player_y;
         player.angle    = player_angle;
+        player.b    = player_angle;
+		player.boss = isBoss;
 
         // Check if player has chosen a different skin
         if(Object.getOwnPropertyNames(skins).length !== 0) {
@@ -355,6 +360,8 @@ io.sockets.on('connection', function(socket){
                 // Choose random boss from players in room
                 var randNumber = Math.floor(Math.random() * io.sockets.clients(data).length);
                 var boss = io.sockets.clients(data)[randNumber].session;
+				
+				var playerBoss = true;
 
                 io.sockets.in(data).emit('startGame', true, boss);
             }
