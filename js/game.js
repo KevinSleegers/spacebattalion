@@ -54,7 +54,8 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     bounds = 2000,
     friendlyFire = true,
     deadTimer,
-    revived = 0;
+    revived = 0,
+    minionTime = 5;
 
 SpaceBattalion.Game = function(game) {
 	this.game;		//	a reference to the currently running game
@@ -353,29 +354,22 @@ SpaceBattalion.Game.prototype = {
 
 		    			socket.emit('playerDied', io.socket.sessionid);
 
-		    			// Start counter van 10 sec
-		    			// Na 10 sec wordt speler minion, binnen 10 sec kan speler gerevived worden
-		    			deadTimer = game.time.events.add(Phaser.Timer.SECOND * 5, function() { 
-		    				console.log('player dood, starten van timer..');
+		    			if(revived === 0) {
+			    			deadTimer = game.time.create(false);
 
-		    				self.explode(player.x, player.y);
+			    			deadTimer.add(minionTime * 1000, function() {
+			    				console.log('player dood, starten van timer..');
 
+			    				self.explode(player.x, player.y);
+
+			    				socket.emit('playerMinion', io.socket.sessionid, myRoom);
+			    			}, this);
+
+			    			deadTimer.start();
+		    			} else {
 		    				socket.emit('playerMinion', io.socket.sessionid, myRoom);
-		    			}, this);
+		    			}
 
-		    			game.time.events.start(deadTimer);
-
-		    			// overlap
-
-		    			// Verwijder timer
-						//game.time.events.events = [];
-
-
-						/*setTimeout(function() {
-							self.explode(player.x, player.y);
-
-							socket.emit('playerMinion', io.socket.sessionid, myRoom);
-						}, 1000); */
 		    		} else {
 		    			var currentFrame = player.frame;
 
@@ -1600,8 +1594,8 @@ SpaceBattalion.Game.prototype = {
 
 	revivePlayer: function(plr, myPlr) {
 		console.log('overlap');
-
-		game.time.events.stop(deadTimer);
+		
+		deadTimer.stop();
 
 		// Frame updaten
 		// Nagaan of speler binnen range is
