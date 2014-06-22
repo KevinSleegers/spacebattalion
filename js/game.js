@@ -193,7 +193,7 @@ SpaceBattalion.Game.prototype = {
 	    boss.body.immovable = true;
 	    boss.move = false;
 
-		this.camera.follow(playerType, Phaser.Camera.FOLLOW_TOPDOWN);	
+		this.camera.follow(player, Phaser.Camera.FOLLOW_TOPDOWN);	
 
 		// Bullets aanmaken
 		bullets = this.add.group();
@@ -1741,7 +1741,7 @@ SpaceBattalion.Game.prototype = {
 			player.lat = position.coords.latitude;
 			player.lng = position.coords.longitude;
 			
-			// Vergelijk opnieuw afstand tussen andere spelers en mijzelef
+			// Vergelijk opnieuw afstand tussen andere spelers en mijzelf
 			for(var plr in players) {
 				console.log(players[plr]);
 
