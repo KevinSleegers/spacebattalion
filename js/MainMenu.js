@@ -10,7 +10,7 @@ window.SpaceBattalion.MainMenu.prototype = {
 		this.backgroundImage = this.add.tileSprite(0, 0, SpaceBattalion.windowWidth, SpaceBattalion.windowHeight, 'mainBg');
 
 		this.music = this.add.audio('loadingMusic');
-		this.music.play('', 0, 1, true);
+		//this.music.play('', 0, 1, true);
 
 		console.dir(this);
 

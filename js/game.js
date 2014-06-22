@@ -122,7 +122,7 @@ SpaceBattalion.Game.prototype = {
 		// Achtergrond muziek en andere geluiden
 		this.backgroundMusic = this.add.audio('backgroundMusic');
 		if(SpaceBattalion.music) {
-			this.backgroundMusic.play('', 0, 1, true);
+			//this.backgroundMusic.play('', 0, 1, true);
 		}
 
 		this.shipHitSound 	= this.add.audio('shipHitSound');
@@ -830,17 +830,21 @@ SpaceBattalion.Game.prototype = {
 				var dist = this.distance(player.lat, player.lng, players[plr].lat, players[plr].lng, "M");
 
 				//	Als afstand kleiner dan 100 meter is
+				//console.log(player.boss);
+				//if(!isBoss)
+				//{
 				if(dist <= range && this.physics.arcade.distanceBetween(players[plr], player) <= range * 2 && player.minion === false && players[plr].minion === false && players[plr].health > 0 && player.health > 0 && player.coop === false && players[plr].coop === false) 
 				{				
 					mergeIcon.visible = true;
 
-	    			mergeIcon.inputEnabled = true;
-	    			mergeIcon.events.onInputDown.add(this.mergePlayers, this);
+					mergeIcon.inputEnabled = true;
+					mergeIcon.events.onInputDown.add(this.mergePlayers, this);
 				}
 				else
 				{
 					mergeIcon.visible = false;
 				}
+				//}
 				//console.log(players[plr].nickname + players[plr].latitude + " ");
 			}
 
@@ -1570,7 +1574,7 @@ SpaceBattalion.Game.prototype = {
 	},
 
 	removePlayer: function(plr) {
-		if (plr !== io.socket.sessionid) {
+		if (plr !== io.socket.sessionid) { 	
 		   	// Check if player who disconnected was in coop mode
 		    if(Object.getOwnPropertyNames(coopPlayers).length !== 0) {
 		    	var self = this;
@@ -1833,8 +1837,13 @@ SpaceBattalion.Game.prototype = {
 		coopPlayers = {};
 		players 	= {};
 
-		emitter.destroy();
+		if(playerType == 'player')
+		{
+			emitter.destroy();		
+		}
+		
 		radarCursor.destroy();
+		
 		radarMeters.destroy();
 		mergeIcon.destroy();
 		playerType.destroy();
