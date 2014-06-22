@@ -833,7 +833,7 @@ SpaceBattalion.Game.prototype = {
 				//console.log(player.boss);
 				//if(!isBoss)
 				//{
-				if(dist <= range && this.physics.arcade.distanceBetween(players[plr], player) <= range * 2 && player.minion === false && players[plr].minion === false && players[plr].health > 0 && player.health > 0 && player.coop === false && players[plr].coop === false && playerType !== boss && players[plr].name !== window.boss) 
+				if(dist <= range && this.physics.arcade.distanceBetween(players[plr], player) <= range * 2 && player.minion === false && players[plr].minion === false && players[plr].health > 0 && player.health > 0 && player.coop === false && players[plr].coop === false && isBoss === false && playerType !== boss && players[plr].name !== window.boss) 
 				{				
 					mergeIcon.visible = true;
 
