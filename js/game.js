@@ -1525,10 +1525,10 @@ SpaceBattalion.Game.prototype = {
 	},
 
 	removePlayer: function(plr) {
-		var self = this;
 		if (plr !== io.socket.sessionid) {
 		   	// Check if player who disconnected was in coop mode
 		    if(Object.getOwnPropertyNames(coopPlayers).length !== 0) {
+		    	var self = this;
 			    Object.keys(coopPlayers).forEach(function(key) {
 				    if(key.indexOf(io.socket.sessionid) > -1) {
 
@@ -1540,7 +1540,7 @@ SpaceBattalion.Game.prototype = {
 				       	player.move = true;
 				       	player.shoot = true;
 				       	player.enableBody = true;
-				       	this.camera.follow(player, Phaser.Camera.FOLLOW_TOPDOWN);	
+				       	self.camera.follow(player, Phaser.Camera.FOLLOW_TOPDOWN);	
 
 				       	Object.keys(coopPlayers).forEach(function(key2) {
 		        			if(key2.indexOf(key) > -1) {
