@@ -812,7 +812,7 @@ SpaceBattalion.Game.prototype = {
 				var dist = this.distance(player.lat, player.lng, players[plr].lat, players[plr].lng, "M");
 
 				//	Als afstand kleiner dan 100 meter is
-				if(dist <= range && this.physics.arcade.distanceBetween(players[plr], player) < range && player.minion === false && players[plr].minion === false && players[plr].health > 0 && player.health > 0 && player.coop === false && players[plr].coop === false) 
+				if(dist <= range && this.physics.arcade.distanceBetween(players[plr], player) <= range * 3 && player.minion === false && players[plr].minion === false && players[plr].health > 0 && player.health > 0 && player.coop === false && players[plr].coop === false) 
 				{				
 					mergeIcon.visible = true;
 
