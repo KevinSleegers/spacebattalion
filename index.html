@@ -35,6 +35,7 @@
 	<link rel="apple-touch-icon" sizes="512x512" href="icons/app_icon_512x512.png">
 	<link rel="apple-touch-icon" sizes="1024x1024" href="icons/app_icon_1024x1024.png">
     <link href='css/reset.css' rel='stylesheet' type='text/css'>
+    <link href='css/style.css' rel='stylesheet' type='text/css'>
     <link href='http://fonts.googleapis.com/css?family=Roboto:400,300,100' rel='stylesheet' type='text/css'>
 	<script type="text/javascript" src="js/min/phaser.min.js"></script>
 	<script type="text/javascript" src="/socket.io/socket.io.js"></script>
@@ -195,223 +196,8 @@
 	<script type="text/javascript" src="js/GameEnd.js"></script> 
 	<script type="text/javascript" src="js/gyro.min.js"></script>
     <script type="text/javascript" src="jquery.cookie.js"></script>
+    <script src="//unslider.com/unslider.min.js"></script>
 	<!--<script type="text/javascript" src="js/game.js"></script>-->
-
-	<style type="text/css">
-		html, body {
-			margin: 0;
-			padding: 0
-		}
-		body {
-			margin:0px;
-			padding:0px;
-			background-color:#000;
-			position:relative;
-		}
-		#menu {position:relative; background-color:#000;}
-		#menu img {width:100%; max-width:400px; padding-bottom:20px; display:block; margin:0 auto;}
-		#menu input {
-			position:relative; 
-			 
-			display:block; 
-			margin:10px auto; 
-			height: 20px;
-			padding: 6px 12px;
-			font-size: 14px;
-			line-height: 1.42857143;
-			color: #555;
-			background-color: #fff;
-			background-image: none;
-			border: 1px solid #ccc;
-			border-radius: 4px;
-			-webkit-box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
-			box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
-			-webkit-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
-			transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
-		}
-		.btn {
-
-			margin:10px auto;
-			display: block;
-			font-weight: 400;
-			text-align: center;
-			vertical-align: middle;
-			cursor: pointer;
-			background-image: none;
-			border: 1px solid transparent;
-			white-space: nowrap;
-			padding: 6px 12px;
-			font-size: 14px;
-			line-height: 1.42857143;
-			border-radius: 4px;	
-		}
-		p {
-			display:block;
-			margin:0 auto;
-			color:#FFF;
-			font-size:14px;
-			margin:0 auto;
-		}
-		
-		a {
-			color:#FFF;
-			text-decoration:underline;	
-		}
-		#ack {color:#F00; font-weight:bold;}
-		#statsaccount ul {color:#FFF; font-size:30px;}
-		.overlay {
-			width:100%;
-			height:100%;
-			display:block;
-			z-index:10;
-			background-color:transparent!important;
-			position:absolute;
-			left:0;
-			top:0;
-			overflow:hidden;
-				
-		}
-		.overlay .wrapper {width:96%; height:96%; position:relative; padding:2%;}
-		.overlay .logo {width:100%; display:block; margin-top:20px;}
-		.overlay .logo img{max-width:356px; max-height:93px; width:100%; height:100%; display:block; margin:0 auto;}
-		.overlay .wrapper .payoff {width:100%; font-size:1.3em; display:block; color:#FFF; font-family: 'Roboto', sans-serif; font-weight: 300; text-align:center;}
-		.overlay .menu {width:100%; display:block; position:absolute; bottom:30px; left:0; 
-		border:1px solid #a9a9a9;
-		background: -moz-linear-gradient(top, rgba(255,255,255,0.15) 0%, rgba(252,252,252,0.15) 1%, rgba(0,0,0,0) 100%); /* FF3.6+ */
-		background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(255,255,255,0.15)), color-stop(1%,rgba(252,252,252,0.15)), color-stop(100%,rgba(0,0,0,0))); /* Chrome,Safari4+ */
-		background: -webkit-linear-gradient(top, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* Chrome10+,Safari5.1+ */
-		background: -o-linear-gradient(top, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* Opera 11.10+ */
-		background: -ms-linear-gradient(top, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* IE10+ */
-		background: linear-gradient(to bottom, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* W3C */
-		filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#26ffffff', endColorstr='#00000000',GradientType=0 ); /* IE6-9 */
-		-webkit-box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
-		-moz-box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
-		box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
-		}
-		.overlay .menu ul {display:block; overflow:hidden; list-style:none; margin-top:12px; margin-bottom:12px;}
-		.overlay .menu ul li {margin-left:20px; display:block; float:left; max-height:56px; cursor:pointer;}
-		.overlay .menu ul li img {width:56px; height:56px;}
-		
-		.stats {
-			padding:24px 40px 14px 40px; 
-			border:1px solid #a9a9a9;
-			background: -moz-linear-gradient(top, rgba(255,255,255,0.15) 0%, rgba(252,252,252,0.15) 1%, rgba(0,0,0,0) 100%); /* FF3.6+ */
-			background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(255,255,255,0.15)), color-stop(1%,rgba(252,252,252,0.15)), color-stop(100%,rgba(0,0,0,0))); /* Chrome,Safari4+ */
-			background: -webkit-linear-gradient(top, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* Chrome10+,Safari5.1+ */
-			background: -o-linear-gradient(top, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* Opera 11.10+ */
-			background: -ms-linear-gradient(top, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* IE10+ */
-			background: linear-gradient(to bottom, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* W3C */
-			filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#26ffffff', endColorstr='#00000000',GradientType=0 ); /* IE6-9 */
-			-webkit-box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
-			-moz-box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
-			box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
-		}
-		.stats h1{font-size:30px; color:#FFF;  font-family: 'Roboto', sans-serif; font-weight: 300; position:relative; display:block; border-bottom:1px solid #FFF;}
-		.stats h1 img{position:absolute; right:0; bottom:5px; display:block;}
-		.stats ul {margin:20px 30px 20px 30px; display:block; padding:0; list-style:none; font-family: 'Roboto', sans-serif; font-weight: 300; font-size:26px; color:#FFF;}
-		.stats ul li {width:100%;}
-		.stats ul li span {float:right; width:150px;}
-		.stats .bottom {width:100%; border-top:1px solid #FFF; display:block; overflow:hidden;}
-		.buttonleft  {display:block; float:left; max-height:30px; margin-top:14px; cursor:pointer;}
-		.buttonright  {display:block; float:right;  max-height:30px; margin-top:14px;  cursor:pointer;}
-		.buttonrighttwo {display:block; float:right;  max-height:30px; margin-top:14px;  cursor:pointer; margin-right:10px;}
-
-		.rooms {
-			padding:24px 40px 14px 40px; 
-			border:1px solid #a9a9a9;
-			background: -moz-linear-gradient(top, rgba(255,255,255,0.15) 0%, rgba(252,252,252,0.15) 1%, rgba(0,0,0,0) 100%); /* FF3.6+ */
-			background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(255,255,255,0.15)), color-stop(1%,rgba(252,252,252,0.15)), color-stop(100%,rgba(0,0,0,0))); /* Chrome,Safari4+ */
-			background: -webkit-linear-gradient(top, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* Chrome10+,Safari5.1+ */
-			background: -o-linear-gradient(top, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* Opera 11.10+ */
-			background: -ms-linear-gradient(top, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* IE10+ */
-			background: linear-gradient(to bottom, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* W3C */
-			filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#26ffffff', endColorstr='#00000000',GradientType=0 ); /* IE6-9 */
-			-webkit-box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
-			-moz-box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
-			box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
-		}
-		.rooms h1{font-size:30px; color:#FFF;  font-family: 'Roboto', sans-serif; font-weight: 300; position:relative; display:block; border-bottom:1px solid #FFF;}
-		.rooms h1 img{position:absolute; right:0; bottom:5px; display:block;}
-		.rooms ul {margin:20px 30px 0 30px; display:block; padding:0; list-style:none; font-family: 'Roboto', sans-serif; font-weight: 300; font-size:26px; color:#FFF;}
-		.rooms ul li {width:100%;}
-		.rooms ul li span {float:right; width:150px;}
-		.rooms .bottom {width:100%; border-top:1px solid #FFF; display:block; overflow:hidden;}
-		
-		.inventory {
-			padding:24px 40px 14px 40px; 
-			border:1px solid #a9a9a9;
-			background: -moz-linear-gradient(top, rgba(255,255,255,0.15) 0%, rgba(252,252,252,0.15) 1%, rgba(0,0,0,0) 100%); /* FF3.6+ */
-			background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(255,255,255,0.15)), color-stop(1%,rgba(252,252,252,0.15)), color-stop(100%,rgba(0,0,0,0))); /* Chrome,Safari4+ */
-			background: -webkit-linear-gradient(top, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* Chrome10+,Safari5.1+ */
-			background: -o-linear-gradient(top, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* Opera 11.10+ */
-			background: -ms-linear-gradient(top, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* IE10+ */
-			background: linear-gradient(to bottom, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* W3C */
-			filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#26ffffff', endColorstr='#00000000',GradientType=0 ); /* IE6-9 */
-			-webkit-box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
-			-moz-box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
-			box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
-			}
-		.inventory h1{font-size:30px; color:#FFF;  font-family: 'Roboto', sans-serif; font-weight: 300; position:relative; display:block; border-bottom:1px solid #FFF;}
-		.inventory h1 img{position:absolute; right:0; bottom:5px; display:block;}
-		.inventory .bottom {width:100%; border-top:1px solid #FFF; display:block; overflow:hidden;}
-		.inventory .inv {display:block; margin:20px 0px 0 0px; overflow:hidden;}
-		.inventory .inv .aircraft h2 {font-family: 'Roboto', sans-serif; font-weight: 300; font-size:20px; color:#FFF; margin-top:10px; margin-bottom:10px; border-top:1px solid #FFF; margin-right:4px;}
-		.inventory .inv .aircraft {width:50%!important; display:block; float:left!important;}
-		.inventory .inv .aircraft .wrap {width:100%; display:block; overflow:hidden; position:relative;}
-		.inventory .inv .aircraft .wrap .item {width:25%; display:block; padding:2px; float:left; box-sizing: border-box; position:relative;}
-		.inventory .inv .aircraft .wrap .item img {display:block; padding:4px; border:1px solid #ff7302; width:94%;}
-		.inventory .inv .aircraft .wrap .item .active {background-image:url('images/equiped.png'); width:19px; height:18px; position:absolute; bottom:6px; right:6px;}
-		
-		.inventory .inv .aircraft .wrap .locked img {opacity:0.3;}
-		
-		.inventory .inv .colors h2 {font-family: 'Roboto', sans-serif; font-weight: 300; font-size:20px; color:#FFF; margin-top:10px; margin-bottom:10px; border-top:1px solid #FFF; margin-left: 2px;}
-		.inventory .inv .colors {width:50%; display:block; float:left;}
-		.inventory .inv .colors .wrap {width:100%; display:block; overflow:hidden; position:relative;}
-		.inventory .inv .colors .wrap .item {width:25%; display:block; padding:2px; float:left; box-sizing: border-box; position:relative;}
-		.inventory .inv .colors .wrap .item div {width:94%; height:48px; display:block; padding:4px; border:1px solid #ff7302;}
-		.inventory .inv .colors .wrap .item .active {background-image:url('images/equiped.png'); width:19px; height:18px; position:absolute; bottom:6px; right:6px; }
-		
-		
-		.account {
-			padding:24px 40px 14px 40px; 
-			border:1px solid #a9a9a9;
-			background: -moz-linear-gradient(top, rgba(255,255,255,0.15) 0%, rgba(252,252,252,0.15) 1%, rgba(0,0,0,0) 100%); /* FF3.6+ */
-			background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(255,255,255,0.15)), color-stop(1%,rgba(252,252,252,0.15)), color-stop(100%,rgba(0,0,0,0))); /* Chrome,Safari4+ */
-			background: -webkit-linear-gradient(top, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* Chrome10+,Safari5.1+ */
-			background: -o-linear-gradient(top, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* Opera 11.10+ */
-			background: -ms-linear-gradient(top, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* IE10+ */
-			background: linear-gradient(to bottom, rgba(255,255,255,0.15) 0%,rgba(252,252,252,0.15) 1%,rgba(0,0,0,0) 100%); /* W3C */
-			filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#26ffffff', endColorstr='#00000000',GradientType=0 ); /* IE6-9 */
-			-webkit-box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
-			-moz-box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
-			box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
-			}
-		.account h1{font-size:30px; color:#FFF;  font-family: 'Roboto', sans-serif; font-weight: 300; position:relative; display:block; border-bottom:1px solid #FFF;}
-		.account h1 img{position:absolute; right:0; bottom:5px; display:block;}
-		.account .bottom {width:100%; border-top:1px solid #FFF; display:block; overflow:hidden;}
-		.account ul {margin:20px 30px 20px 30px; display:block; padding:0; list-style:none; font-family: 'Roboto', sans-serif; font-weight: 300; font-size:26px; color:#FFF;}
-		.account ul li {width:100%;}
-		.account ul li span {float:right; width:150px;}
-		
-		
-		.waiting {padding:24px 40px 14px 40px; }
-		.waiting h2 {width:100%; line-height:100%; font-size:2em; color:#FFF; font-family: 'Roboto', sans-serif; font-weight: 300; position:relative; display:block; text-align:center;}
-		.countdown {padding:24px 40px 14px 40px; }
-		.countdown h2 {width:100%; line-height:100%; font-size:3em; color:#FFF; font-family: 'Roboto', sans-serif; font-weight: 300; position:relative; display:block; text-align:center;}
-		.loader {width:60%; margin:20px auto 20px auto; display:block; position: relative; height:20px; background-color:#FFF;}
-		.loader span {
-			display: block;
-			height: 100%;
-			background-color:#ff7302;
-			position: relative;
-			overflow: hidden;
-			color: #FFF;
-			font-size: 1.6em;
-			text-align: center;
-			line-height: 40px;
-			font-family: 'Roboto', sans-serif; font-weight: 300;
-			}
-	</style>
 
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 </head>
@@ -479,25 +265,12 @@
                 <div class="inv">
                 	<div class="aircraft">
                     	<div class="wrap">
-                        	<div class="item" data-skin="player"><img src="images/skin.png" /><span class="active"></span></div>
-                            <div class="item" data-skin="ns"><img src="images/nsskin.png" /></div>
-                            <div class="item locked"><img src="images/mcskin.png" /><span class="notavailable"></span></div>
-                            <div class="item locked"><img src="images/wkskin.png" /><span class="notavailable"></span></div>
-                            <div class="item locked"><img src="images/wkskin2.png" /><span class="notavailable"></span></div>
-                            <div class="item locked"><img src="images/wkskin3.png" /><span class="notavailable"></span></div>
+                        	<div class="item" data-skin="player"><img class="invimg" src="images/playerskin.png" /><span class="active"></span></div>
                         </div>
                     	<h2>Aircraft skins</h2>
                     </div>
                     <div class="colors">
                     	<div class="wrap">
-                        	<div class="item"><div style="background-color:transparent;"></div><span class="active"></span></div>
-                            <div class="item"><div style="background-color:#c0c0c0;"></div></div>
-                            <div class="item"><div style="background-color:#2a2a2a;"></div></div>
-                            <div class="item"><div style="background-color:#c0c0c0;"></div></div>
-                            <div class="item"><div style="background-color:#ff0000;"></div></div>
-                            <div class="item"><div style="background-color:#2a2a2a;"></div></div>
-                            <div class="item"><div style="background-color:#c0c0c0;"></div></div>
-                            <div class="item"><div style="background-color:#ff0000;"></div></div>
                         </div>
                         <h2>Color Pallets</h2>
                     </div>
@@ -527,11 +300,176 @@
             <div class="countdown">
             	<h2>5</h2>
             </div>
+            <div class="backdrop"></div>
+            <div class="win">
+            	<h1>Receive free skin</h1>
+                <p>For playing at our partner <span class="winlocation"></span>, we want to reward you with a free skin.</p>
+                <div class="wrap">
+                <div class="winningitem"><img src=""></div>
+                <div class="winningtext"></div>
+                </div>
+                <p>If you win one game you will receive this skin.</p>
+                <div class="bottom">
+                	<div class="buttonleft backbuttonpop"><img src="images/backbutton.png" /></div>
+                </div>
+            </div>
+            <div class="shop">
+            	<h1>Shop<img src="images/shop-icon.png"></h1>
+                <div class="buttons">
+                	<div class="button">Skins</div>
+                    <div class="button">Colors</div>
+                    <div class="button">Ships</div>
+                </div>
+                <div class="buttonsindicator">
+                	<div class="buttonindicator"><span class="active"></span></div>
+                    <div class="buttonindicator"></div>
+                    <div class="buttonindicator"></div>
+                </div>
+                <div class="slider">
+                	<ul>
+                    	<li>
+                            <div class="topslide">New in Skins</div>
+                            <div class="contentslide">
+                                <img src="images/sliderimage.png"/>
+                                <div class="infoslide">
+                                    <p>The MCspace Skin</p>
+                                    <span class="buybutton"></span>
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                        	<div class="topslide">New in Skins</div>
+                            <div class="contentslide">
+                                <img src="images/sliderimage.png"/>
+                                <div class="infoslide">
+                                    <p>The MCspace Skin</p>
+                                    <span class="buybutton"></span>
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                        	<div class="topslide">New in Skins</div>
+                            <div class="contentslide">
+                                <img src="images/sliderimage.png"/>
+                                <div class="infoslide">
+                                    <p>The MCspace Skin</p>
+                                    <span class="buybutton"></span>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="timer"><span></span></div>
+                <div class="shoplist">
+                	<div class="left">
+                    	<h2>Popular Skins</h2>
+                    	<ul>
+                        	<li><img src="images/shop-wkskinlion.png" /><span>WK NL lion</span></li>
+                            <li><img src="images/shop-mcskin.png" /><span>MC Donalds</span></li>
+                            <li><img src="images/shop-nsskin.png" /><span>NS</span></li>
+                            <li><img src="images/shop-wkskinflag.png" /><span>WK NL Flag</span></li>
+                            <li><img src="images/shop-wkskin.png" /><span>WK NL</span></li>
+                        </ul>
+                    </div>
+                    <div class="right">
+                    	<h2>Newest Skins</h2>
+                        <ul>
+                        	<li><img src="images/shop-wkskinlion.png" /><span>WK NL lion</span></li>
+                            <li><img src="images/shop-mcskin.png" /><span>MC Donalds</span></li>
+                            <li><img src="images/shop-nsskin.png" /><span>NS</span></li>
+                            <li><img src="images/shop-wkskinflag.png" /><span>WK NL Flag</span></li>
+                            <li><img src="images/shop-wkskin.png" /><span>WK NL</span></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="bottom">
+                	<div class="buttonleft backbutton"><img src="images/backbutton.png" /></div>
+                </div>
+				<script class="secret-source">
+                jQuery(document).ready(function($) {
+                  
+					var slidey = $('.slider').unslider({
+						speed: 500,               //  The speed to animate each slide (in milliseconds)
+						delay: 4000,              //  The delay between slide animations (in milliseconds)
+						complete: function() {},  //  A function that gets called after every slide animation
+						keys: true,               //  Enable keyboard (left, right) arrow shortcuts
+						dots: true,               //  Display dot navigation
+						fluid: false              //  Support responsive design. May break non-responsive designs
+					});
+					
+
+    				
+                });
+                </script>
+            </div>
         </div>
     </div>
 	<script type="text/javascript">
+	//SCHOOL
+	//LAT:51.45185587
+	//LNG:5.48176025
+
 		 $(document).ready(function (){
+			 
+			 
+		function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
+		  var R = 6371; // Radius of the earth in km
+		  var dLat = deg2rad(lat2-lat1);  // deg2rad below
+		  var dLon = deg2rad(lon2-lon1); 
+		  var a = 
+			Math.sin(dLat/2) * Math.sin(dLat/2) +
+			Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
+			Math.sin(dLon/2) * Math.sin(dLon/2)
+			; 
+		  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+		  var d = R * c; // Distance in km
+		  return d;
+		}
+		
+		function deg2rad(deg) {
+		  return deg * (Math.PI/180)
+		}	 
+		
+		window.getLocation;
+
+		(function(){
+			getLocation=function() {
+				if (navigator.geolocation) {
+					navigator.geolocation.getCurrentPosition(showPosition);
+				} else { 
+					x.innerHTML = "Geolocation is not supported by this browser.";
+				}
+			}
+		}());
+		
+		window.locationLat = '51.45185587';
+		window.locationLng = '5.48176025';
+
+		function showPosition(position) {
+			console.log("LAT: "+position.coords.latitude); 
+			console.log("LNG: "+position.coords.longitude);	
+			window.currentLat = position.coords.latitude
+			window.currentLng = position.coords.longitude
+			console.log(getDistanceFromLatLonInKm(window.locationLat,window.locationLng,window.currentLat,window.currentLng)+' km');	
+			if(getDistanceFromLatLonInKm(window.locationLat,window.locationLng,window.currentLat,window.currentLng) < 0.1)
+			{
+				//alert('You are at fontys, win the wk skin by playing a game and win!');
+				$('.winningtext').text('Dutch WK Skin');	
+				$('.winlocation').text('Fontys Eindhoven');
+				$('.winningitem img').attr('src','images/wkskin.png');
+				$('.backdrop').fadeIn(200);
+				$('.win').fadeIn(200);
+			}
+		}
+		
+		
+			 
+			 
 		  window.startbutton = 0;
+		  
+
+		  
+		  
 		  $('.overlay').width($(window).width());
 		  $('.overlay').height($(window).height());	 
 		  $('.overlay').hide();
@@ -542,13 +480,16 @@
 		  $('.account').hide();
 		  $('.waiting').hide();
 		  $('.countdown').hide();
+		  $('.backdrop').hide();
+		  $('.win').hide();
+		  $('.shop').hide();
 		  window.skin = "player";
 		  console.log($.cookie('inlog'));
 		  console.log($.cookie('inlognaam'));
 		  console.log($.cookie('password'));
 		  if ($.cookie('inlog') != '1') {
 		  $("#submit").click(function (){
-			i = $("#inlognaam").val();
+			inl = $("#inlognaam").val();
 			p = $("#password").val();
 			if($("#inlognaam").val() == ""||$("#password").val()=="")
 				$("div#ack").html("please fill in all fields");
@@ -556,7 +497,7 @@
 				$.ajax({
                     type:"post",
                     url:"http://buitmediasolutions.nl/spacebattalion/check.php",
-                    data:{inlognaam: i,password: p},
+                    data:{inlognaam: inl,password: p},
                         success:function(data){
 							console.log(data);
                         if(data=='no'){
@@ -564,15 +505,16 @@
                         }
                         else{
 							$('#inlog').hide();
-							
 							$.cookie('inlog', '1', { expires: 1, path: '/' });
-							$.cookie('inlognaam', i, { expires: 1, path: '/' });
+							$.cookie('inlognaam', inl, { expires: 1, path: '/' });
 							$.cookie('password', p, { expires: 1, path: '/' });
 							
 							
-							window.inlognaam = i;
+							window.inlognaam = inl;
 							window.password = p;
 							window.playerObject = $.parseJSON(data);
+							console.log(window.playerObject);
+							
 							$('.playedvalue').text(window.playerObject.played);
 							$('.wonvalue').text(window.playerObject.win);
 							$('.losevalue').text(window.playerObject.lose);
@@ -584,7 +526,44 @@
 							$('.nicknamevalue').text(window.inlognaam);
 							$('.passwordvalue').text('******');
 							
-							
+							var length = window.playerObject.inventory.length;
+							for(var i = 0;i<length;i++)
+							{
+								if(window.playerObject.inventory_active[i] == 1)
+								{
+									//$('.aircraft .wrap').append('<div class="item" data-skin="'+window.playerObject.inventory[i]+'"><img src="images/'+window.playerObject.inventory[i]+'skin.png" /><span class="active"></span></div>');
+								}
+								else
+								{
+									$('.aircraft .wrap').append('<div class="item" data-skin="'+window.playerObject.inventory[i]+'"><img src="images/'+window.playerObject.inventory[i]+'skin.png" /></div>');
+								}
+							}
+							var length = window.playerObject.colors.length;
+							for(var i = 0;i<length;i++)
+							{
+								if(window.playerObject.colors_active[i] == 1)
+								{
+									if(window.playerObject.colors[i] == '')
+									{
+										$('.colors .wrap').append('<div class="item"><div style="background-color:transparent;"></div><span class="active"></span></div>');
+									}
+									else
+									{
+										$('.colors .wrap').append('<div class="item"><div style="background-color:#'+window.playerObject.colors[i]+';"></div><span class="active"></span></div>');
+									}
+								}
+								else
+								{
+									if(window.playerObject.colors[i] == '')
+									{
+										$('.colors .wrap').append('<div class="item"><div style="background-color:transparent;"></div></div>');
+									}
+									else
+									{
+										$('.colors .wrap').append('<div class="item"><div style="background-color:#'+window.playerObject.colors[i]+';"></div></div>');
+									}
+								}
+							}
 							
 							var w = window.innerWidth,
 							h = window.innerHeight;
@@ -600,6 +579,7 @@
 							
 							window.game.state.start('Boot');
 							$('.overlay').fadeIn(200);
+							
 							
                         }
                     }
@@ -617,6 +597,10 @@
 					console.log(data);
 				if(data=='no'){
 					alert('COOKIE ERROR');
+					$.removeCookie('inlognaam'); 
+					$.removeCookie('password'); 
+					$.removeCookie('inlog');
+					location.reload();
 				}
 				else{
 					
@@ -624,6 +608,7 @@
 					window.inlognaam = $.cookie('inlognaam');
 					window.password = $.cookie('password');
 					window.playerObject = $.parseJSON(data);
+					console.log(window.playerObject);
 					$('.playedvalue').text(window.playerObject.played);
 					$('.wonvalue').text(window.playerObject.win);
 					$('.losevalue').text(window.playerObject.lose);
@@ -634,6 +619,46 @@
 					$('.emailvalue').text(window.playerObject.email);
 					$('.nicknamevalue').text(window.inlognaam);
 					$('.passwordvalue').text('******');
+					
+					
+					var length = window.playerObject.inventory.length;
+					for(var i = 0;i<length;i++)
+					{
+						if(window.playerObject.inventory_active[i] == 1)
+						{
+							//$('.aircraft .wrap').append('<div class="item" data-skin="'+window.playerObject.inventory[i]+'"><img src="images/'+window.playerObject.inventory[i]+'skin.png" /><span class="active"></span></div>');
+						}
+						else
+						{
+							$('.aircraft .wrap').append('<div class="item" data-skin="'+window.playerObject.inventory[i]+'"><img src="images/'+window.playerObject.inventory[i]+'skin.png" /></div>');
+						}
+					}
+					var length = window.playerObject.colors.length;
+					for(var i = 0;i<length;i++)
+					{
+						if(window.playerObject.colors_active[i] == 1)
+						{
+							if(window.playerObject.colors[i] == '')
+							{
+								$('.colors .wrap').append('<div class="item"><div style="background-color:transparent;"></div><span class="active"></span></div>');
+							}
+							else
+							{
+								$('.colors .wrap').append('<div class="item"><div style="background-color:#'+window.playerObject.colors[i]+';"></div><span class="active"></span></div>');
+							}
+						}
+						else
+						{
+							if(window.playerObject.colors[i] == '')
+							{
+								$('.colors .wrap').append('<div class="item"><div style="background-color:transparent; height"></div></div>');
+							}
+							else
+							{
+								$('.colors .wrap').append('<div class="item"><div style="background-color:#'+window.playerObject.colors[i]+';"></div></div>');
+							}
+						}
+					}
 					
 					
 					
@@ -651,6 +676,7 @@
 					
 					window.game.state.start('Boot');
 					$('.overlay').fadeIn(200);
+					
 				}
 			}
 		 });
@@ -686,7 +712,9 @@
 					$(this).find('img').attr('src','images/sound.jpg');
 				}*/	
 			});
-			$('.shopbutton').click(function(){});
+			$('.shopbutton').click(function(){
+				$('.mainmenu').fadeOut(200,function(){$('.shop').fadeIn(200);});
+			});
 			
 			/* Start game button */
 			$('.loader').click(function(){
@@ -696,10 +724,23 @@
 				}
 			});
 			
+			/* Pop up */
+			$('.backdrop').click(function(){
+				$('.backdrop').fadeOut(200)
+				$('.win').fadeOut(200)
+			});
+			
+			$('.backbuttonpop').click(function(){
+				$('.backdrop').fadeOut(200)
+				$('.win').fadeOut(200)
+			});
+			
+			
 			/* Page buttons */
 		 	$('.backbutton').click(function(){
 				$('.inventory').fadeOut(200)
 				$('.account').fadeOut(200)
+				$('.shop').fadeOut(200)
 				$('.stats').fadeOut(200,function(){$('.mainmenu').fadeIn(200);});
 				$('.rooms').fadeOut(200,function(){$('.mainmenu').fadeIn(200);});				
 			});
@@ -709,17 +750,15 @@
 			$('.statsbuttonpage').click(function(){
 				$('.account').fadeOut(200,function(){$('.stats').fadeIn(200);});
 			});
-			$('.inventorybuttonpage').click(function(){
+			$('.inventorybuttonpage').click(function(){	
+				
 				$('.account').fadeOut(200,function(){$('.inventory').fadeIn(200);});
 			});
 			
 			/* Inventory select */
-			$('.inventory .inv .aircraft .wrap .item').click(function(){
+			$('.inventory .inv .aircraft .wrap').on('click', '.item', function(){
 				if($(this).find('.active').length != 0){
 					console.log('yes');	
-				}
-				else if($(this).find('.notavailable').length != 0){
-					alert('To unlock this skin you have to play at special locations');
 				}
 				else
 				{
@@ -729,7 +768,7 @@
 					window.skin = $(this).attr('data-skin');
 				}
 			});
-			$('.inventory .inv .colors .wrap .item').click(function(){
+			$('.inventory .inv .colors .wrap').on('click', '.item', function(){
 				if($(this).find('.active').length != 0){
 					console.log('yes yes');	
 				}

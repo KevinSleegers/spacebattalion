@@ -20,6 +20,7 @@ SpaceBattalion.Preloader.prototype = {
 	    this.load.spritesheet('mainBg', 'assets/img/spr_backgroundOverlay.png', 160, 160);
 		this.load.spritesheet('player', 'assets/img/spr_plane_strip11.png', 64, 64);
 		this.load.spritesheet('ns', 'assets/img/spr_ns_strip11.png', 64, 64);
+		this.load.spritesheet('wk', 'assets/img/spr_wk_strip11.png', 64, 64);
 		this.load.spritesheet('otherPlayers', 'assets/img/spr_plane_strip2.png', 64, 64);
 		this.load.spritesheet('boss', 'assets/img/spr_boss_die_strip13.png', 128, 256);
 		this.load.spritesheet('coop', 'assets/img/spr_double_final_strip4.png', 96, 128);
@@ -84,7 +85,7 @@ SpaceBattalion.Preloader.prototype = {
 				var parentWidth = $('.loader span').offsetParent().width();
 				var percent = 100*width/parentWidth;
 				console.log(percent);
-				if(percent == 100)
+				if(percent >= 99)
 				{
 					clearInterval(loadbar);
 					window.startbutton = 1;
@@ -93,6 +94,7 @@ SpaceBattalion.Preloader.prototype = {
 						$('.loader span').text('Start Game');	
 					});
 					$('.menulist').fadeIn(200);
+					window.getLocation();
 				}
 			}, 200);
 
