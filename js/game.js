@@ -704,8 +704,21 @@ SpaceBattalion.Game.prototype = {
 
 	                    if(player.allowControls === true) {	                    	
 		                    if(o.z < 9.5 || o.z > 10) {	
-		                    	self.changePosition('+', o.y * 50, '+', o.x * 50, anglePlayer, 'p');
-		                    	
+		                    	// max y is gelijk aan movementspeed op desktop
+		                    	if((o.y * 50) > 350) {
+		                    		var accelY = 350;
+		                    	} else {
+		                    		var accelY = o.y * 50;
+		                    	}
+
+		                    	// max x is gelijk aan movementspeed op desktop
+		                    	if((o.x * 50) > 350) {
+		                    		var accelX = 350;
+		                    	} else {
+		                    		var accelX = o.x * 50;
+		                    	}
+
+		                    	self.changePosition('+', accelY, '+', accelX, anglePlayer, 'p');		                    	
 		                    } else {
 		                   		// Als je telefoon vrijwel horizontaal is, stop dan beweging maar behoudt angle
 		                        self.changePosition('+', 0, '+', 0, playerType.angle, 'p');
