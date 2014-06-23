@@ -75,7 +75,7 @@
 					adres = data[1].formatted_address;
 					console.log(adres);
 				} else {
-					adres = randName(5);
+					adres = randName();
 					console.log(adres);
 				}			 
 			});
@@ -234,11 +234,11 @@
 			window.game.state.start('Game');			
 		}
 
-		function randName(char) {
+		function randName() {
 			var text = "";
 		    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-		    for( var i=0; i < char; i++ )
+		    for( var i=0; i < 10; i++ )
 		        text += possible.charAt(Math.floor(Math.random() * possible.length));
 
 		    return text;
