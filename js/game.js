@@ -140,10 +140,7 @@ SpaceBattalion.Game.prototype = {
 
 		player 	= this.add.sprite(this.world.centerX, this.world.centerY, window.skin);		
 
-		boss 	= this.add.sprite(600, 700, 'boss'); 
-
-		
-		
+		boss 	= this.add.sprite(600, 700, 'boss'); 		
 
 		if(isBoss) {
 			playerType = boss;
@@ -172,8 +169,10 @@ SpaceBattalion.Game.prototype = {
 		player.frame = 3;
 		player.minion = false;
 
-		if(bossSession === io.socket.sessionid) {
+		if(isBoss) {
 			player.boss = true;
+			player.visible = false;
+			player.enableBody = false;
 		} else {
 			player.boss = false;
 		}
@@ -189,13 +188,6 @@ SpaceBattalion.Game.prototype = {
 		playerGroup = this.add.group();
 		playerGroup.add(player);
 		playerGroup.bringToTop(player);
-		
-		if(playerType == boss || player.boss == true) {
-			player.visible = false;
-			player.enableBody = false;
-			//player.alive = false;
-			//player.exists = false;			
-		}
 		
 		// Merge icoon
 		mergeIcon = this.add.sprite(this.world.centerX, this.world.centerY, 'mergeButton');
