@@ -56,6 +56,7 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     bounds = 2000,
     friendlyFire = true,
     deadTimer,
+    deadPlayers = 0,
     revived = 0,
     minionTime = 5,
     bossHealth = 100;
@@ -398,7 +399,7 @@ SpaceBattalion.Game.prototype = {
 						player.exists = true;
 						player.visible = true;
 
-						player.allowControls = false;		  
+						player.allowControls = false;	
 
 		    			socket.emit('playerDied', io.socket.sessionid);
 
@@ -410,11 +411,15 @@ SpaceBattalion.Game.prototype = {
 
 			    				self.explode(player.x, player.y);
 
+								deadPlayers++;
+
 			    				socket.emit('playerMinion', io.socket.sessionid, myRoom);
 			    			}, this);
 
 			    			deadTimer.start();
 		    			} else {
+		    				deadPlayers++;
+
 		    				socket.emit('playerMinion', io.socket.sessionid, myRoom);
 		    			}
 
@@ -489,12 +494,29 @@ SpaceBattalion.Game.prototype = {
 		    			setTimeout(function() {
 		    				players[data].frame = 9;
 		    			}, 100);
+
+		    			deadPlayers++;
 						
 						// Standaard als via de function: damage() iets gekilled wordt, dan worden de statussen: alive, exist en visible op false gezet 
 						// verder worden ook alle events gebonden aan de speler removed
 						players[data].alive = true;
 						players[data].exists = true;
-						players[data].visible = true;		
+						players[data].visible = true;	
+
+						if(deadPlayers === Object.keys(players).length && typeof Object.keys(players).length != 'undefined') {
+							console.log('alle andere players zijn dood');
+
+							if(playerType === player) {
+								console.log('ben ik ook dood?', player.minion);
+								if(player.minion === true) {
+									window.shutdown = minion;
+
+									setTimeout(function() {
+										self.shutdown();
+									}, 500);
+								}
+							}
+						}		
 
 						setTimeout(function() {
 							self.explode(players[data].x, players[data].y);
@@ -860,7 +882,7 @@ SpaceBattalion.Game.prototype = {
 			//onsole.dir(players[plr].name + " : " + window.boss);
 			// console.log(bossSession);
         	// Bullets raken andere players
-        	if(players[plr].visible !== false && friendlyFire == true && players[plr].health > 0 && players[plr].minion === false) {
+        	if(playerType !== player && players[plr].visible !== false && friendlyFire == true && players[plr].health > 0 && players[plr].minion === false) {
             	this.physics.arcade.collide(bullets, players[plr], this.bulletOtherPlayer, null, this);
             }
 

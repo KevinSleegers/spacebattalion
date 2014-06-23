@@ -14,20 +14,20 @@ SpaceBattalion.GameEnd.prototype = {
 		
 		this.backgroundImage = this.add.tileSprite(0, 0, SpaceBattalion.windowWidth, SpaceBattalion.windowHeight, 'mainBg');
 		
-		var header = this.add.bitmapText(centerX, centerY - 100, 'C64', 'GAME OVER', 50);
+		var header = this.add.bitmapText(centerX, centerY - 125, 'C64', 'GAME OVER', 50);
 		header.align = 'center';
 		header.tint = '0xff7102';
 		header.x = centerX - header.textWidth / 2;
 
 		if(window.shutdown === boss) {
 			var text = 'BOSS DIED';
-			var subHeader = this.add.bitmapText(centerX, centerY - 75, 'C64', text, 40);
+			var subHeader = this.add.bitmapText(centerX, centerY - 50, 'C64', text, 40);
 			subHeader.align = 'center';
 			subHeader.tint = '0xe6e500';
 			subHeader.x = centerX - subHeader.textWidth / 2;
 		} else if(window.shutdown === minion) {
-			var text = 'ALL PLAYERS DIED';
-			var subHeader = this.add.bitmapText(centerX, centerY - 75, 'C64', text, 40);
+			var text = 'PLAYERS DIED';
+			var subHeader = this.add.bitmapText(centerX, centerY - 50, 'C64', text, 40);
 			subHeader.align = 'center';
 			subHeader.tint = '0xe6e500';
 			subHeader.x = centerX - subHeader.textWidth / 2;
