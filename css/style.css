@@ -72,7 +72,7 @@ top:0;
 overflow:hidden;
 
 }
-.overlay .wrapper {width:96%; height:96%; position:relative; padding:2%; overflow: scroll;}
+.overlay .wrapper {width:96%; height:96%; position:relative; padding:2%; overflow: auto;}
 .overlay .logo {width:100%; display:block; margin-top:20px;}
 .overlay .logo img{max-width:356px; max-height:93px; width:100%; height:100%; display:block; margin:0 auto;}
 .overlay .wrapper .payoff {width:100%; font-size:1.3em; display:block; color:#FFF; font-family: 'Roboto', sans-serif; font-weight: 300; text-align:center;}
