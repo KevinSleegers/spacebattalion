@@ -86,7 +86,6 @@ SpaceBattalion.Preloader.prototype = {
 				var width = $('.loader span').width();
 				var parentWidth = $('.loader span').offsetParent().width();
 				var percent = 100*width/parentWidth;
-				console.log(percent);
 				if(percent >= 99)
 				{
 					clearInterval(loadbar);
@@ -94,6 +93,7 @@ SpaceBattalion.Preloader.prototype = {
 					
 					$('.loader').animate({"height":"40px"},200,function(){
 						$('.loader span').text('Start Game');	
+						$('.loader span').css('cursor', 'pointer');
 					});
 					$('.menulist').fadeIn(200);
 					window.getLocation();

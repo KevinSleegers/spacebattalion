@@ -211,7 +211,6 @@ font-size: 1.6em;
 text-align: center;
 line-height: 40px;
 font-family: 'Roboto', sans-serif; font-weight: 300;
-cursor:pointer;
 }
 
 .backdrop {position:absolute; width:100%; height:100%; left:0; top:0; background-color:#000; opacity:0.6;}
