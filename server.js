@@ -7,7 +7,7 @@ var express = require('express'),
     coopPlayers = {},
     room = '',
     rooms = {},
-    maxPlayers = 2;
+    maxPlayers = 3;
     skins = {},
     tints = {};
 
@@ -388,6 +388,7 @@ io.sockets.on('connection', function(socket){
     });
 
     socket.on('tint', function(data) {
+        console.log(data);
         tints[socket.id] = data;
     });
 

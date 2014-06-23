@@ -719,25 +719,43 @@
 						{
 							if(window.playerObject.colors[i] == '')
 							{
-								$('.colors .wrap').append('<div class="item"><div style="background-color:transparent;"></div><span class="active"></span></div>');
+								$('.colors .wrap').append('<div class="item" data-tint="0"><div style="background-color:transparent;"></div><span class="active"></span></div>');
 							}
 							else
 							{
-								$('.colors .wrap').append('<div class="item"><div style="background-color:#'+window.playerObject.colors[i]+';"></div><span class="active"></span></div>');
+								$('.colors .wrap').append('<div class="item" data-tint="0x' + window.playerObject.colors[i] + '"><div style="background-color:#'+window.playerObject.colors[i]+';"></div><span class="active"></span></div>');
 							}
 						}
 						else
 						{
 							if(window.playerObject.colors[i] == '')
 							{
-								$('.colors .wrap').append('<div class="item"><div style="background-color:transparent; height"></div></div>');
+								$('.colors .wrap').append('<div class="item" data-tint="0"><div style="background-color:transparent; height"></div></div>');
 							}
 							else
 							{
-								$('.colors .wrap').append('<div class="item"><div style="background-color:#'+window.playerObject.colors[i]+';"></div></div>');
+								$('.colors .wrap').append('<div class="item" data-tint="0x' + window.playerObject.colors[i] + '"><div style="background-color:#'+window.playerObject.colors[i]+';"></div></div>');
 							}
 						}
 					}
+
+					$('.inventory .inv .colors .wrap').on('click', '.item', function(){
+						$('.inventory .inv .colors .wrap .item').click(function(){
+
+							if($(this).find('.active').length != 0){
+								console.log('yes yes');	
+							}
+							else
+							{
+								console.log('no no');
+								$('.inventory .inv .colors .wrap').find('.active').remove();
+								$(this).append('<span class="active"></span>');					
+								window.tint = $(this).attr('data-tint');
+
+								socket.emit('tint', $(this).attr('data-tint'));
+							}
+						});		 
+					});
 					
 					
 					
@@ -856,27 +874,7 @@
 				}
 			});
              
-			$('.inventory .inv .colors .wrap').on('click', '.item', function(){
-
-
-
-			$('.inventory .inv .colors .wrap .item').click(function(){
-
-				if($(this).find('.active').length != 0){
-					console.log('yes yes');	
-				}
-				else
-				{
-					console.log('no no');
-					$('.inventory .inv .colors .wrap').find('.active').remove();
-					$(this).append('<span class="active"></span>');					
-					window.tint = $(this).attr('data-tint');
-
-					socket.emit('tint', $(this).attr('data-tint'));
-				}
-			});
-		 
-		});
+			
 		});
 		
 		

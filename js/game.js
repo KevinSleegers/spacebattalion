@@ -860,11 +860,11 @@ SpaceBattalion.Game.prototype = {
 			//onsole.dir(players[plr].name + " : " + window.boss);
 			// console.log(bossSession);
         	// Bullets raken andere players
-        	if(players[plr].visible !== false && friendlyFire == true && players[plr].health > 0) {
+        	if(players[plr].visible !== false && friendlyFire == true && players[plr].health > 0 && players[plr].minion === false) {
             	this.physics.arcade.collide(bullets, players[plr], this.bulletOtherPlayer, null, this);
             }
 
-            if(player.visible !== false && friendlyFire == true && player.health > 0) {
+            if(player.visible !== false && friendlyFire == true && player.health > 0 && player.minion === false) {
             	// Bullets raken jou
             	this.physics.arcade.collide(bullets, player, this.bulletPlayer, null, this);
             }			
@@ -929,10 +929,12 @@ SpaceBattalion.Game.prototype = {
         }
 
         // Bullets raken boss
-        this.physics.arcade.collide(bullets, boss, this.bulletBoss, null, this);
+        if(player.minion === false) {
+        	this.physics.arcade.collide(bullets, boss, this.bulletBoss, null, this);
+        }
 
         // Overlap tussen boss en player
-        this.physics.arcade.overlap(player, boss, this.overlapPlayer, null, this);			
+        // this.physics.arcade.overlap(player, boss, this.overlapPlayer, null, this);			
 	},
 
 	createPlayer: function(plr) {		
@@ -1942,7 +1944,7 @@ SpaceBattalion.Game.prototype = {
 			if(typeof clouds != 'undefined') {				
 				clouds.destroy();
 			}
-			
+
 			bgtile.destroy();
 			playerGroup.destroy();
 			bossGroup.destroy();
