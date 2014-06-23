@@ -63,7 +63,7 @@
 			window.lat = position.coords.latitude;
 			window.lng = position.coords.longitude;
 
-			console.log(window.lat, window.lng);
+			//console.log(window.lat, window.lng);
 
 			gotPosition = true;
 
@@ -154,7 +154,7 @@
 			console.log('Game is ready to start!');
 			clearInterval(window.textInterval);
 			if(data === true) {
-				console.log('boss = ', boss);
+				//console.log('boss = ', boss);
 				window.boss = boss;
 				// Maak timer die na 5 sec game start
 				//game.time.events.add(Phaser.Timer.SECOND * 5, startGame, this);
@@ -296,7 +296,7 @@
             <div class="loader">
                     <span style="width: 0%"></span>
             </div>
-            <div class="payoff">Play together with your friends, any place, any time</div>
+            <div class="payoff">Play together with your everybody, any place, any time</div>
             <div class="menu">
                 <ul class="menulist">
                     <li class="accountbutton"><img src="images/account.jpg"></li>
@@ -561,9 +561,9 @@
 		  $('.win').hide();
 		  $('.shop').hide();
 		  window.skin = "player";
-		  console.log($.cookie('inlog'));
-		  console.log($.cookie('inlognaam'));
-		  console.log($.cookie('password'));
+		  //console.log($.cookie('inlog'));
+		  //console.log($.cookie('inlognaam'));
+		  //console.log($.cookie('password'));
 		  if ($.cookie('inlog') != '1') {
 		  $("#submit").click(function (){
 			inl = $("#inlognaam").val();
@@ -671,7 +671,7 @@
 			url:"http://buitmediasolutions.nl/spacebattalion/check.php",
 			data:{inlognaam: $.cookie('inlognaam'),password: $.cookie('password')},
 				success:function(data){
-					console.log(data);
+					//console.log(data);
 				if(data=='no'){
 					alert('COOKIE ERROR');
 					$.removeCookie('inlognaam'); 
@@ -685,7 +685,7 @@
 					window.inlognaam = $.cookie('inlognaam');
 					window.password = $.cookie('password');
 					window.playerObject = $.parseJSON(data);
-					console.log(window.playerObject);
+					//console.log(window.playerObject);
 					$('.playedvalue').text(window.playerObject.played);
 					$('.wonvalue').text(window.playerObject.win);
 					$('.losevalue').text(window.playerObject.lose);
