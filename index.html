@@ -99,6 +99,8 @@
 						$('.rooms').find('ul').append("<li data-room='" + value.name + "'>" + value.name.replace(/\//g, '') + " ( " + dist + " ) <span>Players: " + value.players + "/" + value.max + "</span></li>");
 					}
 				});
+
+				$('.rooms li').css('cursor', 'pointer');
 			}
 
 			$('.rooms li').click(function() {
@@ -794,6 +796,10 @@
 			
 			/* Start game button */
 			$('.loader').click(function(){
+				if(window.startbutton == 1) {
+					$(this).css('cursor', 'pointer');
+				}
+
 				if(window.startbutton == 1 && gotPosition == true)
 				{
 					$('.mainmenu').fadeOut(200,function(){$('.rooms').fadeIn(200);});
