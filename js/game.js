@@ -1002,6 +1002,8 @@ SpaceBattalion.Game.prototype = {
 
 	    if(bossSession === players[plr.session].name) {
 	    	players[plr.session].boss = true;
+	    	players[plr.session].visible = false;
+	    	players[plr.session].enableBody = false;
 	    } else {
 	    	players[plr.session].boss = false;
 	    }
