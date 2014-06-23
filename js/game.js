@@ -20,7 +20,6 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     diagonalSpeed,
     vibrate = false,
     shakeScreen = 0,
-    bossHealth = 100,
     muzzleFlash,
     playerType,
 	bossIsDying = false,
@@ -58,7 +57,8 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     friendlyFire = true,
     deadTimer,
     revived = 0,
-    minionTime = 5;
+    minionTime = 5,
+    bossHealth = 100;
 
 SpaceBattalion.Game = function(game) {
 	this.game;		//	a reference to the currently running game
@@ -170,6 +170,12 @@ SpaceBattalion.Game.prototype = {
 		player.frame = 3;
 		player.minion = false;
 
+		if(window.boss === io.socket.sessionid) {
+			player.boss = true;
+		} else {
+			player.boss = false;
+		}
+
 		if(typeof window.tint !== "undefined" && window.tint !== 0) {
 			player.tint = window.tint;
 		}
@@ -201,7 +207,7 @@ SpaceBattalion.Game.prototype = {
 	    this.physics.enable(boss, Phaser.Physics.ARCADE);
 	    boss.physicsBodyType = Phaser.Physics.ARCADE;
 		boss.body.collideWorldBounds = true;		
-	    boss.health = 5000;
+	    boss.health = bossHealth;
 	    boss.frame = 1;
 	    boss.body.immovable = true;
 	    boss.move = false;
@@ -447,7 +453,7 @@ SpaceBattalion.Game.prototype = {
 	    	} else {
 	    		players[data].damage(10);
 
-	    		var dist = self.distance(player.lat, player.lng, players[data].lat, players[data].lng, "M");
+	    		var dist = self.distance(player.lat, player.lng, players[data].lat, players[data].lng, "M");	
 
 	    		if(players[data].minion === false) { 
 
@@ -553,6 +559,8 @@ SpaceBattalion.Game.prototype = {
 		// Boss is gekillt door andere speler
 		var self = this;
 		socket.on('bossDead', function(data) {
+			window.shutdown = boss;
+
 			self.explode(boss.x, boss.y);
 			player.score += 1000;
 			
@@ -580,25 +588,31 @@ SpaceBattalion.Game.prototype = {
 			players[data.session].lat = data.lat;
 			players[data.session].lng = data.long;
 
-			var dist = self.distance(player.lat, player.lng, players[data.session].lat, players[data.session].lng, "M");
+			if(players[data.session].boss === false) {
+				var dist = self.distance(player.lat, player.lng, players[data.session].lat, players[data.session].lng, "M");
 
-			if(dist <= range) {
-				if(radarCursor == '' || radarCursor == null || typeof radarCursor == "undefined") {
-					// Radar cursor aanmaken
-					radarCursor = self.add.sprite(0, 0, 'radarCursor');
-					radarCursor.anchor.setTo(.5, .5);
-					radarCursor.fixedToCamera = true;
-					radarCursor.cameraOffset.setTo(cursorOffsetX, 100);	
+				if(dist <= range) {
+					if(radarCursor == '' || radarCursor == null || typeof radarCursor == "undefined") {
+						var angleCursor = self.calcAngle(player.lat, player.lng, players[data.session].lat, players[data.session].lng);
+
+						// Radar cursor aanmaken
+						radarCursor = self.add.sprite(0, 0, 'radarCursor');
+						radarCursor.anchor.setTo(.5, .5);
+						radarCursor.fixedToCamera = true;
+						radarCursor.cameraOffset.setTo(cursorOffsetX, 100);	
+						radarCursor.angle = angleCursor;
+						console.log('radarcursor angle 1', angleCursor);
+							
+						radarMeters = self.add.text(0, 0, dist.toFixed(2) + " M", { font: "14px Arial", fill: "#ffffff", align: "center" });
+						radarMeters.fixedToCamera = true;
+						radarMeters.cameraOffset.setTo(cursorOffsetX - 15, 140);	
+
+						players[data.session].frame = 6;
 						
-					radarMeters = self.add.text(0, 0, dist.toFixed(2) + " M", { font: "14px Arial", fill: "#ffffff", align: "center" });
-					radarMeters.fixedToCamera = true;
-					radarMeters.cameraOffset.setTo(cursorOffsetX - 15, 140);	
-
-					players[data.session].frame = 6;
-					
-					cursorOffsetX += 60;
-				} else {
-					radarMeters.setText(dist.toFixed(2) + ' M');
+						cursorOffsetX += 60;
+					} else {
+						radarMeters.setText(dist.toFixed(2) + ' M');
+					}
 				}
 			}
 		});
@@ -844,7 +858,7 @@ SpaceBattalion.Game.prototype = {
         // Collision detection voor alle players && Icoon om samen te voegen
         for(var plr in players) {
 			//onsole.dir(players[plr].name + " : " + window.boss);
-			console.log(bossSession);
+			// console.log(bossSession);
         	// Bullets raken andere players
         	if(players[plr].visible !== false && friendlyFire == true && players[plr].health > 0) {
             	this.physics.arcade.collide(bullets, players[plr], this.bulletOtherPlayer, null, this);
@@ -853,10 +867,9 @@ SpaceBattalion.Game.prototype = {
             if(player.visible !== false && friendlyFire == true && player.health > 0) {
             	// Bullets raken jou
             	this.physics.arcade.collide(bullets, player, this.bulletPlayer, null, this);
-            }
-			
+            }			
 		
-			if(typeof player.lat !== "undefined" && typeof player.lng !== "undefined") {
+			if(typeof player.lat !== "undefined" && typeof player.lng !== "undefined" && players[plr].boss === false) {
 				var dist = this.distance(player.lat, player.lng, players[plr].lat, players[plr].lng, "M");
 
 				//	Als afstand kleiner dan 100 meter is
@@ -867,8 +880,15 @@ SpaceBattalion.Game.prototype = {
 				//console.log(io.socket.sessionid);
 				//if(players[plr].name !== window.boss) {
 					
-				if(bossSession !== player.name || typeof bossSession === undefined) {
-					if(dist <= range && this.physics.arcade.distanceBetween(players[plr], player) <= range * 2 && player.minion === false && players[plr].minion === false && players[plr].health > 0 && player.health > 0 && player.coop === false && players[plr].coop === false)
+				if(players[plr].boss === false) {
+					if(dist <= range && 
+						this.physics.arcade.distanceBetween(players[plr], player) <= range * 2 && 
+						player.minion === false && 
+						players[plr].minion === false && 
+						players[plr].health > 0 && 
+						player.health > 0 && 
+						player.coop === false && 
+						players[plr].coop === false)
 					{				
 						mergeIcon.visible = true;
 
@@ -878,7 +898,19 @@ SpaceBattalion.Game.prototype = {
 					else
 					{
 						mergeIcon.visible = false;
+
+						/* Debug loggin
+						console.log('dist :', dist);
+						console.log('dist between: ', this.physics.arcade.distanceBetween(players[plr], player) <= range * 2);
+						console.log('player minion: ', player.minion);
+						console.log('players[plr] minion: ', players[plr].minion);
+						console.log('player health: ', player.health);
+						console.log('players[plr] health: ', players[plr].health);
+						console.log('player coop: ', player.coop);
+						console.log('players[plr] coop: ', players[plr].coop);*/
 					}
+				} else {
+					console.log(players[plr].name + ' is de boss');
 				}
 				//}
 				//console.log(players[plr].nickname + players[plr].latitude + " ");
@@ -905,14 +937,11 @@ SpaceBattalion.Game.prototype = {
 
 	createPlayer: function(plr) {		
 		// new player variables
-
-
 	    var newSession = plr.session;
 	    var newPlayerNick = plr.nickname;
 	    var newPlayerX = plr.x;
 	    var newPlayerY = plr.y;
 	    var newPlayerAngle = plr.angle;
-
 	
 		players[plr.session] = this.add.sprite(plr.x, plr.y, 'player');
 	
@@ -929,6 +958,14 @@ SpaceBattalion.Game.prototype = {
 	    //players[plr.session].frame = 1;
 	    players[plr.session].angle = plr.angle;
 	    players[plr.session].body.immovable = true;
+
+	    if(window.boss === plr.session) {
+	    	players[plr.session].boss = true;
+	    } else {
+	    	players[plr.session].boss = false;
+	    }
+
+	    console.log('ben ik boss', players[plr.session].boss);
 
 	    if(typeof plr.minion !== 'undefined') {
 	    	if(plr.minion === true) {
@@ -973,8 +1010,7 @@ SpaceBattalion.Game.prototype = {
 	    playerGroup.bringToTop(player);
 		bossGroup.bringToTop(boss);	
 		
-		var cursorOffsetX = 400;
-		
+		var cursorOffsetX = 400;		
 
 		if(player.lat !== 0 && player.lng !== 0 && players[plr.session].lat !== 0 && players[plr.session].lng !== 0) {
 			var dist = this.distance(player.lat, player.lng, players[plr.session].lat, players[plr.session].lng, "M");
@@ -985,17 +1021,19 @@ SpaceBattalion.Game.prototype = {
 				players[plr.session].frame = 6;
 				
 				if(radarCursor == '' || radarCursor == null || typeof radarCursor == "undefined") {
+					var angleCursor = this.calcAngle(player.lat, player.lng, players[plr.session].lat, players[plr.session].lng);
+
 					// Radar cursor aanmaken
 					radarCursor = this.add.sprite(0, 0, 'radarCursor');
 					radarCursor.anchor.setTo(.5, .5);
 					radarCursor.fixedToCamera = true;
-					radarCursor.cameraOffset.setTo(cursorOffsetX, 100);	
+					radarCursor.cameraOffset.setTo(cursorOffsetX, 100);			
+					radarCursor.angle = angleCursor;
+					console.log('radarcursor angle 2', angleCursor);
 							
 					radarMeters = this.add.text(0, 0, dist.toFixed(2) + " M", { font: "14px Arial", fill: "#ffffff", align: "center" });
 					radarMeters.fixedToCamera = true;
 					radarMeters.cameraOffset.setTo(cursorOffsetX - 15, 140);	
-
-					
 						
 					cursorOffsetX += 60;
 				} else {
@@ -1025,7 +1063,8 @@ SpaceBattalion.Game.prototype = {
 					radarCursor = this.add.sprite(0, 0, 'radarCursor');
 					radarCursor.anchor.setTo(.5, .5);
 					radarCursor.fixedToCamera = true;
-					radarCursor.cameraOffset.setTo(cursorOffsetX, 100);	
+					radarCursor.cameraOffset.setTo(cursorOffsetX, 100);						
+					radarCursor.angle = angle;
 						
 					radarMeters = this.add.text(0, 0, dist + " M", { font: "14px Arial", fill: "#ffffff", align: "center" });
 					radarMeters.fixedToCamera = true;
@@ -1317,11 +1356,11 @@ SpaceBattalion.Game.prototype = {
 
 				boss.frame = 0;
 			
-				if(boss.health <= 500 && boss.health > 200) 
+				if(boss.health <= (70 / 100) * bossHealth  && boss.health > (40 / 100) * bossHealth) 
 				{
 					boss.tint = 0xFF9933;				
 				} 
-				else if(boss.health <= 200 && boss.health > 0)
+				else if(boss.health <= (40 / 100) * bossHealth && boss.health > 0)
 				{
 					boss.tint = 0xFF0000;	
 				} 
@@ -1731,6 +1770,7 @@ SpaceBattalion.Game.prototype = {
 		if(playerLat !== '' && playerLong !== '') {
 			// Afstand tussen player 1 en player 2 in km
 			var dist = this.distance(latitude, longitude, playerLat, playerLong, "M");
+			var angle = self.calcAngle(player.lat, player.lng, playerLat, playerLong);
 
 			// Ga na of afstand binnen 'range' iss
 			if(dist <= range && !isNaN(dist)) {
@@ -1779,34 +1819,38 @@ SpaceBattalion.Game.prototype = {
 			
 			// Vergelijk opnieuw afstand tussen andere spelers en mijzelf
 			for(var plr in players) {
-				console.log(players[plr]);
+				if(players[plr].boss === false) {
+					var dist = this.distance(player.lat, player.lng, players[plr].lat, players[plr].lng, "M");
 
-				var dist = this.distance(player.lat, player.lng, players[plr].lat, players[plr].lng, "M");
+					console.log('distance tussen mijzelf en andere: ' + dist);
 
-				console.log('distance tussen mijzelf en andere: ' + dist);
+					if(dist <= range) {
+						console.log('dist', dist, 'kleiner dan', range);
 
-				if(dist <= range) {
-					console.log('dist', dist, 'kleiner dan', range);
+						if(radarCursor == '' || radarCursor == null || typeof radarCursor == "undefined") {
+							var angleCursor = this.calcAngle(player.lat, player.lng, players[plr].lat, players[plr].lng);
 
-					if(radarCursor == '' || radarCursor == null || typeof radarCursor == "undefined") {
-						// Radar cursor aanmaken
-						radarCursor = this.add.sprite(0, 0, 'radarCursor');
-						radarCursor.anchor.setTo(.5, .5);
-						radarCursor.fixedToCamera = true;
-						radarCursor.cameraOffset.setTo(cursorOffsetX, 100);	
+							// Radar cursor aanmaken
+							radarCursor = this.add.sprite(0, 0, 'radarCursor');
+							radarCursor.anchor.setTo(.5, .5);
+							radarCursor.fixedToCamera = true;
+							radarCursor.cameraOffset.setTo(cursorOffsetX, 100);							
+							radarCursor.angle = angleCursor;
+							console.log('radarcursor angle 3', angleCursor);
+
+							radarMeters = this.add.text(0, 0, dist.toFixed(2) + " M", { font: "14px Arial", fill: "#ffffff", align: "center" });
+							radarMeters.fixedToCamera = true;
+							radarMeters.cameraOffset.setTo(cursorOffsetX - 15, 140);	
+
+							players[plr.session].frame = 6;
 								
-						radarMeters = this.add.text(0, 0, dist.toFixed(2) + " M", { font: "14px Arial", fill: "#ffffff", align: "center" });
-						radarMeters.fixedToCamera = true;
-						radarMeters.cameraOffset.setTo(cursorOffsetX - 15, 140);	
-
-						players[plr.session].frame = 6;
-							
-						cursorOffsetX += 60;
-					} else {
-						radarMeters.setText(dist.toFixed(2) + ' M');
+							cursorOffsetX += 60;
+						} else {
+							radarMeters.setText(dist.toFixed(2) + ' M');
+						}
+					} else {				
+						console.log('dist', dist, ' groter dan ', range);
 					}
-				} else {				
-					console.log('dist', dist, ' groter dan ', range);
 				}
 			}
 
@@ -1851,6 +1895,25 @@ SpaceBattalion.Game.prototype = {
 	    return text;
 	},
 
+	calcAngle: function(lat1, lng1, lat2, lng2) {
+		var dLon = (lng2 - lng1);
+
+		var y = Math.sin(dLon) * Math.cos(lat2);
+	    var x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+
+	    var brng = Math.atan2(y, x);
+
+	    brng = brng * (180/Math.PI);
+	    brng = (brng + 360) % 360;
+	    brng = 360 - brng;
+
+	    brng = this.math.wrapAngle(brng);
+
+	    console.log('angle volgens functie: ', brng);
+
+	    return brng;
+	},
+
 	diffNumbers: function(a, b) {
 		return Math.abs(a - b);
 	},
@@ -1861,36 +1924,49 @@ SpaceBattalion.Game.prototype = {
 	},
 
 	shutdown: function() {
-		bgtile.destroy();
-		clouds.destroy();
-		stars.destroy();
-		moon.destroy();
-		player.destroy();
-		boss.destroy();
-		bullets.destroy();
-		muzzleFlash.destroy();
+		SpaceBattalion.score = player.score;
 
-		coopPlayers = {};
-		players 	= {};
+		setTimeout(function() {
+			player.destroy();
+			boss.destroy();
+			bullets.destroy();
 
-		if(playerType == 'player')
-		{
-			emitter.destroy();		
-		}
-		
-		if(radarCursor !== undefined)
-		{
-			radarCursor.destroy();
-		}
-		
-		if(radarMeters !== undefined)
-		{
-			radarMeters.destroy();
-		}	
-		
-		mergeIcon.destroy();
-		playerType.destroy();
+			if(typeof stars != 'undefined') {				
+				stars.destroy();
+			}
 
-		window.location.href = "index.html";
+			if(typeof moon != 'undefined') {				
+				moon.destroy();
+			}
+
+			if(typeof clouds != 'undefined') {				
+				clouds.destroy();
+			}
+			
+			bgtile.destroy();
+			playerGroup.destroy();
+			bossGroup.destroy();
+
+			if(typeof radarMeters != 'undefined') {
+				radarMeters.destroy();
+			}
+
+			if(typeof mergeIcon != 'undefined') {
+				mergeIcon.destroy();
+			}
+
+			textPlayers 	= '';
+			textScore 		= '';
+			playerType		= null;			
+
+			movementSpeed	= 0;
+
+			players 		= {};
+			coopPlayers 	= {};
+			onlinePlayers	= [];
+
+			// Switch state
+			game.state.start('GameEnd', true, false);
+		}, 2000);
 	},
 };
