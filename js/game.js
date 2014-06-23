@@ -977,7 +977,6 @@ SpaceBattalion.Game.prototype = {
 		
 		if(players[plr.session].boss == false)
 		{
-<<<<<<< HEAD
 			if(bossSession !== players[plr].name || typeof bossSession === undefined)
 			{
 				if(playerType == player && players[plr].name !== player.name && lastSession !== players[plr].name)
@@ -1013,7 +1012,6 @@ SpaceBattalion.Game.prototype = {
 						} else {				
 							console.log('dist', dist, ' groter dan ', range);
 						}
-=======
 			if(player.lat !== 0 && player.lng !== 0 && players[plr.session].lat !== 0 && players[plr.session].lng !== 0) {
 				var dist = this.distance(player.lat, player.lng, players[plr.session].lat, players[plr.session].lng, "M");
 
@@ -1036,7 +1034,6 @@ SpaceBattalion.Game.prototype = {
 						players[plr.session].frame = 6;
 							
 						cursorOffsetX += 60;
->>>>>>> origin/master
 					} else {
 						radarMeters.setText(dist.toFixed(2) + ' M');
 					}
