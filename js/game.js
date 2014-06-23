@@ -55,7 +55,7 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
 
     logging = true,
     bounds = 2000,
-    friendlyFire = true,
+    friendlyFire = false,
     deadTimer,
     revived = 0,
     minionTime = 5;
@@ -975,74 +975,33 @@ SpaceBattalion.Game.prototype = {
 		
 		var cursorOffsetX = 400;
 		
-		if(players[plr.session].boss == false)
-		{
-			if(bossSession !== players[plr].name || typeof bossSession === undefined)
-			{
-				if(playerType == player && players[plr].name !== player.name && lastSession !== players[plr].name)
-				{
+
+		if(player.lat !== 0 && player.lng !== 0 && players[plr.session].lat !== 0 && players[plr.session].lng !== 0) {
+			var dist = this.distance(player.lat, player.lng, players[plr.session].lat, players[plr.session].lng, "M");
+
+			console.log('distance tussen mijzelf en andere: ' + dist);
+
+			if(dist <= range && bossSession !== player.name || typeof bossSession === undefined) {
+				players[plr.session].frame = 6;
+				
+				if(radarCursor == '' || radarCursor == null || typeof radarCursor == "undefined") {
+					// Radar cursor aanmaken
+					radarCursor = this.add.sprite(0, 0, 'radarCursor');
+					radarCursor.anchor.setTo(.5, .5);
+					radarCursor.fixedToCamera = true;
+					radarCursor.cameraOffset.setTo(cursorOffsetX, 100);	
+							
+					radarMeters = this.add.text(0, 0, dist.toFixed(2) + " M", { font: "14px Arial", fill: "#ffffff", align: "center" });
+					radarMeters.fixedToCamera = true;
+					radarMeters.cameraOffset.setTo(cursorOffsetX - 15, 140);	
+
 					
-					if(player.lat !== 0 && player.lng !== 0 && players[plr].lat !== 0 && players[plr].lng !== 0) {
-						var dist = this.distance(player.lat, player.lng, players[plr].lat, players[plr].lng, "M");
+						
+					cursorOffsetX += 60;
+				} else {
+					radarMeters.setText(dist.toFixed(2) + ' M');
 
-						console.log('distance tussen mijzelf en andere: ' + dist);
-						console.log("is boss? " + players[plr].boss);
-
-						if(dist <= range) {
-							console.log('dist', dist, 'kleiner dan', range);
-							players[plr].frame = 6;
-							
-							if(radarCursor == '' || radarCursor == null || typeof radarCursor == "undefined") {
-								// Radar cursor aanmaken
-								radarCursor = this.add.sprite(0, 0, 'radarCursor');
-								radarCursor.anchor.setTo(.5, .5);
-								radarCursor.fixedToCamera = true;
-								radarCursor.cameraOffset.setTo(cursorOffsetX, 100);	
-										
-								radarMeters = this.add.text(0, 0, dist.toFixed(2) + " M", { font: "14px Arial", fill: "#ffffff", align: "center" });
-								radarMeters.fixedToCamera = true;
-								radarMeters.cameraOffset.setTo(cursorOffsetX - 15, 140);	
-
-								
-									
-								cursorOffsetX += 60;
-							} else {
-								radarMeters.setText(dist.toFixed(2) + ' M');
-							}
-						} else {				
-							console.log('dist', dist, ' groter dan ', range);
-						}
-			if(player.lat !== 0 && player.lng !== 0 && players[plr.session].lat !== 0 && players[plr.session].lng !== 0) {
-				var dist = this.distance(player.lat, player.lng, players[plr.session].lat, players[plr.session].lng, "M");
-
-				console.log('distance tussen mijzelf en andere: ' + dist);
-
-				if(dist <= range) {
-					console.log('dist', dist, 'kleiner dan', range);
-
-					if(radarCursor == '' || radarCursor == null || typeof radarCursor == "undefined") {
-						// Radar cursor aanmaken
-						radarCursor = this.add.sprite(0, 0, 'radarCursor');
-						radarCursor.anchor.setTo(.5, .5);
-						radarCursor.fixedToCamera = true;
-						radarCursor.cameraOffset.setTo(cursorOffsetX, 100);	
-								
-						radarMeters = this.add.text(0, 0, dist.toFixed(2) + " M", { font: "14px Arial", fill: "#ffffff", align: "center" });
-						radarMeters.fixedToCamera = true;
-						radarMeters.cameraOffset.setTo(cursorOffsetX - 15, 140);	
-
-						players[plr.session].frame = 6;
-							
-						cursorOffsetX += 60;
-					} else {
-						radarMeters.setText(dist.toFixed(2) + ' M');
-					}
-				} else {				
-					console.log('dist', dist, ' groter dan ', range);
-				}
-			} else {
-				console.log('1 van deze waardes zijn 0 of undefined');
-				console.log(player.lat, player.lng, players[plr.session].lat, players[plr.session].lng);
+				} 
 			}
 		}
 		
