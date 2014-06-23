@@ -201,7 +201,7 @@ SpaceBattalion.Game.prototype = {
 	    this.physics.enable(boss, Phaser.Physics.ARCADE);
 	    boss.physicsBodyType = Phaser.Physics.ARCADE;
 		boss.body.collideWorldBounds = true;		
-	    boss.health = 1000;
+	    boss.health = 99000;
 	    boss.frame = 1;
 	    boss.body.immovable = true;
 	    boss.move = false;
