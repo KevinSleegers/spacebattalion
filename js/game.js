@@ -55,10 +55,11 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
 
     logging = true,
     bounds = 2000,
-    friendlyFire = true,
+    friendlyFire = false,
     deadTimer,
     revived = 0,
-    minionTime = 5;
+    minionTime = 5,
+    deadPlayers = 0;
 
 SpaceBattalion.Game = function(game) {
 	this.game;		//	a reference to the currently running game
@@ -138,10 +139,7 @@ SpaceBattalion.Game.prototype = {
 
 		player 	= this.add.sprite(this.world.centerX, this.world.centerY, window.skin);		
 
-		boss 	= this.add.sprite(600, 700, 'boss'); 
-
-		
-		
+		boss 	= this.add.sprite(600, 700, 'boss'); 	
 
 		if(isBoss) {
 			playerType = boss;
@@ -213,8 +211,6 @@ SpaceBattalion.Game.prototype = {
 
 		//this.camera.follow(boss, Phaser.Camera.FOLLOW_TOPDOWN);	
 		this.camera.follow(playerType, Phaser.Camera.FOLLOW_LOCKON);	
-	
-		
 
 		// Bullets aanmaken
 		bullets = this.add.group();
@@ -392,7 +388,7 @@ SpaceBattalion.Game.prototype = {
 						player.exists = true;
 						player.visible = true;
 
-						player.allowControls = false;		  
+						player.allowControls = false;	  
 
 		    			socket.emit('playerDied', io.socket.sessionid);
 
@@ -404,11 +400,15 @@ SpaceBattalion.Game.prototype = {
 
 			    				self.explode(player.x, player.y);
 
+								deadPlayers++;	
+
 			    				socket.emit('playerMinion', io.socket.sessionid, myRoom);
 			    			}, this);
 
 			    			deadTimer.start();
 		    			} else {
+		    				deadPlayers++;	
+
 		    				socket.emit('playerMinion', io.socket.sessionid, myRoom);
 		    			}
 
@@ -712,7 +712,21 @@ SpaceBattalion.Game.prototype = {
 					player.body.velocity.setTo(0, 0);
 				}
 			}
-		}			
+		}		
+
+		if(typeof players.length == "undefined") {
+			var aantalPlayers = 0;
+		} else {
+			var aantalPlayers = players.length;
+		}
+
+		if(deadPlayers === aantalPlayers) {
+			console.log('alle andere spelers zijn dood');
+			
+			if(player.minion === true) {
+				alert('ik ben ook dood');
+			}
+		}
 
 	    // Alleen uitvoeren als gebruiker op desktop is
 		if(this.game.device.desktop) {    	
@@ -837,10 +851,8 @@ SpaceBattalion.Game.prototype = {
 
         // Collision detection voor alle players && Icoon om samen te voegen
         for(var plr in players) {
-			//onsole.dir(players[plr].name + " : " + window.boss);
-			console.log(bossSession);
         	// Bullets raken andere players
-        	if(players[plr].visible !== false && friendlyFire == true && players[plr].health > 0) {
+        	if(friendlyFire == true && players[plr].health > 0 && players[plr].minion === false) {
             	this.physics.arcade.collide(bullets, players[plr], this.bulletOtherPlayer, null, this);
             }
 
@@ -891,10 +903,10 @@ SpaceBattalion.Game.prototype = {
         }
 
         // Bullets raken boss
-        this.physics.arcade.collide(bullets, boss, this.bulletBoss, null, this);
+        // this.physics.arcade.collide(bullets, boss, this.bulletBoss, null, this);
 
         // Overlap tussen boss en player
-        this.physics.arcade.overlap(player, boss, this.overlapPlayer, null, this);			
+        // this.physics.arcade.overlap(player, boss, this.overlapPlayer, null, this);			
 	},
 
 	createPlayer: function(plr) {		
@@ -1259,8 +1271,7 @@ SpaceBattalion.Game.prototype = {
 		}
 	},
 
-	bulletOtherPlayer: function(plr, blt) {
-		
+	bulletOtherPlayer: function(plr, blt) {		
 		blt.animations.play('bulletCollide');
 
 		blt.events.onAnimationComplete.add(function() {

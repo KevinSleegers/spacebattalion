@@ -7,7 +7,7 @@ var express = require('express'),
     coopPlayers = {},
     room = '',
     rooms = {},
-    maxPlayers = 4;
+    maxPlayers = 3;
     skins = {},
     tints = {};
 
@@ -327,31 +327,27 @@ io.sockets.on('connection', function(socket){
     });
 
     socket.on('newRoom', function(data) {
-        var obj = JSON.parse(data);      
+    	if(typeof data != "undefined") {
+	        var obj = JSON.parse(data);    
 
-        // Voeg nieuwe room toe aan rooms
-        var newRoom     = {};
+	        // Voeg nieuwe room toe aan rooms
+		    var newRoom     = {};
+		    newRoom.name    = obj.address;
+		    newRoom.lat     = obj.lat;
+		    newRoom.lng     = obj.lng;
+		    newRoom.players = io.sockets.clients(obj.address).length;
+		    newRoom.max     = maxPlayers; 
 
-        if( obj.address in rooms ) {
-        	console.log('room bestaat al');
-    		newRoom.name = obj.address + '_' + randName();
-		} else {			
-        	newRoom.name    = obj.address;
+	        if(obj.address in rooms) {
+	        	newRoom.name 	= obj.address + '_' + randName(10);
+			} else {
+				newRoom.name 	= obj.address;
+			}
+
+			rooms[newRoom.name] = newRoom;
+
+		    io.sockets.emit('roomUpdate', rooms);
 		}
-
-        newRoom.lat     = obj.lat;
-        newRoom.lng     = obj.lng;
-        newRoom.players = io.sockets.clients(obj.address).length;
-        newRoom.max     = maxPlayers;
-
-        rooms[newRoom.name] = newRoom;
-
-        //socket.session = socket.id;
-        //socket.join(room);
-
-        //io.sockets.socket(socket.id).emit('joinedRoom', room);
-
-        io.sockets.emit('roomUpdate', rooms);
     });
 
     socket.on('joinRoom', function(data) {
