@@ -211,6 +211,7 @@ font-size: 1.6em;
 text-align: center;
 line-height: 40px;
 font-family: 'Roboto', sans-serif; font-weight: 300;
+cursor:pointer;
 }
 
 .backdrop {position:absolute; width:100%; height:100%; left:0; top:0; background-color:#000; opacity:0.6;}
@@ -322,3 +323,12 @@ box-shadow: inset 0px 0px 6px 2px rgba(254,254,254,1);
 .shop .timer {width:100%; height:15px; display:block; background-color:#333333;margin-bottom:20px;}
 .shop .timer span {background-color:#ff7302; width:0%; height:100%; margin:0; padding:0; display: block;}
 .shop .bottom {width:100%; border-top:1px solid #FFF; display:block; overflow:hidden;}
+
+/* DIRTY CSS (by Kevin) */
+.newroom {
+	background-color: #ff7302; color: #fff;	font-size: 1.4em; text-align: center; line-height: 40px; font-family: 'Roboto', sans-serif; font-weight: 300; margin: 14px auto 28px auto; border: none; cursor: pointer; display: block; width: 60%;
+}
+
+.newroom:focus {
+	outline: 0;
+}

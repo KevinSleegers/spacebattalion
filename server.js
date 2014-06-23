@@ -335,7 +335,7 @@ io.sockets.on('connection', function(socket){
 
 	        if( obj.address in rooms ) {
 	        	console.log('room bestaat al');
-	    		newRoom.name = obj.address + '_' + randName();
+	    		newRoom.name = obj.address + '_' + randName(5);
 			} else {			
 	        	newRoom.name    = obj.address;
 			}
@@ -400,11 +400,11 @@ io.sockets.on('connection', function(socket){
         socket.broadcast.emit('removePlayer', socket.id);
     });
 
-    function randName() {
+    function randName(chars) {
         var text = "";
         var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-        for( var i=0; i < 10; i++ )
+        for( var i=0; i < chars; i++ )
             text += possible.charAt(Math.floor(Math.random() * possible.length));
 
         return text;
