@@ -59,7 +59,9 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     deadPlayers = 0,
     revived = 0,
     minionTime = 5,
-    bossHealth = 100;
+    bossHealth = 10000,
+    scoreMultiplier = 1,
+    bossPlayer = '';
 
 SpaceBattalion.Game = function(game) {
 	this.game;		//	a reference to the currently running game
@@ -91,6 +93,8 @@ SpaceBattalion.Game.prototype = {
 			bossSession = window.boss;
 			isBoss = true;
 		}
+
+		bossPlayer = window.boss;
 
 		// Stuur huidige locatie naar server
 		var updatedLocation = JSON.stringify({
@@ -463,10 +467,14 @@ SpaceBattalion.Game.prototype = {
 	    					setTimeout(function() {
 	    						players[data].frame = 7;
 	    					}, 100);
+
+	    					scoreMultiplier = 1.5;
  	    				} else {
 			    			setTimeout(function() {
 			    				players[data].frame = 1;
 			    			}, 100);
+
+			    			scoreMultiplier = 1;
 		    			}
 						//player.tint = 0xFF9933;				
 		        	} else if(players[data].health <= 30 && players[data].health > 0) {
@@ -476,10 +484,14 @@ SpaceBattalion.Game.prototype = {
 		    				setTimeout(function() {
 		    					players[data].frame = 8;
 		    				}, 100);
+
+		    				scoreMultiplier = 1.5;
 		    			} else {
 		    				setTimeout(function() {
 		    					players[data].frame = 2;
 		    				}, 100);
+
+		    				scoreMultiplier = 1;
 		    			}
 						//player.tint = 0xFF3300;
 					} else if(players[data].health <= 0) {		
@@ -578,7 +590,7 @@ SpaceBattalion.Game.prototype = {
 			window.shutdown = boss;
 
 			self.explode(boss.x, boss.y);
-			player.score += 1000;
+			player.score += 1000 * scoreMultiplier;
 			
 			console.log('Total score: ' + player.score);
 			$.ajax({
@@ -608,6 +620,8 @@ SpaceBattalion.Game.prototype = {
 				var dist = self.distance(player.lat, player.lng, players[data.session].lat, players[data.session].lng, "M");
 
 				if(dist <= range) {
+					scoreMultiplier = 1.5;
+
 					if(radarCursor == '' || radarCursor == null || typeof radarCursor == "undefined") {
 						var angleCursor = self.calcAngle(player.lat, player.lng, players[data.session].lat, players[data.session].lng);
 
@@ -629,6 +643,8 @@ SpaceBattalion.Game.prototype = {
 					} else {
 						radarMeters.setText(dist + ' M');
 					}
+				} else {
+					scoreMultiplier = 1;
 				}
 			}
 		});
@@ -726,6 +742,9 @@ SpaceBattalion.Game.prototype = {
 	},
 
 	update: function() {
+
+		console.log('multiplier: ', scoreMultiplier);
+
 		// Als window niet in focus is
 		var self = this;
 		window.onblur = function() {
@@ -908,16 +927,13 @@ SpaceBattalion.Game.prototype = {
 				//console.log(io.socket.sessionid);
 				//if(players[plr].name !== window.boss) {
 					
-				if(players[plr].boss === false && player.boss === false) {
+				if(players[plr].boss === false && player.boss === false || player.boss === false || isBoss === false) {
 					var dist = this.distance(player.lat, player.lng, players[plr].lat, players[plr].lng, "M");
 
 					if(	dist <= range && 
 						this.physics.arcade.distanceBetween(players[plr], player) <= (range * 2) && 
-						player.minion === false && 
 						players[plr].minion === false && 
 						players[plr].health > 0 && 
-						player.health > 0 && 
-						player.coop === false && 
 						players[plr].coop === false)
 					{				
 						mergeIcon.visible = true;
@@ -928,20 +944,13 @@ SpaceBattalion.Game.prototype = {
 					else
 					{
 						mergeIcon.visible = false;
-
-						// Debug loggin
-						console.log('dist :', dist);
-						console.log('dist between: ', this.physics.arcade.distanceBetween(players[plr], player) <= range * 2);
-						console.log('player minion: ', player.minion);
-						console.log('players[plr] minion: ', players[plr].minion);
-						console.log('player health: ', player.health);
-						console.log('players[plr] health: ', players[plr].health);
-						console.log('player coop: ', player.coop);
-						console.log('players[plr] coop: ', players[plr].coop);
 					}
 				}
 				//}
 				//console.log(players[plr].nickname + players[plr].latitude + " ");
+			} else {
+				console.log('andere zijn geen boss');
+				mergeIcon.visible = false;
 			}
 
 			// Player revived andere player
@@ -989,18 +998,13 @@ SpaceBattalion.Game.prototype = {
 	    players[plr.session].angle = plr.angle;
 	    players[plr.session].body.immovable = true;
 
-	    console.log('bossSession', bossSession);
-	    console.log('plr.session', players[plr.session].name);
-
-	    if(bossSession === players[plr.session].name) {
+	    if(bossPlayer === players[plr.session].name) {
 	    	players[plr.session].boss = true;
 	    	players[plr.session].visible = false;
 	    	players[plr.session].enableBody = false;
 	    } else {
 	    	players[plr.session].boss = false;
 	    }
-
-	    console.log('ben ik boss', players[plr.session].boss);
 
 	    if(typeof plr.minion !== 'undefined') {
 	    	if(plr.minion === true) {
@@ -1053,6 +1057,7 @@ SpaceBattalion.Game.prototype = {
 			console.log('distance tussen mijzelf en andere: ' + dist);
 
 			if(dist <= range && bossSession !== player.name || typeof bossSession === undefined) {
+				scoreMultiplier = 1.5;
 				players[plr.session].frame = 6;
 				
 				if(radarCursor == '' || radarCursor == null || typeof radarCursor == "undefined") {
@@ -1075,6 +1080,8 @@ SpaceBattalion.Game.prototype = {
 					radarMeters.setText(dist + ' M');
 
 				} 
+			} else {
+				scoreMultiplier = 1;
 			}
 		}
 		
@@ -1271,48 +1278,90 @@ SpaceBattalion.Game.prototype = {
 		if(this.time.now > bulletTime) {
 			bulletTime = this.time.now + 250;
 
-	        if(player.coop === true) {
-	        	var resetX = coopPlayers[coopSession].body.x + (coopPlayers[coopSession].width / 2);
-	        	var resetY = coopPlayers[coopSession].body.y + (coopPlayers[coopSession].height / 2);
-	        	var rotation = coopPlayers[coopSession].rotation;
-	        	var randomVelocity = (Math.random() * (-0.100 - 0.100) + 0.100);
-	        	var bulletY = Math.floor((Math.random() * 40) + -20);
-	        } else {          
-	        	if(dir === 'left') {
-	        		// Spawn bullet aan linker kant van schip
-	        		var resetX = playerType.body.x + (playerType.width * .25);
-	        		var resetY = playerType.body.y + (playerType.height * .25);
-	        		var randomVelocity = 0;
-	        		var bulletY = 0;
-	        	} else if (dir === 'right') {	  
-	        		// Spawn bullet aan rechter kant van schip      		
-	        		var resetX = playerType.body.x + (playerType.width * .75);
-	        		var resetY = playerType.body.y + (playerType.height * .75);
-	        		var randomVelocity = 0;
-	        		var bulletY = 0;
-	        	}
-	        	else {
-	        		// Spawn bullet in het midden van schip
-	        		var resetX = playerType.body.x + (playerType.width / 2);
-	        		var resetY = playerType.body.y + (playerType.height / 2);
-	        		var randomVelocity = (Math.random() * (-0.100 - 0.100) + 0.100);
-	        		var bulletY = Math.floor((Math.random() * 40) + -20);
-	        	}
+			if(player.boss === true) {
+				// Links
+				var resetLeftX = boss.body.x + (boss.width * .25);
+				var resetLeftY = boss.body.y + (boss.height * .25);
+				var randomVelocity = 0;
+				var bulletY = 0;
 
-	        	var rotation = playerType.rotation;
-	        }
-	        
-	        var bulletPosition = JSON.stringify({
-	            sessionid: io.socket.sessionid,
-	            rotation: rotation,
-	            nickname: playerName,
-	            resetX: resetX,
-	            resetY: resetY,
-	            bulletY: bulletY,
-	            randVelocity: randomVelocity
-	        });
-	        
-	        socket.emit('bulletChange', bulletPosition, myRoom);
+				var rotation = boss.rotation;
+
+				var bulletLeft = JSON.stringify({
+		            sessionid: io.socket.sessionid,
+		            rotation: rotation,
+		            nickname: playerName,
+		            resetX: resetLeftX,
+		            resetY: resetLeftY,
+		            bulletY: bulletY,
+		            randVelocity: randomVelocity
+		        });
+		        
+		        socket.emit('bulletChange', bulletLeft, myRoom);
+
+		        // Rechts
+				var resetRightX = boss.body.x + (boss.width * .75);
+				var resetRightY = boss.body.y + (boss.height * .75);
+				var randomVelocity = 0;
+				var bulletY = 0;
+
+				var rotation = boss.rotation;
+
+				var bulletRight = JSON.stringify({
+		            sessionid: io.socket.sessionid,
+		            rotation: rotation,
+		            nickname: playerName,
+		            resetX: resetRightX,
+		            resetY: resetRightY,
+		            bulletY: bulletY,
+		            randVelocity: randomVelocity
+		        });
+		        
+		        socket.emit('bulletChange', bulletRight, myRoom);
+			} else {
+				if(player.coop === true) {
+		        	var resetX = coopPlayers[coopSession].body.x + (coopPlayers[coopSession].width / 2);
+		        	var resetY = coopPlayers[coopSession].body.y + (coopPlayers[coopSession].height / 2);
+		        	var rotation = coopPlayers[coopSession].rotation;
+		        	var randomVelocity = (Math.random() * (-0.100 - 0.100) + 0.100);
+		        	var bulletY = Math.floor((Math.random() * 40) + -20);
+		        } else {          
+		        	if(dir === 'left') {
+		        		// Spawn bullet aan linker kant van schip
+		        		var resetX = playerType.body.x + (playerType.width * .25);
+		        		var resetY = playerType.body.y + (playerType.height * .25);
+		        		var randomVelocity = 0;
+		        		var bulletY = 0;
+		        	} else if (dir === 'right') {	  
+		        		// Spawn bullet aan rechter kant van schip      		
+		        		var resetX = playerType.body.x + (playerType.width * .75);
+		        		var resetY = playerType.body.y + (playerType.height * .75);
+		        		var randomVelocity = 0;
+		        		var bulletY = 0;
+		        	}
+		        	else {
+		        		// Spawn bullet in het midden van schip
+		        		var resetX = playerType.body.x + (playerType.width / 2);
+		        		var resetY = playerType.body.y + (playerType.height / 2);
+		        		var randomVelocity = (Math.random() * (-0.100 - 0.100) + 0.100);
+		        		var bulletY = Math.floor((Math.random() * 40) + -20);
+		        	}
+
+		        	var rotation = playerType.rotation;
+		        }
+		        
+		        var bulletPosition = JSON.stringify({
+		            sessionid: io.socket.sessionid,
+		            rotation: rotation,
+		            nickname: playerName,
+		            resetX: resetX,
+		            resetY: resetY,
+		            bulletY: bulletY,
+		            randVelocity: randomVelocity
+		        });
+		        
+		        socket.emit('bulletChange', bulletPosition, myRoom);
+			}
 
 	        if(SpaceBattalion.music) {
 				this.laserShotSound.play();
@@ -1344,7 +1393,7 @@ SpaceBattalion.Game.prototype = {
 			//Jou kogel heeft iemand geraakt
 			if (player.name == blt.session)
 			{
-				player.score += 10;
+				player.score += 10 * scoreMultiplier;
 			}
 			blt.kill();
 		}, this);
@@ -1376,7 +1425,7 @@ SpaceBattalion.Game.prototype = {
 		if(!bossIsDying) {
 			if(blt.session === io.socket.sessionid) {
 				if(player.minion === false) {
-					player.score += 10;
+					player.score += 10 * scoreMultiplier;
 					//textScore.setText('Score: ' + player.score);
 					var minion = false;
 				} else {
@@ -1420,7 +1469,7 @@ SpaceBattalion.Game.prototype = {
 					boss.events.onAnimationComplete.add(function() {
 						socket.emit('bossDied', io.socket.sessionid, myRoom);
 					});	
-					player.score += 2000;
+					player.score += 2000 * scoreMultiplier;
 			
 					console.log('Total score: '+player.score);
 					$.ajax({
@@ -1865,6 +1914,7 @@ SpaceBattalion.Game.prototype = {
 
 					if(dist <= range) {
 						console.log('dist', dist, 'kleiner dan', range);
+						scoreMultiplier = 1.5;
 
 						if(radarCursor == '' || radarCursor == null || typeof radarCursor == "undefined") {
 							var angleCursor = this.calcAngle(player.lat, player.lng, players[plr].lat, players[plr].lng);
@@ -1887,7 +1937,8 @@ SpaceBattalion.Game.prototype = {
 						} else {
 							radarMeters.setText(dist + ' M');
 						}
-					} else {				
+					} else {	
+						scoreMultiplier = 1;			
 						console.log('dist', dist, ' groter dan ', range);
 					}
 				}
