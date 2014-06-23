@@ -190,8 +190,9 @@ SpaceBattalion.Game.prototype = {
 		playerGroup.add(player);
 		playerGroup.bringToTop(player);
 		
-		if(playerType == boss) {
+		if(playerType == boss || player.boss == true) {
 			player.visible = false;
+			player.enableBody = false;
 			//player.alive = false;
 			//player.exists = false;			
 		}
@@ -917,17 +918,15 @@ SpaceBattalion.Game.prototype = {
 					
 				if(players[plr].boss === false && player.boss === false) {
 					var dist = this.distance(player.lat, player.lng, players[plr].lat, players[plr].lng, "M");
-					
-					console.log('dist', dist, 'range', range);
-					console.log('between: ', this.physics.arcade.distanceBetween(players[plr], player));
+
 					if(	dist <= range && 
-						this.physics.arcade.distanceBetween(players[plr], player) <= (range * 2)/* && 
+						this.physics.arcade.distanceBetween(players[plr], player) <= (range * 2) && 
 						player.minion === false && 
 						players[plr].minion === false && 
 						players[plr].health > 0 && 
 						player.health > 0 && 
 						player.coop === false && 
-						players[plr].coop === false*/)
+						players[plr].coop === false)
 					{				
 						mergeIcon.visible = true;
 
@@ -938,9 +937,7 @@ SpaceBattalion.Game.prototype = {
 					{
 						mergeIcon.visible = false;
 
-						console.log('wat is het probleem nou??');
-
-						/* Debug loggin
+						// Debug loggin
 						console.log('dist :', dist);
 						console.log('dist between: ', this.physics.arcade.distanceBetween(players[plr], player) <= range * 2);
 						console.log('player minion: ', player.minion);
@@ -948,7 +945,7 @@ SpaceBattalion.Game.prototype = {
 						console.log('player health: ', player.health);
 						console.log('players[plr] health: ', players[plr].health);
 						console.log('player coop: ', player.coop);
-						console.log('players[plr] coop: ', players[plr].coop);*/
+						console.log('players[plr] coop: ', players[plr].coop);
 					}
 				}
 				//}

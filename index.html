@@ -96,7 +96,9 @@
 						var dist = distance(window.lat, window.lng, value.lat, value.lng, "M");
 						dist = dist + 'm';
 
-						$('.rooms').find('ul').append("<li data-room='" + value.name + "'>" + truncateTitle(value.name.replace(/\//g, ''), 15) + " ( " + dist + " ) <span>Players: " + value.players + "/" + value.max + "</span></li>");
+						if(value.players !== value.max) {
+							$('.rooms').find('ul').append("<li data-room='" + value.name + "'>" + truncateTitle(value.name.replace(/\//g, ''), 15) + " ( " + dist + " ) <span>Players: " + value.players + "/" + value.max + "</span></li>");
+						}
 					}
 				});
 
@@ -207,7 +209,9 @@
 						var dist = distance(window.lat, window.lng, value.lat, value.lng, "M");
 						dist = dist + 'm';
 
-						$('.rooms').find('ul').append("<li data-room='" + value.name + "'>" + truncateTitle(value.name.replace(/\//g, ''), 15) + " ( " + dist + " ) <span>Players: " + value.players + "/" + value.max + "</span></li>");
+						if(value.players !== value.max) {
+							$('.rooms').find('ul').append("<li data-room='" + value.name + "'>" + truncateTitle(value.name.replace(/\//g, ''), 15) + " ( " + dist + " ) <span>Players: " + value.players + "/" + value.max + "</span></li>");
+						}
 					}
 				});
 
@@ -265,6 +269,7 @@
 		    if (unit=="K") { dist = dist * 1.609344 };
 		    if (unit=="N") { dist = dist * 0.8684 };
 		    if (unit=="M") { dist = ((dist * 1.609344) * 1000) };
+
 		    return Math.round(dist);
 		}
 
