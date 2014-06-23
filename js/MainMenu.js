@@ -12,7 +12,7 @@ window.SpaceBattalion.MainMenu.prototype = {
 		this.music = this.add.audio('loadingMusic');
 		//this.music.play('', 0, 1, true);
 
-		//console.dir(this);
+		console.dir(this);
 
 		/*this.startButton = this.add.button(this.world.centerX, this.world.centerY, '', this.startGame, this, 1, 0, 2);
 		this.startButton.x = this.world.centerX - this.startButton.width/2;

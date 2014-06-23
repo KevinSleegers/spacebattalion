@@ -104,7 +104,7 @@ SpaceBattalion.Game.prototype = {
 		this.time.advancedTiming = true;
 		this.input.maxPointers = 1;
 
-		//console.log('je huidige room is: ' + myRoom);
+		console.log('je huidige room is: ' + myRoom);
 		//alert('ROOM IM IN: ' + myRoom);
 
 		// Console.log aan / uit zetten
@@ -236,20 +236,20 @@ SpaceBattalion.Game.prototype = {
 		// Haal spelers van server die al online zijn
 	    var self = this;
     	socket.on('onlinePlayer', function(data) {
-    		//console.log(data);
+    		console.log(data);
 
 	        if(Object.getOwnPropertyNames(data).length === 0) {
 	        	console.log('There are no other players online.');
 	        } else {
-	        	//console.log('There are other players online.');
+	        	console.log('There are other players online.');
 	        	// Check which players are in co-op mode
 	        	socket.emit('getCoopPlayers', io.socket.sessionid);
 	        }
 
 	        for(var onlinePlayer in data) {
 	        	if(data[onlinePlayer].session.length <= 20) {
-	        		//console.log('Creating player', data[onlinePlayer].session);
-	        		//console.log(data[onlinePlayer]);
+	        		console.log('Creating player', data[onlinePlayer].session);
+	        		console.log(data[onlinePlayer]);
 	            	self.createPlayer(data[onlinePlayer]);
 	            	//onlinePlayers.push(data[onlinePlayer].nickname);
 	            }
@@ -556,13 +556,13 @@ SpaceBattalion.Game.prototype = {
 			self.explode(boss.x, boss.y);
 			player.score += 1000;
 			
-			//console.log('Total score: ' + player.score);
+			console.log('Total score: ' + player.score);
 			$.ajax({
 				type:"post",
 				url:"http://buitmediasolutions.nl/spacebattalion/score.php",
 				data:{id: window.playerObject.id, score: player.score},
 				success:function(data){
-					//console.log(data);
+					console.log(data);
 					
 				}
 			});
@@ -582,8 +582,7 @@ SpaceBattalion.Game.prototype = {
 
 			var dist = self.distance(player.lat, player.lng, players[data.session].lat, players[data.session].lng, "M");
 
-			//if(dist <= range && this.physics.arcade.distanceBetween(players[plr], player) <= range * 2 && player.minion === false && players[plr].minion === false && players[plr].health > 0 && player.health > 0 && player.coop === false && players[plr].coop === false) {
-			if(dist <= range) {				
+			if(dist <= range) {
 				if(radarCursor == '' || radarCursor == null || typeof radarCursor == "undefined") {
 					// Radar cursor aanmaken
 					radarCursor = self.add.sprite(0, 0, 'radarCursor');
@@ -730,7 +729,7 @@ SpaceBattalion.Game.prototype = {
 
 	    	// Maak wolken aan
 	    	if(clouds.length >= 30) {
-	    		//console.log('meer dan 30 wolken.. ');
+	    		console.log('meer dan 30 wolken.. ');
 	    		clouds.removeAll();
 	    	} else {
 			    if(this.time.now > cloudTimer) {          
@@ -740,7 +739,7 @@ SpaceBattalion.Game.prototype = {
 			
 			// Maak sterren aan
 			if(stars.length >= 40) {
-	    		//console.log('meer dan 40 sterren.. ');
+	    		console.log('meer dan 40 sterren.. ');
 				stars.removeAll();
 			} else {
 				if(this.time.now > starTimer) {          
@@ -844,8 +843,8 @@ SpaceBattalion.Game.prototype = {
 
         // Collision detection voor alle players && Icoon om samen te voegen
         for(var plr in players) {
-			//console.dir(players[plr].name + " : " + window.boss);
-			//console.log(bossSession);
+			//onsole.dir(players[plr].name + " : " + window.boss);
+			console.log(bossSession);
         	// Bullets raken andere players
         	if(players[plr].visible !== false && friendlyFire == true && players[plr].health > 0) {
             	this.physics.arcade.collide(bullets, players[plr], this.bulletOtherPlayer, null, this);
@@ -945,7 +944,7 @@ SpaceBattalion.Game.prototype = {
 	    players[plr.session].lat = plr.lat; 	
 	    players[plr.session].lng = plr.long;
 
-	    //console.log('new player pos', players[plr.session].lat, players[plr.session].lng);
+	    console.log('new player pos', players[plr.session].lat, players[plr.session].lng);
 
 	    //players[plr.session] = game.add.sprite(plr.x, plr.y, 'otherPlayers');
 	    if(plr.skin == 'ns') {
@@ -974,11 +973,11 @@ SpaceBattalion.Game.prototype = {
 	    playerGroup.bringToTop(player);
 		bossGroup.bringToTop(boss);	
 		
-		var lastSession;
-		
 		var cursorOffsetX = 400;
-		for(var plr in players) 
+		
+		if(players[plr.session].boss == false)
 		{
+<<<<<<< HEAD
 			if(bossSession !== players[plr].name || typeof bossSession === undefined)
 			{
 				if(playerType == player && players[plr].name !== player.name && lastSession !== players[plr].name)
@@ -1014,11 +1013,39 @@ SpaceBattalion.Game.prototype = {
 						} else {				
 							console.log('dist', dist, ' groter dan ', range);
 						}
+=======
+			if(player.lat !== 0 && player.lng !== 0 && players[plr.session].lat !== 0 && players[plr.session].lng !== 0) {
+				var dist = this.distance(player.lat, player.lng, players[plr.session].lat, players[plr.session].lng, "M");
+
+				console.log('distance tussen mijzelf en andere: ' + dist);
+
+				if(dist <= range) {
+					console.log('dist', dist, 'kleiner dan', range);
+
+					if(radarCursor == '' || radarCursor == null || typeof radarCursor == "undefined") {
+						// Radar cursor aanmaken
+						radarCursor = this.add.sprite(0, 0, 'radarCursor');
+						radarCursor.anchor.setTo(.5, .5);
+						radarCursor.fixedToCamera = true;
+						radarCursor.cameraOffset.setTo(cursorOffsetX, 100);	
+								
+						radarMeters = this.add.text(0, 0, dist.toFixed(2) + " M", { font: "14px Arial", fill: "#ffffff", align: "center" });
+						radarMeters.fixedToCamera = true;
+						radarMeters.cameraOffset.setTo(cursorOffsetX - 15, 140);	
+
+						players[plr.session].frame = 6;
+							
+						cursorOffsetX += 60;
+>>>>>>> origin/master
 					} else {
-						console.log('1 van deze waardes zijn 0 of undefined');
-						console.log(player.lat, player.lng, players[plr.session].lat, players[plr.session].lng);
+						radarMeters.setText(dist.toFixed(2) + ' M');
 					}
+				} else {				
+					console.log('dist', dist, ' groter dan ', range);
 				}
+			} else {
+				console.log('1 van deze waardes zijn 0 of undefined');
+				console.log(player.lat, player.lng, players[plr.session].lat, players[plr.session].lng);
 			}
 		}
 		

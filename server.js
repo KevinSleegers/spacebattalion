@@ -327,31 +327,33 @@ io.sockets.on('connection', function(socket){
     });
 
     socket.on('newRoom', function(data) {
-        var obj = JSON.parse(data);      
+    	if(typeof data != "undefined") {    		
+	        var obj = JSON.parse(data);      
 
-        // Voeg nieuwe room toe aan rooms
-        var newRoom     = {};
+	        // Voeg nieuwe room toe aan rooms
+	        var newRoom     = {};
 
-        if( obj.address in rooms ) {
-        	console.log('room bestaat al');
-    		newRoom.name = obj.address + '_' + randName();
-		} else {			
-        	newRoom.name    = obj.address;
-		}
+	        if( obj.address in rooms ) {
+	        	console.log('room bestaat al');
+	    		newRoom.name = obj.address + '_' + randName();
+			} else {			
+	        	newRoom.name    = obj.address;
+			}
 
-        newRoom.lat     = obj.lat;
-        newRoom.lng     = obj.lng;
-        newRoom.players = io.sockets.clients(obj.address).length;
-        newRoom.max     = maxPlayers;
+	        newRoom.lat     = obj.lat;
+	        newRoom.lng     = obj.lng;
+	        newRoom.players = io.sockets.clients(obj.address).length;
+	        newRoom.max     = maxPlayers;
 
-        rooms[newRoom.name] = newRoom;
+	        rooms[newRoom.name] = newRoom;
 
-        //socket.session = socket.id;
-        //socket.join(room);
+	        //socket.session = socket.id;
+	        //socket.join(room);
 
-        //io.sockets.socket(socket.id).emit('joinedRoom', room);
+	        //io.sockets.socket(socket.id).emit('joinedRoom', room);
 
-        io.sockets.emit('roomUpdate', rooms);
+	        io.sockets.emit('roomUpdate', rooms);
+    	}
     });
 
     socket.on('joinRoom', function(data) {

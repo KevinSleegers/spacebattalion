@@ -86,7 +86,7 @@ SpaceBattalion.Preloader.prototype = {
 				var width = $('.loader span').width();
 				var parentWidth = $('.loader span').offsetParent().width();
 				var percent = 100*width/parentWidth;
-				//console.log(percent);
+				console.log(percent);
 				if(percent >= 99)
 				{
 					clearInterval(loadbar);
