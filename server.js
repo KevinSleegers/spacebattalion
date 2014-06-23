@@ -7,7 +7,7 @@ var express = require('express'),
     coopPlayers = {},
     room = '',
     rooms = {},
-    maxPlayers = 3;
+    maxPlayers = 4;
     skins = {},
     tints = {};
 
@@ -327,11 +327,18 @@ io.sockets.on('connection', function(socket){
     });
 
     socket.on('newRoom', function(data) {
-        var obj = JSON.parse(data);        
+        var obj = JSON.parse(data);      
 
         // Voeg nieuwe room toe aan rooms
         var newRoom     = {};
-        newRoom.name    = obj.address;
+
+        if( obj.address in rooms ) {
+        	console.log('room bestaat al');
+    		newRoom.name = obj.address + '_' + Date.now();
+		} else {			
+        	newRoom.name    = obj.address;
+		}
+
         newRoom.lat     = obj.lat;
         newRoom.lng     = obj.lng;
         newRoom.players = io.sockets.clients(obj.address).length;
