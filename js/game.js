@@ -201,7 +201,7 @@ SpaceBattalion.Game.prototype = {
 	    this.physics.enable(boss, Phaser.Physics.ARCADE);
 	    boss.physicsBodyType = Phaser.Physics.ARCADE;
 		boss.body.collideWorldBounds = true;		
-	    boss.health = 99000;
+	    boss.health = 5000;
 	    boss.frame = 1;
 	    boss.body.immovable = true;
 	    boss.move = false;
@@ -1898,7 +1898,7 @@ SpaceBattalion.Game.prototype = {
 
 	render: function() {
 		// FPS DEBUGGEN
-		this.game.debug.text('FPS: ' + this.time.fps, 80, 150, 'rgb(255,255,255)', '24px Courier');
+		// this.game.debug.text('FPS: ' + this.time.fps, 80, 150, 'rgb(255,255,255)', '24px Courier');
 	},
 
 	shutdown: function() {
