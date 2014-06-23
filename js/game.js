@@ -695,6 +695,12 @@ SpaceBattalion.Game.prototype = {
 		window.onfocus = function() {	
 			self.backgroundMusic.resume();
 		}
+		
+		// Animatie voor radarcursor in hier
+		if(radarCursor)
+		{
+			
+		}
 
 		// Zet velocity weer op 0 van jezelf
 		if(Object.getOwnPropertyNames(coopPlayers).length !== 0) {
@@ -986,8 +992,9 @@ SpaceBattalion.Game.prototype = {
 
 						if(dist <= range) {
 							console.log('dist', dist, 'kleiner dan', range);
-
-							//if(radarCursor == '' || radarCursor == null || typeof radarCursor == "undefined") {
+							players[plr].frame = 6;
+							
+							if(radarCursor == '' || radarCursor == null || typeof radarCursor == "undefined") {
 								// Radar cursor aanmaken
 								radarCursor = this.add.sprite(0, 0, 'radarCursor');
 								radarCursor.anchor.setTo(.5, .5);
@@ -998,12 +1005,12 @@ SpaceBattalion.Game.prototype = {
 								radarMeters.fixedToCamera = true;
 								radarMeters.cameraOffset.setTo(cursorOffsetX - 15, 140);	
 
-								players[plr].frame = 6;
+								
 									
 								cursorOffsetX += 60;
-							//} else {
+							} else {
 								radarMeters.setText(dist.toFixed(2) + ' M');
-							//}
+							}
 						} else {				
 							console.log('dist', dist, ' groter dan ', range);
 						}
