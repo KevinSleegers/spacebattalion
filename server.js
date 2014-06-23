@@ -334,7 +334,7 @@ io.sockets.on('connection', function(socket){
 
         if( obj.address in rooms ) {
         	console.log('room bestaat al');
-    		newRoom.name = obj.address + '_' + Date.now();
+    		newRoom.name = obj.address + '_' + randName();
 		} else {			
         	newRoom.name    = obj.address;
 		}
