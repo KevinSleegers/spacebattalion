@@ -55,7 +55,7 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
 
     logging = true,
     bounds = 2000,
-    friendlyFire = false,
+    friendlyFire = true,
     deadTimer,
     revived = 0,
     minionTime = 5;
