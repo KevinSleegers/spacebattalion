@@ -520,10 +520,6 @@ SpaceBattalion.Game.prototype = {
 									setTimeout(function() {
 										self.shutdown();
 									}, 500);
-								}else if(player.boss === true) {
-									setTimeout(function() {
-										self.shutdown();
-									}, 500);									
 								}
 							}
 						}		
@@ -747,7 +743,7 @@ SpaceBattalion.Game.prototype = {
 
 	update: function() {
 
-		//console.log('multiplier: ', scoreMultiplier);
+		console.log('multiplier: ', scoreMultiplier);
 
 		// Als window niet in focus is
 		var self = this;
@@ -921,7 +917,7 @@ SpaceBattalion.Game.prototype = {
             	this.physics.arcade.collide(bullets, player, this.bulletPlayer, null, this);
             }			
 		
-			//if(typeof player.lat !== "undefined" && typeof player.lng !== "undefined" && players[plr].boss === false) {
+			if(typeof player.lat !== "undefined" && typeof player.lng !== "undefined" && players[plr].boss === false) {
 
 				//	Als afstand kleiner dan 100 meter is
 				//console.log(player.boss);
@@ -933,13 +929,12 @@ SpaceBattalion.Game.prototype = {
 					
 				if(players[plr].boss === false && player.boss === false || player.boss === false || isBoss === false) {
 					var dist = this.distance(player.lat, player.lng, players[plr].lat, players[plr].lng, "M");
-					
-					//console.log(this.physics.arcade.distanceBetween(players[plr], player) <= range * 2);
 
-					if(	this.physics.arcade.distanceBetween(players[plr], player) <= 100 * 2 && 
-						players[plr].minion == false && 
+					if(	dist <= range && 
+						this.physics.arcade.distanceBetween(players[plr], player) <= (range * 2) && 
+						players[plr].minion === false && 
 						players[plr].health > 0 && 
-						players[plr].coop == false)
+						players[plr].coop === false)
 					{				
 						mergeIcon.visible = true;
 
@@ -951,11 +946,12 @@ SpaceBattalion.Game.prototype = {
 						mergeIcon.visible = false;
 					}
 				}
+				//}
 				//console.log(players[plr].nickname + players[plr].latitude + " ");
-			//} else {
-				//console.log('andere zijn geen boss');
-			//	mergeIcon.visible = false;
-			//}
+			} else {
+				console.log('andere zijn geen boss');
+				mergeIcon.visible = false;
+			}
 
 			// Player revived andere player
 			if(player.health === 0 && player.minion === false && revived === 0) {
@@ -1256,7 +1252,7 @@ SpaceBattalion.Game.prototype = {
 	updatePlayer: function(plr) {
 		//console.log("Speler is een boss? : " + plr.boss);
 
-		//console.log(plr.session);
+		console.log(plr.session);
 		
 		if(plr.boss === true) {
 			boss.x = players[plr.session].x;
