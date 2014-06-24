@@ -7,7 +7,7 @@ var express = require('express'),
     coopPlayers = {},
     room = '',
     rooms = {},
-    maxPlayers = 3;
+    maxPlayers = 4;
     skins = {},
     tints = {};
 

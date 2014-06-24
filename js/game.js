@@ -1838,7 +1838,7 @@ SpaceBattalion.Game.prototype = {
 	        bullet.y += blt.bulletY;
 	        bullet.session = blt.session;
 
-	        this.physics.arcade.velocityFromRotation(blt.rotation += blt.randVelocity, 625, bullet.body.velocity);
+	        this.physics.arcade.velocityFromRotation(blt.rotation += blt.randVelocity, 1000, bullet.body.velocity);
 	        //game.physics.arcade.velocityFromRotation(blt.rotation, 450, otherBullet.body.velocity);
 	        bullet.animations.add('bulletCollide');
 
