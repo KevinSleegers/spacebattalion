@@ -59,7 +59,7 @@ var io = io.connect('', { rememberTransport: false, transports: ['WebSocket', 'F
     deadPlayers = 0,
     revived = 0,
     minionTime = 5,
-    bossHealth = 10000,
+    bossHealth = 2000,
     scoreMultiplier = 1,
     bossPlayer = '';
 
@@ -86,7 +86,7 @@ SpaceBattalion.Game = function(game) {
 
 SpaceBattalion.Game.prototype = {
 
-	create: function() {		
+	create: function() {
 		if(window.boss === io.socket.sessionid) {
 			console.log('ik ben de boss');
 			console.log('window.boss = ' , window.boss);
@@ -131,7 +131,7 @@ SpaceBattalion.Game.prototype = {
 		// Achtergrond muziek en andere geluiden
 		this.backgroundMusic = this.add.audio('backgroundMusic');
 		if(SpaceBattalion.music) {
-			//this.backgroundMusic.play('', 0, 1, true);
+			this.backgroundMusic.play('', 0, 1, true);
 		}
 
 		this.shipHitSound 	= this.add.audio('shipHitSound');
@@ -180,6 +180,8 @@ SpaceBattalion.Game.prototype = {
 		} else {
 			player.boss = false;
 		}
+
+		console.log('is boss', isBoss);
 
 		if(typeof window.tint !== "undefined" && window.tint !== 0) {
 			player.tint = window.tint;
@@ -743,8 +745,6 @@ SpaceBattalion.Game.prototype = {
 
 	update: function() {
 
-		console.log('multiplier: ', scoreMultiplier);
-
 		// Als window niet in focus is
 		var self = this;
 		window.onblur = function() {
@@ -926,8 +926,23 @@ SpaceBattalion.Game.prototype = {
 				//console.log("id is " + io.socket.sessionid + " name is : " + players[plr].name);
 				//console.log(io.socket.sessionid);
 				//if(players[plr].name !== window.boss) {
+
+				if(player.boss === false && players[plr].boss === false) {
+					if(this.physics.arcade.distanceBetween(players[plr], player) <= (range * 2)) {
+						mergeIcon.visible = true;
+
+						mergeIcon.inputEnabled = true;
+						mergeIcon.events.onInputDown.add(this.mergePlayers, this);
+					} else {
+						console.log('nee');
+
+						mergeIcon.visible = false;
+					}
+				} else {
+					mergeIcon.visible = false;
+				}
 					
-				if(players[plr].boss === false && player.boss === false || player.boss === false || isBoss === false) {
+				/*if(players[plr].boss === false && player.boss === false || player.boss === false || isBoss === false) {
 					var dist = this.distance(player.lat, player.lng, players[plr].lat, players[plr].lng, "M");
 
 					if(	dist <= range && 
@@ -945,11 +960,10 @@ SpaceBattalion.Game.prototype = {
 					{
 						mergeIcon.visible = false;
 					}
-				}
+				}*/
 				//}
 				//console.log(players[plr].nickname + players[plr].latitude + " ");
 			} else {
-				console.log('andere zijn geen boss');
 				mergeIcon.visible = false;
 			}
 
@@ -1126,6 +1140,8 @@ SpaceBattalion.Game.prototype = {
 	},
 
 	createCoop: function(player1, player2, shoot, move, x, y, angle, type) {
+		mergeIcon.visible = false;
+
 		if(type == 'new') {
 			coopSession = player1 + player2;
 		}
@@ -1263,7 +1279,7 @@ SpaceBattalion.Game.prototype = {
 	    	players[plr.session].y = plr.y;	
 			players[plr.session].angle = plr.angle;
 		}
-		else if(plr.coop === true) {
+		else if(plr.coop === true || plr.session.length > 20) {
 			coopPlayers[plr.session].x = plr.x;
 			coopPlayers[plr.session].y = plr.y;
 			coopPlayers[plr.session].angle = plr.angle;
