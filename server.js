@@ -361,6 +361,7 @@ io.sockets.on('connection', function(socket){
             socket.session = socket.id;
             socket.join(data);
 
+            console.log('message to all other sockets within room');
             io.sockets.socket(socket.id).emit('joinedRoom', data);
 
             if(io.sockets.clients(data).length === maxPlayers) {
