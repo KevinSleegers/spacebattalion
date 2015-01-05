@@ -361,7 +361,6 @@ io.sockets.on('connection', function(socket){
             socket.session = socket.id;
             socket.join(data);
 
-            console.log('message to all other sockets within room');
             io.sockets.socket(socket.id).emit('joinedRoom', data);
 
             if(io.sockets.clients(data).length === maxPlayers) {
@@ -372,6 +371,8 @@ io.sockets.on('connection', function(socket){
                 var boss = io.sockets.clients(data)[randNumber].session;
 				
 				var playerBoss = true;
+
+                io.sockets.in(data).emit('startGame', true, boss);
             }
 
             rooms[data].players = io.sockets.clients(data).length;
