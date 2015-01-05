@@ -295,17 +295,17 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 </head>
 <body>
-	<div id="menu">
-    	<div id="inlog">
-    	<img src="images/logo-small.png" alt="Space Battalion"/>
-        <div id="ack"></div>
-        
-    	<input id="inlognaam" type="text" name="inlog" placeholder="Username"/>
-        <input id="password" type="password" name="password" placeholder="Password"/>
-    	<button id="submit" class="btn">Inloggen</button>
-        <p>Nog geen account? <a href="registreren.html">registreren</a></p>
-        </div>
-    </div>
+	<!-- <div id="menu">
+	    	<div id="inlog">
+	    	<img src="images/logo-small.png" alt="Space Battalion"/>
+	        <div id="ack"></div>
+	        
+	    	<input id="inlognaam" type="text" name="inlog" placeholder="Username"/>
+	        <input id="password" type="password" name="password" placeholder="Password"/>
+	    	<button id="submit" class="btn">Inloggen</button>
+	        <p>Nog geen account? <a href="registreren.html">registreren</a></p>
+	        </div>
+	    </div> -->
     <div class="overlay">
     	<div class="wrapper">
         	<div class="mainmenu">
@@ -559,14 +559,29 @@
 		
 			 
 			 
-		  window.startbutton = 0;
+		window.startbutton = 0;
+
+		var w = window.innerWidth,
+		h = window.innerHeight;
+							
+		/* ~~~~~~~ NEW GAME ~~~~~~~ */
+		window.game = new Phaser.Game(w, h, Phaser.AUTO, '');
+		
+		window.game.state.add('Boot', SpaceBattalion.Boot);
+		window.game.state.add('Preloader', SpaceBattalion.Preloader);
+		window.game.state.add('MainMenu', SpaceBattalion.MainMenu);
+		window.game.state.add('Game', SpaceBattalion.Game);
+		window.game.state.add('GameEnd', SpaceBattalion.GameEnd);
+		
+		window.game.state.start('Boot');
+		$('.overlay').fadeIn(200);
 		  
 
 		  
 		  
 		  $('.overlay').width($(window).width());
 		  $('.overlay').height($(window).height());	 
-		  $('.overlay').hide();
+		  //$('.overlay').hide();
 		  $('.menulist').hide();
 		  $('.stats').hide();
 		  $('.rooms').hide();

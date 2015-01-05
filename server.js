@@ -7,7 +7,7 @@ var express = require('express'),
     coopPlayers = {},
     room = '',
     rooms = {},
-    maxPlayers = 4;
+    maxPlayers = 3;
     skins = {},
     tints = {};
 
@@ -371,8 +371,6 @@ io.sockets.on('connection', function(socket){
                 var boss = io.sockets.clients(data)[randNumber].session;
 				
 				var playerBoss = true;
-
-                io.sockets.in(data).emit('startGame', true, boss);
             }
 
             rooms[data].players = io.sockets.clients(data).length;
